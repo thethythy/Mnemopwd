@@ -30,6 +30,7 @@
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from hashlib import sha512
+from binascii import hexlify, unhexlify
 from .openssl import OpenSSL
 from .cipher import Cipher
 from .hash import hmac_sha256, equals
@@ -65,6 +66,7 @@ class ECC:
         print bob.get_ecdh_key(alice.get_pubkey()).encode('hex')
 
     """
+
     def __init__(self, pubkey=None, privkey=None, pubkey_x=None,
                  pubkey_y=None, raw_privkey=None, curve='sect283r1'):
         """
@@ -79,12 +81,9 @@ class ECC:
         if pubkey_x is not None and pubkey_y is not None:
             self._set_keys(pubkey_x, pubkey_y, raw_privkey)
         elif pubkey is not None:
-            curve, pubkey_x, pubkey_y, i = ECC._decode_pubkey(pubkey)
+            pubkey_x, pubkey_y = ECC._decode_pubkey(pubkey)
             if privkey is not None:
-                curve2, raw_privkey, i = ECC._decode_privkey(privkey)
-                if curve != curve2:
-                    raise Exception("Bad ECC keys ...")
-            self.curve = curve
+                raw_privkey = ECC._decode_privkey(privkey)
             self._set_keys(pubkey_x, pubkey_y, raw_privkey)
         else:
             self.privkey, self.pubkey_x, self.pubkey_y = self._generate()
@@ -113,10 +112,56 @@ class ECC:
     def get_curve_id(self):
         return self.curve
 
-    def get_pubkey(self):
+    def get_pubkey(self, _format='binary'):
         """
         High level function which returns :
-        curve(2) + len_of_pubkeyX(2) + pubkeyX + len_of_pubkeyY + pubkeyY
+        pubkeyX + pubkeyY
+        """
+        binary = b''.join((
+            self.pubkey_x,
+            self.pubkey_y
+        ))
+
+        if _format is 'binary':
+            pubkey = b'' + unhexlify('04') + binary
+        elif _format is 'hex':
+            pubkey = b'04' + binary.encode('hex')
+        else:
+            raise Exception("[ECC] Unsupported pubkey output format ...")
+
+        return pubkey
+
+    def get_privkey(self):
+        """
+        High level function which returns
+        privkey
+        """
+        return self.privkey
+
+    @staticmethod
+    def _decode_pubkey(pubkey, format='binary'):
+        if format is 'binary':
+            binary_key = pubkey
+        elif format is 'hex':
+            binary_key = unhexlify(pubkey)
+        else:
+            raise Exception("[ECC] Unsupported pubkey input format")
+
+        conv_form = binary_key[0:1]
+        if hexlify(conv_form) != b'04':
+            raise Exception("[ECC] Unsupported pubkey point conversion form")
+        i = int(len(binary_key) / 2 + 1)
+        pubkey_x = binary_key[1:i]
+        pubkey_y = binary_key[i:]
+        return pubkey_x, pubkey_y
+
+    @staticmethod
+    def _decode_privkey(privkey):
+        return privkey
+
+    def _old_get_pubkey(self):
+        """
+        Old get_pubkey, keeps for compatibility issues.
         """
         return b''.join((pack('!H', self.curve),
                          pack('!H', len(self.pubkey_x)),
@@ -125,10 +170,9 @@ class ECC:
                          self.pubkey_y
                          ))
 
-    def get_privkey(self):
+    def _old_get_privkey(self):
         """
-        High level function which returns
-        curve(2) + len_of_privkey(2) + privkey
+        Old get_privkey, keeps for compatibility issues.
         """
         return b''.join((pack('!H', self.curve),
                          pack('!H', len(self.privkey)),
@@ -136,7 +180,10 @@ class ECC:
                          ))
 
     @staticmethod
-    def _decode_pubkey(pubkey):
+    def _old_decode_pubkey(pubkey):
+        """
+        Converts old exported pubkey to new format
+        """
         i = 0
         curve = unpack('!H', pubkey[i:i + 2])[0]
         i += 2
@@ -151,7 +198,10 @@ class ECC:
         return curve, pubkey_x, pubkey_y, i
 
     @staticmethod
-    def _decode_privkey(privkey):
+    def _old_decode_privkey(privkey):
+        """
+        Converts old exported privkey to new format
+        """
         i = 0
         curve = unpack('!H', privkey[i:i + 2])[0]
         i += 2
@@ -168,11 +218,11 @@ class ECC:
 
             key = OpenSSL.EC_KEY_new_by_curve_name(self.curve)
             if key == 0:
-                raise Exception("[OpenSSL] EC_KEY_new_by_curve_name FAIL ...")
+                raise Exception("[OpenSSL] EC_KEY_new_by_curve_name FAIL ... " + OpenSSL.get_error())
             if (OpenSSL.EC_KEY_generate_key(key)) == 0:
-                raise Exception("[OpenSSL] EC_KEY_generate_key FAIL ...")
+                raise Exception("[OpenSSL] EC_KEY_generate_key FAIL ... " + OpenSSL.get_error())
             if (OpenSSL.EC_KEY_check_key(key)) == 0:
-                raise Exception("[OpenSSL] EC_KEY_check_key FAIL ...")
+                raise Exception("[OpenSSL] EC_KEY_check_key FAIL ... " + OpenSSL.get_error())
             priv_key = OpenSSL.EC_KEY_get0_private_key(key)
 
             group = OpenSSL.EC_KEY_get0_group(key)
@@ -183,7 +233,10 @@ class ECC:
                                                             pub_key_y, 0
                                                             )) == 0:
                 raise Exception(
-                    "[OpenSSL] EC_POINT_get_affine_coordinates_GFp FAIL ...")
+                    "[OpenSSL] EC_POINT_get_affine_coordinates_GFp FAIL ... " + OpenSSL.get_error())
+
+            field_size = OpenSSL.EC_GROUP_get_degree(OpenSSL.EC_KEY_get0_group(key))
+            secret_len = int((field_size + 7) / 8)
 
             privkey = OpenSSL.malloc(0, OpenSSL.BN_num_bytes(priv_key))
             pubkeyx = OpenSSL.malloc(0, OpenSSL.BN_num_bytes(pub_key_x))
@@ -194,6 +247,12 @@ class ECC:
             pubkeyx = pubkeyx.raw
             OpenSSL.BN_bn2bin(pub_key_y, pubkeyy)
             pubkeyy = pubkeyy.raw
+
+            if len(pubkeyx) < secret_len:
+                pubkeyx = pubkeyx.rjust(secret_len, b'\0')
+            if len(pubkeyy) < secret_len:
+                pubkeyy = pubkeyy.rjust(secret_len, b'\0')
+
             self.raw_check_key(privkey, pubkeyx, pubkeyy)
 
             return privkey, pubkeyx, pubkeyy
@@ -203,15 +262,13 @@ class ECC:
             OpenSSL.BN_free(pub_key_x)
             OpenSSL.BN_free(pub_key_y)
 
-    def get_ecdh_key(self, pubkey):
+    def get_ecdh_key(self, pubkey, format='binary'):
         """
         High level function. Compute public key with the local private key
-        and returns a 512bits shared key
+        and returns a shared binary key
         """
-        curve, pubkey_x, pubkey_y, i = ECC._decode_pubkey(pubkey)
-        if curve != self.curve:
-            raise Exception("ECC keys must be from the same curve !")
-        return sha512(self.raw_get_ecdh_key(pubkey_x, pubkey_y)).digest()
+        pubkey_x, pubkey_y = ECC._decode_pubkey(pubkey, format)
+        return self.raw_get_ecdh_key(pubkey_x, pubkey_y)
 
     def raw_get_ecdh_key(self, pubkey_x, pubkey_y):
         try:
@@ -219,13 +276,15 @@ class ECC:
 
             other_key = OpenSSL.EC_KEY_new_by_curve_name(self.curve)
             if other_key == 0:
-                raise Exception("[OpenSSL] EC_KEY_new_by_curve_name FAIL ...")
+                raise Exception("[OpenSSL] EC_KEY_new_by_curve_name FAIL ... " + OpenSSL.get_error())
 
             other_pub_key_x = OpenSSL.BN_bin2bn(pubkey_x, len(pubkey_x), 0)
             other_pub_key_y = OpenSSL.BN_bin2bn(pubkey_y, len(pubkey_y), 0)
 
             other_group = OpenSSL.EC_KEY_get0_group(other_key)
             other_pub_key = OpenSSL.EC_POINT_new(other_group)
+            if (other_pub_key == None):
+                raise Exception("[OpenSSl] EC_POINT_new FAIL ... " + OpenSSL.get_error())
 
             if (OpenSSL.EC_POINT_set_affine_coordinates_GFp(other_group,
                                                             other_pub_key,
@@ -233,27 +292,27 @@ class ECC:
                                                             other_pub_key_y,
                                                             0)) == 0:
                 raise Exception(
-                    "[OpenSSL] EC_POINT_set_affine_coordinates_GFp FAIL ...")
+                    "[OpenSSL] EC_POINT_set_affine_coordinates_GFp FAIL ..." + OpenSSL.get_error())
             if (OpenSSL.EC_KEY_set_public_key(other_key, other_pub_key)) == 0:
-                raise Exception("[OpenSSL] EC_KEY_set_public_key FAIL ...")
+                raise Exception("[OpenSSL] EC_KEY_set_public_key FAIL ... " + OpenSSL.get_error())
             if (OpenSSL.EC_KEY_check_key(other_key)) == 0:
-                raise Exception("[OpenSSL] EC_KEY_check_key FAIL ...")
+                raise Exception("[OpenSSL] EC_KEY_check_key FAIL ... " + OpenSSL.get_error())
 
             own_key = OpenSSL.EC_KEY_new_by_curve_name(self.curve)
             if own_key == 0:
-                raise Exception("[OpenSSL] EC_KEY_new_by_curve_name FAIL ...")
+                raise Exception("[OpenSSL] EC_KEY_new_by_curve_name FAIL ... " + OpenSSL.get_error())
             own_priv_key = OpenSSL.BN_bin2bn(
                 self.privkey, len(self.privkey), 0)
 
             if (OpenSSL.EC_KEY_set_private_key(own_key, own_priv_key)) == 0:
-                raise Exception("[OpenSSL] EC_KEY_set_private_key FAIL ...")
+                raise Exception("[OpenSSL] EC_KEY_set_private_key FAIL ... " + OpenSSL.get_error())
 
             OpenSSL.ECDH_set_method(own_key, OpenSSL.ECDH_OpenSSL())
             ecdh_keylen = OpenSSL.ECDH_compute_key(
                 ecdh_keybuffer, 32, other_pub_key, own_key, 0)
 
             if ecdh_keylen != 32:
-                raise Exception("[OpenSSL] ECDH keylen FAIL ...")
+                raise Exception("[OpenSSL] ECDH keylen FAIL ... " + OpenSSL.get_error())
 
             return ecdh_keybuffer.raw
 
@@ -270,27 +329,19 @@ class ECC:
         Check the public key and the private key.
         The private key is optional (replace by None)
         """
-        curve, pubkey_x, pubkey_y, i = ECC._decode_pubkey(pubkey)
+        pubkey_x, pubkey_y = ECC._decode_pubkey(pubkey)
         if privkey is None:
             raw_privkey = None
-            curve2 = curve
         else:
-            curve2, raw_privkey, i = ECC._decode_privkey(privkey)
-        if curve != curve2:
-            raise Exception("Bad public and private key")
-        return self.raw_check_key(raw_privkey, pubkey_x, pubkey_y, curve)
+            raw_privkey = ECC._decode_privkey(privkey)
+        return self.raw_check_key(raw_privkey, pubkey_x, pubkey_y)
 
-    def raw_check_key(self, privkey, pubkey_x, pubkey_y, curve=None):
-        if curve is None:
-            curve = self.curve
-        elif type(curve) == str:
-            curve = OpenSSL.get_curve(curve)
-        else:
-            curve = curve
+    def raw_check_key(self, privkey, pubkey_x, pubkey_y):
+        curve = self.curve
         try:
             key = OpenSSL.EC_KEY_new_by_curve_name(curve)
             if key == 0:
-                raise Exception("[OpenSSL] EC_KEY_new_by_curve_name FAIL ...")
+                raise Exception("[OpenSSL] EC_KEY_new_by_curve_name FAIL ... " + OpenSSL.get_error())
             if privkey is not None:
                 priv_key = OpenSSL.BN_bin2bn(privkey, len(privkey), 0)
             pub_key_x = OpenSSL.BN_bin2bn(pubkey_x, len(pubkey_x), 0)
@@ -299,7 +350,7 @@ class ECC:
             if privkey is not None:
                 if (OpenSSL.EC_KEY_set_private_key(key, priv_key)) == 0:
                     raise Exception(
-                        "[OpenSSL] EC_KEY_set_private_key FAIL ...")
+                        "[OpenSSL] EC_KEY_set_private_key FAIL ... " + OpenSSL.get_error())
 
             group = OpenSSL.EC_KEY_get0_group(key)
             pub_key = OpenSSL.EC_POINT_new(group)
@@ -309,11 +360,11 @@ class ECC:
                                                             pub_key_y,
                                                             0)) == 0:
                 raise Exception(
-                    "[OpenSSL] EC_POINT_set_affine_coordinates_GFp FAIL ...")
+                    "[OpenSSL] EC_POINT_set_affine_coordinates_GFp FAIL ... " + OpenSSL.get_error())
             if (OpenSSL.EC_KEY_set_public_key(key, pub_key)) == 0:
-                raise Exception("[OpenSSL] EC_KEY_set_public_key FAIL ...")
+                raise Exception("[OpenSSL] EC_KEY_set_public_key FAIL ... " + OpenSSL.get_error())
             if (OpenSSL.EC_KEY_check_key(key)) == 0:
-                raise Exception("[OpenSSL] EC_KEY_check_key FAIL ...")
+                raise Exception("[OpenSSL] EC_KEY_check_key FAIL ... " + OpenSSL.get_error())
             return 0
 
         finally:
@@ -339,14 +390,14 @@ class ECC:
 
             key = OpenSSL.EC_KEY_new_by_curve_name(self.curve)
             if key == 0:
-                raise Exception("[OpenSSL] EC_KEY_new_by_curve_name FAIL ...")
+                raise Exception("[OpenSSL] EC_KEY_new_by_curve_name FAIL ... " + OpenSSL.get_error())
 
             priv_key = OpenSSL.BN_bin2bn(self.privkey, len(self.privkey), 0)
             pub_key_x = OpenSSL.BN_bin2bn(self.pubkey_x, len(self.pubkey_x), 0)
             pub_key_y = OpenSSL.BN_bin2bn(self.pubkey_y, len(self.pubkey_y), 0)
 
             if (OpenSSL.EC_KEY_set_private_key(key, priv_key)) == 0:
-                raise Exception("[OpenSSL] EC_KEY_set_private_key FAIL ...")
+                raise Exception("[OpenSSL] EC_KEY_set_private_key FAIL ... " + OpenSSL.get_error())
 
             group = OpenSSL.EC_KEY_get0_group(key)
             pub_key = OpenSSL.EC_POINT_new(group)
@@ -356,22 +407,22 @@ class ECC:
                                                             pub_key_y,
                                                             0)) == 0:
                 raise Exception(
-                    "[OpenSSL] EC_POINT_set_affine_coordinates_GFp FAIL ...")
+                    "[OpenSSL] EC_POINT_set_affine_coordinates_GFp FAIL ... " + OpenSSL.get_error())
             if (OpenSSL.EC_KEY_set_public_key(key, pub_key)) == 0:
-                raise Exception("[OpenSSL] EC_KEY_set_public_key FAIL ...")
+                raise Exception("[OpenSSL] EC_KEY_set_public_key FAIL ... " + OpenSSL.get_error())
             if (OpenSSL.EC_KEY_check_key(key)) == 0:
-                raise Exception("[OpenSSL] EC_KEY_check_key FAIL ...")
+                raise Exception("[OpenSSL] EC_KEY_check_key FAIL ... " + OpenSSL.get_error())
 
             OpenSSL.EVP_MD_CTX_init(md_ctx)
             OpenSSL.EVP_DigestInit_ex(md_ctx, OpenSSL.EVP_sha256(), None)
 
             if (OpenSSL.EVP_DigestUpdate(md_ctx, buff, size)) == 0:
-                raise Exception("[OpenSSL] EVP_DigestUpdate FAIL ...")
+                raise Exception("[OpenSSL] EVP_DigestUpdate FAIL ... " + OpenSSL.get_error())
             OpenSSL.EVP_DigestFinal_ex(md_ctx, digest, dgst_len)
             OpenSSL.ECDSA_sign(0, digest, dgst_len.contents, sig, siglen, key)
             if (OpenSSL.ECDSA_verify(0, digest, dgst_len.contents, sig,
                                      siglen.contents, key)) != 1:
-                raise Exception("[OpenSSL] ECDSA_verify FAIL ...")
+                raise Exception("[OpenSSL] ECDSA_verify FAIL ... " + OpenSSL.get_error())
 
             return sig.raw[0:siglen.contents.value]
 
@@ -398,7 +449,7 @@ class ECC:
             key = OpenSSL.EC_KEY_new_by_curve_name(self.curve)
 
             if key == 0:
-                raise Exception("[OpenSSL] EC_KEY_new_by_curve_name FAIL ...")
+                raise Exception("[OpenSSL] EC_KEY_new_by_curve_name FAIL ... " + OpenSSL.get_error())
 
             pub_key_x = OpenSSL.BN_bin2bn(self.pubkey_x, len(self.pubkey_x), 0)
             pub_key_y = OpenSSL.BN_bin2bn(self.pubkey_y, len(self.pubkey_y), 0)
@@ -410,16 +461,16 @@ class ECC:
                                                             pub_key_y,
                                                             0)) == 0:
                 raise Exception(
-                    "[OpenSSL] EC_POINT_set_affine_coordinates_GFp FAIL ...")
+                    "[OpenSSL] EC_POINT_set_affine_coordinates_GFp FAIL ... " + OpenSSL.get_error())
             if (OpenSSL.EC_KEY_set_public_key(key, pub_key)) == 0:
-                raise Exception("[OpenSSL] EC_KEY_set_public_key FAIL ...")
+                raise Exception("[OpenSSL] EC_KEY_set_public_key FAIL ... " + OpenSSL.get_error())
             if (OpenSSL.EC_KEY_check_key(key)) == 0:
-                raise Exception("[OpenSSL] EC_KEY_check_key FAIL ...")
+                raise Exception("[OpenSSL] EC_KEY_check_key FAIL ... " + OpenSSL.get_error())
 
             OpenSSL.EVP_MD_CTX_init(md_ctx)
             OpenSSL.EVP_DigestInit_ex(md_ctx, OpenSSL.EVP_sha256(), None)
             if (OpenSSL.EVP_DigestUpdate(md_ctx, binputb, len(inputb))) == 0:
-                raise Exception("[OpenSSL] EVP_DigestUpdate FAIL ...")
+                raise Exception("[OpenSSL] EVP_DigestUpdate FAIL ... " + OpenSSL.get_error())
 
             OpenSSL.EVP_DigestFinal_ex(md_ctx, digest, dgst_len)
             ret = OpenSSL.ECDSA_verify(
@@ -441,12 +492,12 @@ class ECC:
             OpenSSL.EC_POINT_free(pub_key)
             OpenSSL.EVP_MD_CTX_destroy(md_ctx)
 
-    @staticmethod
-    def encrypt(data, pubkey, ephemcurve=None, ciphername='aes-256-cbc'):
+    def encrypt(self, data, pubkey, ephemcurve=None, ciphername='aes-256-cbc'):
         """
         Encrypt data with ECIES method using the public key of the recipient.
         """
-        curve, pubkey_x, pubkey_y, i = ECC._decode_pubkey(pubkey)
+        curve = OpenSSL.get_curve_by_id(self.curve)
+        pubkey_x, pubkey_y = ECC._decode_pubkey(pubkey)
         return ECC.raw_encrypt(data, pubkey_x, pubkey_y, curve=curve,
                                ephemcurve=ephemcurve, ciphername=ciphername)
 
@@ -459,7 +510,7 @@ class ECC:
         key = sha512(ephem.raw_get_ecdh_key(pubkey_x, pubkey_y)).digest()
         key_e, key_m = key[:32], key[32:]
         pubkey = ephem.get_pubkey()
-        iv = OpenSSL.rand(OpenSSL.get_cipher(ciphername).get_blocksize())
+        iv = Cipher.gen_IV(ciphername)
         ctx = Cipher(key_e, iv, 1, ciphername)
         ciphertext = iv + pubkey + ctx.ciphering(data)
         mac = hmac_sha256(key_m, ciphertext)
@@ -472,14 +523,15 @@ class ECC:
         blocksize = OpenSSL.get_cipher(ciphername).get_blocksize()
         iv = data[:blocksize]
         i = blocksize
-        curve, pubkey_x, pubkey_y, i2 = ECC._decode_pubkey(data[i:])
-        i += i2
+        coord_len = len(self.pubkey_x) * 2 + 1
+        pubkey_x, pubkey_y = ECC._decode_pubkey(data[i:i + coord_len])
+        i += coord_len
         ciphertext = data[i:len(data) - 32]
-        i += len(ciphertext)
+        i = len(data) - 32
         mac = data[i:]
         key = sha512(self.raw_get_ecdh_key(pubkey_x, pubkey_y)).digest()
         key_e, key_m = key[:32], key[32:]
-        if not equals(hmac_sha256(key_m, data[:len(data) - 32]), mac):
+        if not equals(hmac_sha256(key_m, data[:i]), mac):
             raise RuntimeError("Fail to verify data")
         ctx = Cipher(key_e, iv, 0, ciphername)
         return ctx.ciphering(ciphertext)
