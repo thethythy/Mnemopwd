@@ -1,0 +1,5 @@
+__pycache__
+nbproject
+*.log
+*.bak
+.DS_Store
