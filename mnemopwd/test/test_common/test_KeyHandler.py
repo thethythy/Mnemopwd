@@ -26,9 +26,9 @@ class  Test_KeyHandlerTestCase(unittest.TestCase):
     
     def setUp(self):
         self.ikey = "this is the key for testing".encode()
-        self.foo1 = KeyHandler(self.ikey)
+        self.foo1 = KeyHandler(self.ikey, cur2='sect409k1', cip2='aes-256-cbc', cur3='sect409k1', cip3='aes-256-cbc')
         self.plaintext1 = b"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-
+        
     def tearDown(self):
         self.foo1 = None
 
@@ -46,6 +46,20 @@ class  Test_KeyHandlerTestCase(unittest.TestCase):
         
     def test_stage1_encrypt_decrypt(self):
         cyphertext = self.foo1.encrypt(0, self.plaintext1)
+        self.assertEqual(self.plaintext1, self.foo1.decrypt(0, cyphertext))
+        
+    def test_stage2_encrypt_decrypt(self):
+        cyphertext = self.foo1.encrypt(1, self.plaintext1)
+        self.assertEqual(self.plaintext1, self.foo1.decrypt(1, cyphertext))
+        
+    def test_stage3_encrypt_decrypt(self):
+        cyphertext = self.foo1.encrypt(2, self.plaintext1)
+        self.assertEqual(self.plaintext1, self.foo1.decrypt(2, cyphertext))
+        
+    def test_stage12_encrypt_decrypt(self):
+        cyphertext = self.foo1.encrypt(0, self.plaintext1)
+        cyphertext = self.foo1.encrypt(1, cyphertext)
+        cyphertext = self.foo1.decrypt(1, cyphertext)
         self.assertEqual(self.plaintext1, self.foo1.decrypt(0, cyphertext))
 
 if __name__ == '__main__':

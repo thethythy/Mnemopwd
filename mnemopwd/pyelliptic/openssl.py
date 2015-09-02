@@ -100,6 +100,19 @@ class _OpenSSL:
         self.BN_bin2bn.argtypes = [ctypes.c_void_p, ctypes.c_int,
                                    ctypes.c_void_p]
 
+        self.BN_cmp = self._lib.BN_cmp
+        self.BN_cmp.restype = ctypes.c_int
+        self.BN_cmp.argtypes = [ctypes.c_void_p, ctypes.c_void_p]
+
+        self.BN_mask_bits = self._lib.BN_mask_bits
+        self.BN_mask_bits.restype = ctypes.c_int
+        self.BN_mask_bits.argtypes = [ctypes.c_void_p, ctypes.c_int]
+
+        self.EC_GROUP_get_order = self._lib.EC_GROUP_get_order
+        self.EC_GROUP_get_order.restype = ctypes.c_int
+        self.EC_GROUP_get_order.argtypes = [ctypes.c_void_p, ctypes.c_void_p,
+                                            ctypes.c_void_p]
+
         self.EC_GROUP_get_degree = self._lib.EC_GROUP_get_degree
         self.EC_GROUP_get_degree.restype = ctypes.c_int
         self.EC_GROUP_get_degree.argtypes = [ctypes.c_void_p]

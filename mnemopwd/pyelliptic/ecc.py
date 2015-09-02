@@ -273,7 +273,6 @@ class ECC:
     def raw_get_ecdh_key(self, pubkey_x, pubkey_y):
         try:
             ecdh_keybuffer = OpenSSL.malloc(0, 32)
-
             other_key = OpenSSL.EC_KEY_new_by_curve_name(self.curve)
             if other_key == 0:
                 raise Exception("[OpenSSL] EC_KEY_new_by_curve_name FAIL ... " + OpenSSL.get_error())

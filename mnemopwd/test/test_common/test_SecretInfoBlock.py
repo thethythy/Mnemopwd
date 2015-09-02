@@ -27,7 +27,7 @@ class  SecretInfoBlockTestCase(unittest.TestCase):
     def setUpClass(cls):
         logging.basicConfig(filename='test/test_common/test_SecretInfoBlock.log')
         ikey = "this is the key for testing".encode()
-        keyh = KeyHandler(ikey, cur2='secp256k1', cip2='aes-128-cbc', cur3='sect409r1', cip3='rc4')
+        keyh = KeyHandler(ikey, cur2='secp256k1', cip2='aes-128-cbc', cur3='sect283r1', cip3='rc4')
         cryptoh = CryptoHandler(keyh)
         
     @classmethod
@@ -158,7 +158,7 @@ class  SecretInfoBlockTestCase(unittest.TestCase):
         del self.foo1["info1"]
         with self.assertRaises(KeyError):
             del self.foo1["info1"]
-            
+
     def test__contains__(self):
         self.assertFalse(self.value in self.foo1)
         self.foo1["info1"] = self.value

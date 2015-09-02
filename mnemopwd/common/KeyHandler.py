@@ -35,7 +35,7 @@ class KeyHandler:
     # Intern methods
     # --------------
     
-    def __init__(self, msecret, cur1='secp256k1', cip1='aes-256-cbc', cur2=None, cip2=None, cur3=None, cip3=None):
+    def __init__(self, msecret, cur1='sect571r1', cip1='aes-256-cbc', cur2=None, cip2=None, cur3=None, cip3=None):
         """Object initializer"""
         # Compute ikey
         ho = hashlib.sha512()
@@ -53,11 +53,11 @@ class KeyHandler:
         If index is not valid, raises an AssertionException exception"""
         assert 0 <= index < 3
         return (self.eccs[index])['ecc'], (self.eccs[index])['cipher']
-    
-    def _compute_keypair_(self, cur, secret):
+
+    @staticmethod
+    def _compute_keypair_(cur, secret):
         """Computes a keypair from a secret number.
-        If secret >= cur.order then secret is truncated until it becomes false.
-        OpenSSL library makes its own tests (see EC_KEY_check_key function)."""
+        If secret >= cur.order then secret is truncated until it becomes false"""
         try:
             # Create a BIGNUM structure (see OpenSSL documentation) from the secret number
             bn_secret = OpenSSL.BN_bin2bn(secret, len(secret), 0)
@@ -78,22 +78,30 @@ class KeyHandler:
             
             # Control that secret < order
             bn_order = OpenSSL.BN_new() # Create a BIGNUM structure to store order
-            OpenSSL.EC_GROUP_get_order(ec_group, bn_order, bn_ctx); # Get the order     
+            OpenSSL.EC_GROUP_get_order(ec_group, bn_order, bn_ctx); # Get the order
             while OpenSSL.BN_cmp(bn_secret, bn_order) >= 0 : # If secret >= order
                 logging.warning("Decrease secret because it is > of order of the curve %s", cur)
-                new_number_bytes = (OpenSSL.BN_num_bytes(bn_secret) - 1) * 8 # Decrease the size by 8 bits
-                OpenSSL.BN_mask_bits(bn_secret, new_number_bytes) # Truncate
+                new_number_bits = (OpenSSL.BN_num_bytes(bn_secret) - 1) * 8 # Decrease the size by 8 bits
+                OpenSSL.BN_mask_bits(bn_secret, new_number_bits) # Truncate
             
             # Compute the public key
-            res = OpenSSL.EC_POINT_mul(ec_group, ec_point, bn_secret, 0, 0, bn_ctx)
-            if res == 0:
+            if OpenSSL.EC_POINT_mul(ec_group, ec_point, bn_secret, 0, 0, bn_ctx) == 0:
                 raise Exception("EC_KEY_new_by_curve_name fails with %s".format(cur))
-                        
+            
+            # Verify the keypair
+            if OpenSSL.EC_KEY_set_public_key(ec_key, ec_point) == 0:
+                raise Exception("EC_KEY_set_public_key fails")
+            if OpenSSL.EC_KEY_set_private_key(ec_key, bn_secret) == 0:
+                raise Exception("EC_KEY_set_private_key fails")
+            if OpenSSL.EC_KEY_check_key(ec_key) == 0:
+                print(OpenSSL.get_error())
+                raise Exception("EC_KEY_check_key fails")
+            
             # Get public key affine coordinates
             pub_key_x = OpenSSL.BN_new()
             pub_key_y = OpenSSL.BN_new()
             if OpenSSL.EC_POINT_get_affine_coordinates_GFp(ec_group, ec_point, pub_key_x, pub_key_y, 0) == 0:
-                raise Exception("EC_POINT_get_affine_coordinates_GFp FAIL ...")
+                raise Exception("EC_POINT_get_affine_coordinates_GFp fails")
             
             # Allocate memories to return keypair
             privkey = OpenSSL.malloc(0, OpenSSL.BN_num_bytes(bn_secret))
@@ -117,16 +125,16 @@ class KeyHandler:
             OpenSSL.EC_KEY_free(ec_key)
             OpenSSL.BN_free(bn_secret)
     
-    def _compute_ecc_(self, cur, secret, stagename):
+    def _compute_ecc_(self, curve, secret, stagename):
         """Creates a new ECC object"""
-        if cur is None:
+        if curve is None:
             return None
         else:
             ho = hashlib.sha512()
             ho.update(secret)
             ho.update("the %s stage ecc secret".format(stagename).encode())
-            pubx, puby, priv = self._compute_keypair_(cur, ho.digest())
-            return ECC(pubkey_x=pubx, pubkey_y=puby, raw_privkey=priv, curve=cur)
+            pubx, puby, priv = KeyHandler._compute_keypair_(curve, ho.digest())
+            return ECC(pubkey_x=pubx, pubkey_y=puby, raw_privkey=priv, curve=curve)
     
     # Extern Methods
     # --------------
