@@ -21,34 +21,68 @@ import socket
 import ssl
 import time
 from server.server import Server
+from pyelliptic import ECC
 
-class Test_Server_Client(threading.Thread):
-    def __init__(self, host, port, test):
+class Test_Server_Client_S0(threading.Thread):
+    def __init__(self, host, port, test, number):
         threading.Thread.__init__(self)
         self.host = host
         self.port = port
         self.test = test
+        self.number = number
+        
+    def connect_to_server(self):
+        time.sleep(1)
+        context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
+        context.options |= ssl.OP_NO_SSLv2 # SSL v2 not allowed
+        context.options |= ssl.OP_NO_SSLv3 # SSL v3 not allowed
+        context.set_ciphers("AECDH-AES256-SHA")
+        context.verify_mode = ssl.CERT_NONE
+        connect = context.wrap_socket(socket.socket(socket.AF_INET, socket.SOCK_STREAM), server_hostname=self.host)
+        connect.connect((self.host, self.port))
+            
+        (cipher, version, bits) = connect.cipher()
+        self.test.assertEqual(cipher, 'AECDH-AES256-SHA')
+        self.test.assertEqual(bits, 256)
+        print("Client", self.number, ": connection with the server")
+        return connect
+    
+    def state_S0(self, connect):
+        message = connect.recv(1024)
+        protocol_cd = message[:10]
+        protocol_data = message[11:]
+        self.test.assertEqual(protocol_cd, b'KEYSHARING')
+        ephecc = ECC(pubkey=protocol_data)
+        self.test.assertEqual(protocol_data, ephecc.get_pubkey())
         
     def run(self):
         try:
-            time.sleep(1)
-            context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
-            context.options |= ssl.OP_NO_SSLv2 # SSL v2 not allowed
-            context.options |= ssl.OP_NO_SSLv3 # SSL v3 not allowed
-            context.set_ciphers("AECDH-AES256-SHA")
-            context.verify_mode = ssl.CERT_NONE
-            connect = context.wrap_socket(socket.socket(socket.AF_INET, socket.SOCK_STREAM), server_hostname=self.host)
-            connect.connect((self.host, self.port))
-            
-            (cipher, version, bits) = connect.cipher()
-            self.test.assertEqual(cipher, 'AECDH-AES256-SHA')
-            self.test.assertEqual(bits, 256)
-            print("Connection with the server")
-        
+            connect = self.connect_to_server()
+            # State 0
+            self.state_S0(connect)
         finally:
             time.sleep(1)
             connect.close()
-            print("Disconnection with the server")
+            print("Client", self.number, ": disconnection with the server")
+       
+class Test_Server_Client_S11(Test_Server_Client_S0):
+    def __init__(self, host, port, test, number):
+        Test_Server_Client_S0.__init__(self,host,port,test,number)
+        
+    def state_S11(self, connect):
+        connect.send(b'CREATION')
+        
+    def run(self):
+        try:
+            connect = self.connect_to_server() 
+            # State 0
+            self.state_S0(connect)
+            # State 1
+            self.state_S11(connect)
+        finally:
+            time.sleep(1)
+            connect.close()
+            print("Client", self.number, ": disconnection with the server")
         
 class  Test_ServerTestCase(unittest.TestCase):
     @classmethod
@@ -63,7 +97,8 @@ class  Test_ServerTestCase(unittest.TestCase):
         pass
                     
     def test_Server(self):
-        Test_Server_Client(self.host, self.port, self).start()
+        Test_Server_Client_S0(self.host, self.port, self, 1).start()
+        Test_Server_Client_S11(self.host, self.port, self, 2).start()
         print("Use Ctrl+C to finish the test")
         try:
             s = Server(self.host, self.port)

@@ -19,6 +19,7 @@ import logging
 import asyncio
 import socket
 import ssl
+import concurrent.futures
 from server.clients.ClientHandler import ClientHandler
 
 """
@@ -52,19 +53,34 @@ class Server:
         self.loop = asyncio.get_event_loop()
         self.loop.set_debug(True)
         
+        # Create and set an executor
+        executor = concurrent.futures.ThreadPoolExecutor(10) # TODO : see configuration
+        self.loop.set_default_executor(executor)
+        
+        # Set exception handler
+        #self.loop.set_exception_handler(Server._exception_handler_)
+        
         # Create a SSL context
         context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
         context.options |= ssl.OP_NO_SSLv2 # SSL v2 not allowed
         context.options |= ssl.OP_NO_SSLv3 # SSL v3 not allowed
         context.options |= ssl.OP_SINGLE_ECDH_USE # Change ECDH key at every session
-        context.set_ecdh_curve('sect409k1')
+        context.set_ecdh_curve('sect409k1') # Why not ?
         context.set_ciphers('AECDH-AES256-SHA') # Use only ECDH-anon
         context.verify_mode = ssl.CERT_NONE # No client certificat
         
         # Create an asynchronous SSL server
-        coro = self.loop.create_server(ClientHandler, host, port, family=socket.AF_INET, ssl=context, reuse_address=True)
+        coro = self.loop.create_server(lambda: ClientHandler(self.loop), host, port, family=socket.AF_INET, ssl=context, reuse_address=True)
         self.server = self.loop.run_until_complete(coro)
-    
+            
+#    @staticmethod
+#    def _exception_handler_(loop, context):
+#        if context['message']:
+#            logging.warning("Server error : ", context.message)
+#        if context['transport']:    
+#            context.transport.close()
+#        loop.default_exception_handler(context)
+            
     # Extern methods
     
     def start(self):

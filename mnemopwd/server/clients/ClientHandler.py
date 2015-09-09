@@ -17,20 +17,37 @@
 
 import asyncio
 import logging
+from server.clients.protocol import *
 
 """
-Handler of a client connection
+The client connection handler
 """
 
 class ClientHandler(asyncio.Protocol):
-    """A client connection handler"""
+    """The client connection handler"""
     
+    def __init__(self, loop):
+        """Initialize the handler"""
+        # The i/o asynchronous loop
+        self.loop = loop
+        # The protocol states
+        self.states = {'0':StateS0(), '1':StateS1(), '11':StateS11(), '12':StateS12()}
+        
+    def exception_handler(self, exc):
+        """Exception handler for actions executed by the executor"""
+        logging.warning('Closing connection with {} because server detects an error : {}'.format(self.peername, exc))
+        self.transport.close()
+        
     def connection_made(self, transport):
-        """Connection starting"""
+        """Connection starting : set default protocol state and start it"""
+        self.transport = transport
         self.peername = transport.get_extra_info('peername')
         cipher = transport.get_extra_info('cipher')
         logging.info('Connection from {} with {}'.format(self.peername,cipher))
-        self.transport = transport
+                
+        # Set the default state and schedule its execution
+        self.state = self.states['0'] # State 0 at the beginning
+        self.loop.run_in_executor(None, self.state.do, self, None) # Future execution
         
     def connection_lost(self, exc):
         """Connection finishing"""
@@ -38,16 +55,9 @@ class ClientHandler(asyncio.Protocol):
             logging.info('Disconnection from {}'.format(self.peername))
         else:
             logging.warning('Lost connection from {}'.format(self.peername))
+        # TODO : nothing to do here ????
         self.transport.close()
 
     def data_received(self, data):
         """Data received"""
-        message = data.decode()
-        print('Data received: {!r}'.format(message))
-
-        print('Send: {!r}'.format(message))
-        self.transport.write(data)
-
-        #print('Close the client socket')
-        #self.transport.close()
-        
+        self.loop.run_in_executor(None, self.state.do, self, data) # Future excecution
