@@ -43,7 +43,7 @@ class Server:
     
     # Intern methods
     
-    def __init__(self, host, port):
+    def __init__(self, host, port, dbpath):
         """Initialization"""
         logging.basicConfig(filename='log/mnemopwds.log', level=logging.DEBUG, 
             format='%(asctime)s %(levelname)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S')
@@ -70,7 +70,7 @@ class Server:
         context.verify_mode = ssl.CERT_NONE # No client certificat
         
         # Create an asynchronous SSL server
-        coro = self.loop.create_server(lambda: ClientHandler(self.loop), host, port, family=socket.AF_INET, ssl=context, reuse_address=True)
+        coro = self.loop.create_server(lambda: ClientHandler(self.loop, dbpath), host, port, family=socket.AF_INET, ssl=context, reuse_address=True)
         self.server = self.loop.run_until_complete(coro)
             
 #    @staticmethod
@@ -105,5 +105,5 @@ class Server:
 if __name__ == "__main__":
     # TODO : load configuration
     # TODO : singleton
-    Server("127.0.0.1", 25600).start()
+    Server("127.0.0.1", 25600, '/tmp/').start()
     

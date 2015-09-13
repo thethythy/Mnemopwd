@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """
-Class to create and handle keys to crypt, decrypt and check integrity
+Class to create and handle keys to encrypt, decrypt and check integrity
 """
 
 from pyelliptic import OpenSSL, ECC
@@ -28,7 +28,7 @@ class KeyHandler:
    
     Attribut(s) :
     - ikey : key for integrity operations (bytes array)
-    - eccs : sequence of dictionaries of ECC object and cipher name for operations of each stage
+    - eccs : list of dictionaries of ECC object and cipher name for operations of each stage
       For example, for stage one : eccs[0] == {'ecc':ECC_object, 'cipher':'cipher_name'}
     """
     
@@ -94,7 +94,6 @@ class KeyHandler:
             if OpenSSL.EC_KEY_set_private_key(ec_key, bn_secret) == 0:
                 raise Exception("EC_KEY_set_private_key fails")
             if OpenSSL.EC_KEY_check_key(ec_key) == 0:
-                print(OpenSSL.get_error())
                 raise Exception("EC_KEY_check_key fails")
             
             # Get public key affine coordinates

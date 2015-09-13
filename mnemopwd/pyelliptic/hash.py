@@ -30,7 +30,7 @@
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from .openssl import OpenSSL
-
+import sys 
 
 # For python3
 def _equals_bytes(a, b):
@@ -88,7 +88,11 @@ def pbkdf2(password, salt=None, i=10000, keylen=64):
     p_password = OpenSSL.malloc(password, len(password))
     p_salt = OpenSSL.malloc(salt, len(salt))
     output = OpenSSL.malloc(0, keylen)
-    OpenSSL.PKCS5_PBKDF2_HMAC(p_password, len(password), p_salt,
-                              len(p_salt), i, OpenSSL.EVP_sha256(),
-                              keylen, output)
+    try:
+        OpenSSL.PKCS5_PBKDF2_HMAC(p_password, len(password), p_salt,
+                                  len(p_salt), i, OpenSSL.EVP_sha256(),
+                                  keylen, output)
+    except AttributeError:
+        OpenSSL.PKCS5_PBKDF2_HMAC_SHA1(p_password, len(password), p_salt,
+                                       len(p_salt), i, keylen, output)
     return salt, output.raw

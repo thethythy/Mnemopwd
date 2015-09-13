@@ -23,7 +23,7 @@ from server.util.funcutils import singleton
 
 @singleton
 class StateS1():
-    """State S1 : CountCreation or Login substates"""
+    """State S1 : select CountCreation substate or Login substate"""
     
     #def __init__(self, client_handler):
     #    """Initialize object"""

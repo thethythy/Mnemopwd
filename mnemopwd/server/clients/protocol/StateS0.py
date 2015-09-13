@@ -20,7 +20,7 @@ State SO : KeySharing
 """
 
 from server.util.funcutils import singleton
-from server.clients.protocol import ProtocolState
+#from server.clients.protocol import ProtocolState
 from pyelliptic import ECC
 
 @singleton

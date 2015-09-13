@@ -18,10 +18,27 @@
 # ---------------------------------------------------------
 # Singleton class
 
+import hashlib
+import base64
+from pyelliptic.hash import hmac_sha512
+
 def singleton(the_class):
     instances = {} # Dictionary of singleton objects
     def get_instance():
         if the_class not in instances:
-            instances[the_class] = the_class() # Creation of singleton object and storage
+            instances[the_class] = the_class() # Create a singleton object and store it
         return instances[the_class]
     return get_instance
+
+# ---------------------------------------------------------
+# Compute client id
+
+def compute_client_id(client, ems, elogin):
+    """Compute a client id according to the protocol"""
+    ms = client.ephecc.decrypt(ems)         # Decrypt master secret
+    login = client.ephecc.decrypt(elogin)   # Decrypt login
+                
+    # Compute client id
+    ho = hashlib.sha256()
+    ho.update(hmac_sha512(ms, ms + login))
+    return base64.b64encode(ho.digest())

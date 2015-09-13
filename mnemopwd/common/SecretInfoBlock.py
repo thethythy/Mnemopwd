@@ -110,13 +110,13 @@ class SecretInfoBlock:
         self.__dict__.update(state)
 
     def _verify_index_(self, index):
-        """Verifies if the index parameter is valid index format"""
+        """Verifies if the index parameter is a valid index format"""
         if not isinstance(index, str) :
-            logging.error("In SecretInfoBlock index paramter %s must be a string", str(index))
+            logging.error("In SecretInfoBlock index parameter %s must be a string", str(index))
             raise TypeError("index parameter must be a string")
         index_regex = "^info[1-" + str(self.nbInfo) + "]$"
         if re.search(index_regex, index) is None :
-            logging.error("In SecretInfoBlock index paramter %s is not correct", index)
+            logging.error("In SecretInfoBlock index parameter %s is not correct", index)
             raise KeyError("index parameter is not correct")
     
     @CryptoHandler.decrypting_value(0)  # Decryption stage 1 

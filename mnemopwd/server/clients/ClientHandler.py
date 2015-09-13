@@ -26,17 +26,12 @@ The client connection handler
 class ClientHandler(asyncio.Protocol):
     """The client connection handler"""
     
-    def __init__(self, loop):
+    def __init__(self, loop, path):
         """Initialize the handler"""
-        # The i/o asynchronous loop
-        self.loop = loop
+        self.db_path = path # The path to the database
+        self.loop = loop # The i/o asynchronous loop
         # The protocol states
         self.states = {'0':StateS0(), '1':StateS1(), '11':StateS11(), '12':StateS12()}
-        
-    def exception_handler(self, exc):
-        """Exception handler for actions executed by the executor"""
-        logging.warning('Closing connection with {} because server detects an error : {}'.format(self.peername, exc))
-        self.transport.close()
         
     def connection_made(self, transport):
         """Connection starting : set default protocol state and start it"""
@@ -61,3 +56,8 @@ class ClientHandler(asyncio.Protocol):
     def data_received(self, data):
         """Data received"""
         self.loop.run_in_executor(None, self.state.do, self, data) # Future excecution
+
+    def exception_handler(self, exc):
+        """Exception handler for actions executed by the executor"""
+        logging.warning('Closing connection with {} because server detects an error : {}'.format(self.peername, exc))
+        self.transport.close()

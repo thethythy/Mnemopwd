@@ -20,6 +20,8 @@ State S11 : CountCreation
 """
 
 from server.util.funcutils import singleton
+from server.util.funcutils import compute_client_id
+from server.clients.DBHandler import DBHandler
 
 @singleton
 class StateS11():
@@ -32,8 +34,27 @@ class StateS11():
     def do(self, client, data):
         """Action of the state S11: create an id and store it"""
         try:
-            print('toto')
+            
+            is_cd_S11 = data[:8] == b"CREATION" # Test for S11 command
+            
+            if not is_cd_S11 :
+                raise Exception('Protocol error')
+                
+            ems = data[9:210]       # Master secret encrypted 
+            elogin = data[211:]     # Login encrypted 
+            id = compute_client_id(client, ems, elogin) # Get client id
+            
+            result = DBHandler.new(client.db_path, id.decode()) # Try to create a new database
+                
+            if result:
+                client.transport.write(b'OK')
+            else:
+                client.transport.write(b'ERROR;' + b'id already used')
+            
         except Exception as exc:
-            client.exception_handler(exc)
+            # Schedule a callback to client exception handler
+            client.loop.call_soon_threadsafe(client.exception_handler, exc)
+        
         else:
-            client.state = client.states['12'] # Next state
+            # Next state
+            client.state = client.states['12']

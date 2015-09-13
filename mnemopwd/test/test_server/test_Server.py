@@ -22,6 +22,7 @@ import ssl
 import time
 from server.server import Server
 from pyelliptic import ECC
+from pyelliptic.hash import pbkdf2
 
 class Test_Server_Client_S0(threading.Thread):
     def __init__(self, host, port, test, number):
@@ -52,8 +53,8 @@ class Test_Server_Client_S0(threading.Thread):
         protocol_cd = message[:10]
         protocol_data = message[11:]
         self.test.assertEqual(protocol_cd, b'KEYSHARING')
-        ephecc = ECC(pubkey=protocol_data)
-        self.test.assertEqual(protocol_data, ephecc.get_pubkey())
+        self.ephecc = ECC(pubkey=protocol_data)
+        self.test.assertEqual(protocol_data, self.ephecc.get_pubkey())
         
     def run(self):
         try:
@@ -68,16 +69,21 @@ class Test_Server_Client_S0(threading.Thread):
 class Test_Server_Client_S11(Test_Server_Client_S0):
     def __init__(self, host, port, test, number):
         Test_Server_Client_S0.__init__(self,host,port,test,number)
+        self.password = 'This is the test password'.encode()
+        self.login = 'This is the client S11 login'.encode()
         
     def state_S11(self, connect):
-        connect.send(b'CREATION')
+        salt, ms = pbkdf2(self.password, salt=self.login)
+        ems = self.ephecc.encrypt(ms, pubkey=self.ephecc.get_pubkey())
+        elogin = self.ephecc.encrypt(self.login, pubkey=self.ephecc.get_pubkey())        
+        connect.send(b'CREATION;' + ems + b';' + elogin)
         
     def run(self):
         try:
             connect = self.connect_to_server() 
             # State 0
             self.state_S0(connect)
-            # State 1
+            # State 11
             self.state_S11(connect)
         finally:
             time.sleep(1)
@@ -92,6 +98,7 @@ class  Test_ServerTestCase(unittest.TestCase):
     def setUp(self):
         self.host = "127.0.0.1"
         self.port = 25600
+        self.path = '/tmp/'
 
     def tearDown(self):
         pass
@@ -101,7 +108,7 @@ class  Test_ServerTestCase(unittest.TestCase):
         Test_Server_Client_S11(self.host, self.port, self, 2).start()
         print("Use Ctrl+C to finish the test")
         try:
-            s = Server(self.host, self.port)
+            s = Server(self.host, self.port, self.path)
             s.start()
         except KeyboardInterrupt:
             pass
