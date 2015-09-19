@@ -20,7 +20,7 @@ State S11 : CountCreation
 """
 
 from server.util.funcutils import singleton
-from server.util.funcutils import compute_client_id
+from server.util.funcutils import compute_client_id, compute_client_filename
 from server.clients.DBHandler import DBHandler
 
 @singleton
@@ -42,19 +42,20 @@ class StateS11():
                 
             ems = data[9:210]       # Master secret encrypted 
             elogin = data[211:]     # Login encrypted 
-            id = compute_client_id(client, ems, elogin) # Get client id
             
-            result = DBHandler.new(client.db_path, id.decode()) # Try to create a new database
+            # Compute client id
+            id, ms, login = compute_client_id(client, ems, elogin)
+            
+            # Try to create a new database
+            filename = compute_client_filename(id, ms, login)
+            result = DBHandler.new(client.db_path, filename)
                 
             if result:
                 client.transport.write(b'OK')
+                client.state = client.states['2'] # Next state
             else:
-                client.transport.write(b'ERROR;' + b'id already used')
+                client.transport.write(b'ERROR;' + b'login already used')
             
         except Exception as exc:
             # Schedule a callback to client exception handler
             client.loop.call_soon_threadsafe(client.exception_handler, exc)
-        
-        else:
-            # Next state
-            client.state = client.states['12']

@@ -19,6 +19,7 @@
 Database Handler
 """
 
+import os
 import shelve
 
 class DBHandler:
@@ -34,12 +35,22 @@ class DBHandler:
     # Extern methods
     
     @staticmethod
-    def new(path, id):
+    def new(path, filename):
         """Try to create a new db"""
         print('hello world')
         
-        with shelve.open(path + id, flag='n') as db:
+        with shelve.open(path + filename, flag='n') as db:
             db['nb_sibs'] = 0
             
         return True
     
+    @staticmethod
+    def exist(path, filename):
+        """Test if the data file exist"""
+        print("hello world 2", filename)
+        try:
+            file = open(path+filename+'.db', 'rb')
+            file.close()
+        except OSError:
+            return False
+        return True

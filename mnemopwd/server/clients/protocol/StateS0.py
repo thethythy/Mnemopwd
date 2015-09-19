@@ -46,4 +46,4 @@ class StateS0():
             client.loop.call_soon_threadsafe(client.exception_handler, exc)
         else:
             # Next state
-            client.state = client.states['1']
+            client.state = client.states['12']

@@ -31,7 +31,7 @@ class ClientHandler(asyncio.Protocol):
         self.db_path = path # The path to the database
         self.loop = loop # The i/o asynchronous loop
         # The protocol states
-        self.states = {'0':StateS0(), '1':StateS1(), '11':StateS11(), '12':StateS12()}
+        self.states = {'0':StateS0(), '11':StateS11(), '12':StateS12(), '2':StateS2()}
         
     def connection_made(self, transport):
         """Connection starting : set default protocol state and start it"""
@@ -59,5 +59,5 @@ class ClientHandler(asyncio.Protocol):
 
     def exception_handler(self, exc):
         """Exception handler for actions executed by the executor"""
-        logging.warning('Closing connection with {} because server detects an error : {}'.format(self.peername, exc))
+        logging.critical('Closing connection with {} because server detects an error : {}'.format(self.peername, exc))
         self.transport.close()
