@@ -26,10 +26,6 @@ from server.clients.DBHandler import DBHandler
 @singleton
 class StateS11():
     """State S11 : CountCreation"""
-    
-    #def __init__(self, client_handler):
-    #    """Initialize object"""
-    #    ProtocolState.__init__(self, client_handler)
         
     def do(self, client, data):
         """Action of the state S11: create an id and store it"""
@@ -47,7 +43,7 @@ class StateS11():
             id, ms, login = compute_client_id(client, ems, elogin)
             
             # Try to create a new database
-            filename = compute_client_filename(id, ms, login)
+            filename = compute_client_filename(ms, login)
             result = DBHandler.new(client.db_path, filename)
                 
             if result:

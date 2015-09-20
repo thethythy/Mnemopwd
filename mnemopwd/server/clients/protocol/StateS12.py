@@ -26,10 +26,6 @@ from server.clients.DBHandler import DBHandler
 @singleton
 class StateS12():
     """State S12 : Login"""
-    
-    #def __init__(self, client_handler):
-    #    """Initialize object"""
-    #    ProtocolState.__init__(self, client_handler)
         
     def do(self, client, data):
         """Action of the state S12: control client login and id"""
@@ -51,7 +47,7 @@ class StateS12():
             id_from_client = client.ephecc.decrypt(eid)
             
             # Test if login exists
-            filename = compute_client_filename(id_computed, ms, login)
+            filename = compute_client_filename(ms, login)
             exist = DBHandler.exist(client.db_path, filename)
             
             # If login is OK and ids are equal

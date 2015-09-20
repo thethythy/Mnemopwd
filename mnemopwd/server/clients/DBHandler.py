@@ -19,7 +19,7 @@
 Database Handler
 """
 
-import os
+from pathlib import Path
 import shelve
 
 class DBHandler:
@@ -27,10 +27,10 @@ class DBHandler:
     
     # Intern methods
     
-    def __init__(self, path, id):
+    def __init__(self, path, filename):
         """Set attributs"""
         self.path = path # Path to the db directory
-        self.id = id # db name is id
+        self.filename = filename # db filename
         
     # Extern methods
     
@@ -39,18 +39,15 @@ class DBHandler:
         """Try to create a new db"""
         print('hello world')
         
-        with shelve.open(path + filename, flag='n') as db:
-            db['nb_sibs'] = 0
-            
-        return True
+        if DBHandler.exist(path, filename) :
+            return False
+        else:
+            with shelve.open(path + filename, flag='n') as db:
+                db['nb_sibs'] = 0
+            return True
     
     @staticmethod
     def exist(path, filename):
         """Test if the data file exist"""
-        print("hello world 2", filename)
-        try:
-            file = open(path+filename+'.db', 'rb')
-            file.close()
-        except OSError:
-            return False
-        return True
+        print("hello world 2", filename)        
+        return Path(path + filename + '.db').exists()

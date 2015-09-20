@@ -20,16 +20,11 @@ State SO : KeySharing
 """
 
 from server.util.funcutils import singleton
-#from server.clients.protocol import ProtocolState
 from pyelliptic import ECC
 
 @singleton
 class StateS0():
     """State S0 : KeySharing"""
-    
-    #def __init__(self, client_handler):
-    #    """Initialize object"""
-    #    ProtocolState.__init__(self, client_handler)
         
     def do(self, client, data):
         """Action of the state S0: send an ephemeral server public key"""

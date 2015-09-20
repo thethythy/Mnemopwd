@@ -48,15 +48,16 @@ def compute_client_id(client, ems, elogin):
 # ---------------------------------------------------------
 # Compute client data filename
 
-def compute_client_filename(id, ms, login):
+def compute_client_filename(ms, login):
     """Compute a filename"""    
     
-    # Compute login MAC
+    # Compute login hash
     ho = hashlib.sha256()
     ho.update(hmac_sha512(ms, login))
-    login = ho.digest()
+    hlogin = ho.digest()
     
-    filename = (base64.b32encode(id))[:52] + b'_' + (base64.b32encode(login))[:52]
+    # Filename construction
+    filename = (base64.b32encode(hlogin))[:52]
     
-    return filename.decode() # Return client data filename
+    return filename.decode() # Return client data filename (a string)
 

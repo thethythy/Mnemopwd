@@ -24,10 +24,6 @@ from server.util.funcutils import singleton
 @singleton
 class StateS2():
     """State S2 : select Configuration substate (S21) or Data substate (S22) """
-    
-    #def __init__(self, client_handler):
-    #    """Initialize object"""
-    #    ProtocolState.__init__(self, client_handler)
         
     def do(self, client, data):
         """Action of the state S2: select substate S21 or S22"""
