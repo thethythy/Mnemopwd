@@ -19,7 +19,9 @@
 Database Handler
 """
 
-from pathlib import Path
+import os
+import os.path
+import stat
 import shelve
 
 class DBHandler:
@@ -29,9 +31,8 @@ class DBHandler:
     
     def __init__(self, path, filename):
         """Set attributs"""
-        self.path = path # Path to the db directory
-        self.filename = filename # db filename
-        
+        self.database_file = path + filename + '.db' # Client database file
+
     # Extern methods
     
     @staticmethod
@@ -42,12 +43,13 @@ class DBHandler:
         if DBHandler.exist(path, filename) :
             return False
         else:
-            with shelve.open(path + filename, flag='n') as db:
-                db['nb_sibs'] = 0
+            # Create a new database file with good permissions
+            with shelve.open(path + filename, flag='n') as db: db['nb_sibs'] = 0
+            os.chmod(path + filename + '.db', stat.S_IRUSR | stat.S_IWUSR)
             return True
     
     @staticmethod
     def exist(path, filename):
         """Test if the data file exist"""
-        print("hello world 2", filename)        
-        return Path(path + filename + '.db').exists()
+        print("hello world 2", filename)
+        return os.path.exists(path + filename + '.db')

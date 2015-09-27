@@ -41,23 +41,23 @@ class StateS12():
             elogin = data[378:] # Login encrypted 
 
             # Compute client id
-            id_computed, ms, login = compute_client_id(client, ems, elogin)
+            id, ms, login = compute_client_id(client, ems, elogin)
             
             # Get id from client
             id_from_client = client.ephecc.decrypt(eid)
             
             # Test if login exists
-            filename = compute_client_filename(ms, login)
+            filename = compute_client_filename(id, ms, login)
             exist = DBHandler.exist(client.db_path, filename)
             
             # If login is OK and ids are equal
-            if exist and id_computed == id_from_client :
+            if exist and id == id_from_client :
                 client.dbhandler = DBHandler(client.db_path, filename)
                 client.state = client.states['2']
                 client.transport.write(b'OK')
             
             # If login is OK but ids are not equal
-            elif exist and id_computed != id_from_client :
+            elif exist and id != id_from_client :
                 client.transport.write(b'ERROR;' + b'wrong id')
                 raise Exception('Good login but bad id')
                 

@@ -43,7 +43,7 @@ class StateS11():
             id, ms, login = compute_client_id(client, ems, elogin)
             
             # Try to create a new database
-            filename = compute_client_filename(ms, login)
+            filename = compute_client_filename(id, ms, login)
             result = DBHandler.new(client.db_path, filename)
                 
             if result:

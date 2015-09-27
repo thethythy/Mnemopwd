@@ -26,7 +26,8 @@ def singleton(the_class):
     instances = {} # Dictionary of singleton objects
     def get_instance():
         if the_class not in instances:
-            instances[the_class] = the_class() # Create a singleton object and store it
+            # Create a singleton object and store it
+            instances[the_class] = the_class()
         return instances[the_class]
     return get_instance
 
@@ -48,7 +49,7 @@ def compute_client_id(client, ems, elogin):
 # ---------------------------------------------------------
 # Compute client data filename
 
-def compute_client_filename(ms, login):
+def compute_client_filename(id, ms, login):
     """Compute a filename"""    
     
     # Compute login hash
@@ -57,7 +58,7 @@ def compute_client_filename(ms, login):
     hlogin = ho.digest()
     
     # Filename construction
-    filename = (base64.b32encode(hlogin))[:52]
+    filename = (base64.b32encode(hlogin))[:52] + (base64.b32encode(id))[:52]
     
     return filename.decode() # Return client data filename (a string)
 

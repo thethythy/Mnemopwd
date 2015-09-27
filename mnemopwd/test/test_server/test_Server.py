@@ -22,6 +22,7 @@ import ssl
 import time
 from pathlib import Path
 from server.server import Server
+from server.util.Configuration import Configuration
 from pyelliptic import ECC
 from pyelliptic.hash import pbkdf2
 import hashlib
@@ -230,8 +231,6 @@ class  Test_ServerTestCase(unittest.TestCase):
         pass
     
     def setUp(self):
-        self.host = "127.0.0.1"
-        self.port = 25600
         self.path = 'test/data/'
         for child in Path(self.path).iterdir(): Path(child).unlink()
 
@@ -239,15 +238,18 @@ class  Test_ServerTestCase(unittest.TestCase):
         pass
                     
     def test_Server(self):
-        Test_Server_Client_S0(self.host, self.port, self, 1).start()
-        Test_Server_Client_S12_KO_S11_OK(self.host, self.port, self, 2).start()
-        Test_Server_Client_S12_KO_S11_KO(self.host, self.port, self, 3).start()
-        Test_Server_Client_S12_KO(self.host, self.port, self, 4).start()
-        Test_Server_Client_S12_OK(self.host, self.port, self, 5).start()
+        Test_Server_Client_S0(Configuration.host, Configuration.port, self, 1).start()
+        Test_Server_Client_S12_KO_S11_OK(Configuration.host, Configuration.port, self, 2).start()
+        
+        # Begin after 2 secondes
+        Test_Server_Client_S12_KO_S11_KO(Configuration.host, Configuration.port, self, 3).start()
+        Test_Server_Client_S12_KO(Configuration.host, Configuration.port, self, 4).start()
+        Test_Server_Client_S12_OK(Configuration.host, Configuration.port, self, 5).start()
 
         print("Use Ctrl+C to finish the test")
         try:
-            s = Server(self.host, self.port, self.path)
+            Configuration.dbpath = self.path
+            s = Server()
             s.start()
         except KeyboardInterrupt:
             pass

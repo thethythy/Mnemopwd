@@ -20,6 +20,7 @@ import asyncio
 import socket
 import ssl
 import concurrent.futures
+from server.util.Configuration import Configuration
 from server.clients.ClientHandler import ClientHandler
 
 """
@@ -43,7 +44,7 @@ class Server:
     
     # Intern methods
     
-    def __init__(self, host, port, dbpath):
+    def __init__(self):
         """Initialization"""
         logging.basicConfig(filename='log/mnemopwds.log', level=logging.DEBUG, 
             format='%(asctime)s %(levelname)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S')
@@ -54,11 +55,8 @@ class Server:
         self.loop.set_debug(True)
         
         # Create and set an executor
-        executor = concurrent.futures.ThreadPoolExecutor(10) # TODO : see configuration
+        executor = concurrent.futures.ThreadPoolExecutor(Configuration.poolsize)
         self.loop.set_default_executor(executor)
-        
-        # Set exception handler
-        #self.loop.set_exception_handler(Server._exception_handler_)
         
         # Create a SSL context
         context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
@@ -70,16 +68,11 @@ class Server:
         context.verify_mode = ssl.CERT_NONE # No client certificat
         
         # Create an asynchronous SSL server
-        coro = self.loop.create_server(lambda: ClientHandler(self.loop, dbpath), host, port, family=socket.AF_INET, ssl=context, reuse_address=True)
+        coro = self.loop.create_server(lambda: ClientHandler(self.loop, Configuration.dbpath), \
+                                        Configuration.host, Configuration.port, \
+                                        family=socket.AF_INET, ssl=context, \
+                                        reuse_address=True)
         self.server = self.loop.run_until_complete(coro)
-            
-#    @staticmethod
-#    def _exception_handler_(loop, context):
-#        if context['message']:
-#            logging.warning("Server error : ", context.message)
-#        if context['transport']:    
-#            context.transport.close()
-#        loop.default_exception_handler(context)
             
     # Extern methods
     
@@ -103,7 +96,7 @@ class Server:
         logging.info("Server closed")
 
 if __name__ == "__main__":
-    # TODO : load configuration
-    # TODO : singleton
-    Server("127.0.0.1", 25600, '/tmp/').start()
+    # TODO : daemon
+    Configuration.configure()
+    Server().start()
     
