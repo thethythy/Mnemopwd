@@ -45,7 +45,7 @@ class DBHandler:
         else:
             # Create a new database file with good permissions
             with shelve.open(path + filename, flag='n') as db: db['nb_sibs'] = 0
-            os.chmod(path + filename + '.db', stat.S_IRUSR | stat.S_IWUSR)
+            os.chmod(path + filename + '.db', stat.S_IRUSR | stat.S_IWUSR | stat.S_IREAD | stat.S_IWRITE)
             return True
     
     @staticmethod

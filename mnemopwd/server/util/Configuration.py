@@ -31,8 +31,10 @@ import os
 import stat
 
 class MyParserAction(argparse.Action):
+    """Actions for command line parser"""
     def __init__(self, option_strings, dest, nargs=None, **kwargs):
         super(MyParserAction, self).__init__(option_strings, dest, **kwargs)
+        
     def __call__(self, parser, namespace, values, option_string=None):
         if option_string in ['-s', '--poolsize'] :
             Configuration.poolsize = values
@@ -55,20 +57,45 @@ class Configuration:
     poolsize = 10       # Default pool executor size
     
     @staticmethod
-    def __treat_config_file__(fileparser):
-        fileparser.read(Configuration.configfile)
-        Configuration.port = int(fileparser['DEFAULT']['port'])
-        Configuration.dbpath = fileparser['DEFAULT']['dbpath']
-        Configuration.poolsize = int(fileparser['DEFAULT']['poolsize'])
+    def __test_config_file__(path):
+        """Test existence and permissions of configuration file"""
+        if not os.path.exists(path) :
+            return False
+        else:
+            statinfo = os.stat(path)
+            if not os.path.isfile(path) or os.path.islink(path):
+                print("Error: invalid configuration file {} (it must be a regular file)".format(path))
+                exit(2)
+            elif stat.filemode(statinfo.st_mode) != '-rw-------' :
+                print("Error: invalid configuration file {} (it must have only read anw write permissions for user)".format(path))
+                exit(2)
+            elif statinfo.st_uid != os.getuid() :
+                print("Error: invalid configuration file {} (the owner must be the user)".format(path))
+                exit(2)
+        return True
+            
+    @staticmethod
+    def __load_config_file__(fileparser):
+        """Load configuration file"""
+        try:
+            fileparser.read(Configuration.configfile)
+        except:
+            print("Error: parsing error of configuration file {}".format(Configuration.configfile))
+            exit(2)
+        else:
+            Configuration.port = int(fileparser['DEFAULT']['port'])
+            Configuration.dbpath = fileparser['DEFAULT']['dbpath']
+            Configuration.poolsize = int(fileparser['DEFAULT']['poolsize'])
     
     @staticmethod
     def __create_config_file__(fileparser):
+        """Method to create default configuration file"""
         fileparser['DEFAULT'] = {'port': str(Configuration.port), \
                                  'dbpath': Configuration.dbpath, \
                                  'poolsize': str(Configuration.poolsize)}
         with open(Configuration.configfile, 'w') as configfile:
             fileparser.write(configfile)
-        os.chmod(Configuration.configfile, stat.S_IRUSR | stat.S_IWUSR)
+        os.chmod(Configuration.configfile, stat.S_IRUSR | stat.S_IWUSR | stat.S_IREAD | stat.S_IWRITE)
     
     @staticmethod
     def configure():
@@ -76,9 +103,9 @@ class Configuration:
         
         # Create, configure a configuration file parser and parse
         fileparser = configparser.ConfigParser()
-        if os.path.exists(Configuration.configfile) :
+        if Configuration.__test_config_file__(Configuration.configfile) :
             # Load values from configuration file
-            Configuration.__treat_config_file__(fileparser)
+            Configuration.__load_config_file__(fileparser)
         else:
             # Create default configuration file
             Configuration.__create_config_file__(fileparser)
@@ -100,6 +127,8 @@ class Configuration:
                                action=MyParserAction)
         argparser.add_argument('-v', '--version', action='version', version='version ' + Configuration.version)
         argparser.parse_args()
+        
+        # TODO : verify dbpath permissions
         
 if __name__ == '__main__':
     Configuration.configure()
