@@ -50,7 +50,7 @@ class StateS11():
                 client.transport.write(b'OK')
                 client.state = client.states['2'] # Next state
             else:
-                client.transport.write(b'ERROR;' + b'login already used')
+                client.transport.write(b'ERROR;' + b'count already used')
             
         except Exception as exc:
             # Schedule a callback to client exception handler

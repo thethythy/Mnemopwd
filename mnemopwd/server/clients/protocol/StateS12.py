@@ -64,7 +64,7 @@ class StateS12():
             # If login is unknown
             elif not exist :
                 client.state = client.states['11']
-                client.transport.write(b'ERROR;' + b'login does not exist')
+                client.transport.write(b'ERROR;' + b'count does not exist')
             
         except Exception as exc:
             # Schedule a callback to client exception handler

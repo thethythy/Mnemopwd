@@ -31,7 +31,7 @@ class DBHandler:
     
     def __init__(self, path, filename):
         """Set attributs"""
-        self.database_file = path + filename + '.db' # Client database file
+        self.database_file = path + '/' + filename + '.db' # Client database file
 
     # Extern methods
     
@@ -44,12 +44,12 @@ class DBHandler:
             return False
         else:
             # Create a new database file with good permissions
-            with shelve.open(path + filename, flag='n') as db: db['nb_sibs'] = 0
-            os.chmod(path + filename + '.db', stat.S_IRUSR | stat.S_IWUSR | stat.S_IREAD | stat.S_IWRITE)
+            with shelve.open(path + '/' + filename, flag='n') as db: db['nb_sibs'] = 0
+            os.chmod(path + '/' + filename + '.db', stat.S_IRUSR | stat.S_IWUSR | stat.S_IREAD | stat.S_IWRITE)
             return True
     
     @staticmethod
     def exist(path, filename):
         """Test if the data file exist"""
         print("hello world 2", filename)
-        return os.path.exists(path + filename + '.db')
+        return os.path.exists(path + '/' + filename + '.db')

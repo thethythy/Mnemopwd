@@ -101,7 +101,7 @@ class Test_Server_Client_S12_KO_S11_OK(Test_Server_Client_S0):
         protocol_cd = message[:5]
         protocol_data = message[6:]
         self.test.assertEqual(protocol_cd, b'ERROR')
-        self.test.assertEqual(protocol_data, b'login does not exist') 
+        self.test.assertEqual(protocol_data, b'count does not exist') 
         
     def state_S11(self, connect):
         salt, ms = pbkdf2(self.password, salt=self.login)
@@ -151,7 +151,7 @@ class Test_Server_Client_S12_KO_S11_KO(Test_Server_Client_S12_KO_S11_OK):
         protocol_cd = message[:5]
         protocol_data = message[6:]
         self.test.assertEqual(protocol_cd, b'ERROR')
-        self.test.assertEqual(protocol_data, b'login already used')
+        self.test.assertEqual(protocol_data, b'count already used')
         
     def run(self):
         try:
@@ -231,7 +231,7 @@ class  Test_ServerTestCase(unittest.TestCase):
         pass
     
     def setUp(self):
-        self.path = 'test/data/'
+        self.path = 'test/data'
         for child in Path(self.path).iterdir(): Path(child).unlink()
 
     def tearDown(self):
