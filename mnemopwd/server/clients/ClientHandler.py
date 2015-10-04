@@ -17,7 +17,13 @@
 
 import asyncio
 import logging
-from server.clients.protocol import *
+from server.clients.protocol.StateS0 import StateS0
+from server.clients.protocol.StateS1S import StateS1S
+from server.clients.protocol.StateS1C import StateS1C
+from server.clients.protocol.StateS2 import StateS2
+from server.clients.protocol.StateS21 import StateS21
+from server.clients.protocol.StateS22 import StateS22
+from server.clients.protocol.StateS3 import StateS3
 
 """
 The client connection handler
@@ -31,7 +37,9 @@ class ClientHandler(asyncio.Protocol):
         self.db_path = path # The path to the database
         self.loop = loop # The i/o asynchronous loop
         # The protocol states
-        self.states = {'0':StateS0(), '11':StateS11(), '12':StateS12(), '2':StateS2()}
+        self.states = {'0':StateS0(), '1S':StateS1S(), '1C':StateS1C(), \
+                       '2':StateS2(), '21':StateS21(), '22':StateS22(), \
+                       '3':StateS3()}
         
     def connection_made(self, transport):
         """Connection starting : set default protocol state and start it"""

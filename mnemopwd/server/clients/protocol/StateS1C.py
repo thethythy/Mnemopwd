@@ -16,42 +16,39 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """
-State S11 : CountCreation
+State S1C : Challenge
 """
 
 from server.util.funcutils import singleton
-from server.util.funcutils import compute_client_id, compute_client_filename
-from server.clients.DBHandler import DBHandler
+from pyelliptic import hmac_sha256
 
 @singleton
-class StateS11():
-    """State S11 : CountCreation"""
+class StateS1C():
+    """State S1C : control challenge answer"""
         
     def do(self, client, data):
-        """Action of the state S11: create an id and store it"""
+        """Action of the state S1C: control challenge answer"""
         try:
+
+            # Test for S1C command
+            is_cd_S1C = data[:10] == b"CHALLENGEA"
+            if not is_cd_S1C : raise Exception('protocol error')
+              
+            echallenge = data[11:] # Encrypted challenge
+            challenge = client.ephecc.decrypt(echallenge) # Decrypting challenge
             
-            is_cd_S11 = data[:8] == b"CREATION" # Test for S11 command
+            # Compute challenge
+            challenge_bis = hmac_sha256(client.ms, client.session + b'S1.12')
             
-            if not is_cd_S11 :
-                raise Exception('Protocol error')
-                
-            ems = data[9:210]       # Master secret encrypted 
-            elogin = data[211:]     # Login encrypted 
-            
-            # Compute client id
-            id, ms, login = compute_client_id(client, ems, elogin)
-            
-            # Try to create a new database
-            filename = compute_client_filename(id, ms, login)
-            result = DBHandler.new(client.db_path, filename)
-                
-            if result:
-                client.transport.write(b'OK')
-                client.state = client.states['2'] # Next state
+            if challenge == challenge_bis :
+                client.transport.write(b'OK') # Send challenge accepted
             else:
-                client.transport.write(b'ERROR;' + b'count already used')
+                client.transport.write(b'ERROR;' + b"challenge rejected") # Send challenge rejected
+                raise Exception("challenge rejected")
             
         except Exception as exc:
             # Schedule a callback to client exception handler
             client.loop.call_soon_threadsafe(client.exception_handler, exc)
+            
+        else:
+            client.state = client.states['2'] # Next state

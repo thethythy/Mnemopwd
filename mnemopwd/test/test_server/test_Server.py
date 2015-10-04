@@ -24,9 +24,15 @@ from pathlib import Path
 from server.server import Server
 from server.util.Configuration import Configuration
 from pyelliptic import ECC
-from pyelliptic.hash import pbkdf2
+from pyelliptic import OpenSSL
+from pyelliptic import Cipher
+from pyelliptic import pbkdf2
+from pyelliptic import hmac_sha512
+from pyelliptic import hmac_sha256
 import hashlib
-from pyelliptic.hash import hmac_sha512
+
+# -----------------------------------------------------------------------------
+# Test S0
 
 class Test_Server_Client_S0(threading.Thread):
     def __init__(self, host, port, test, number):
@@ -71,82 +77,300 @@ class Test_Server_Client_S0(threading.Thread):
         finally:
             connect.close()
             print("Client", self.number, ": disconnection with the server")
+
+# -----------------------------------------------------------------------------
+# Test S1            
             
-class Test_Server_Client_S12_KO_S11_OK(Test_Server_Client_S0):
+class Test_Server_Client_S1_OK(Test_Server_Client_S0):
     def __init__(self, host, port, test, number):
         Test_Server_Client_S0.__init__(self,host,port,test,number)
         self.password = 'This is the test password'.encode()
-        self.login = 'This is the client S12 login'.encode()
-        
-    def state_S12_Begin(self, connect, bug=False):        
+        self.login = 'This is the client S21 login'.encode()
+
+    def state_S1S_begin(self, connect):
         salt, ms = pbkdf2(self.password, salt=self.login)
-        ems = self.ephecc.encrypt(ms, pubkey=self.ephecc.get_pubkey())
-        elogin = self.ephecc.encrypt(self.login, pubkey=self.ephecc.get_pubkey())        
-        
-        ho = hashlib.sha256()
-        if bug :
-            ho.update(hmac_sha512(ms, ms + self.login + b'bug')) # Wrong id
-        else:
-            ho.update(hmac_sha512(ms, ms + self.login)) # Good id
-        id = ho.digest()
-        eid = self.ephecc.encrypt(id, pubkey=self.ephecc.get_pubkey())
-        
-        connect.send(b'LOGIN;' + eid + b';' + ems + b';' + elogin)  
-        
-    def state_S12_KO(self, connect):
-        #print("Client", self.number, "state_S12_KO : starting")    
+        self.ms = ms
+        ems = self.ephecc.encrypt(self.ms, pubkey=self.ephecc.get_pubkey())
+        connect.send(b'SESSION;' + ems)
+
+    def state_S1S_end(self, connect):
         message = connect.recv(1024)
-        #print("Client", self.number, "state_S12_KO : receiving")
+        protocol_cd = message[:10]
+        blocksize = OpenSSL.get_cipher('aes-256-cbc').get_blocksize()
+        self.iv = message[11:11+blocksize]
+        self.esession = message[12+blocksize:]        
+        self.test.assertEqual(protocol_cd, b'CHALLENGER')        
+    
+    def get_echallenge(self, var, bug=False):
+        if bug:
+            challenge = hmac_sha256(self.ms, self.session + b'BUG')
+        else:
+            challenge = hmac_sha256(self.ms, self.session + var)
+        return self.ephecc.encrypt(challenge, pubkey=self.ephecc.get_pubkey())
+    
+    def state_S1C_begin(self, connect):
+        ctx = Cipher(self.ms, self.iv, 0, 'aes-256-cbc')
+        self.session = ctx.ciphering(self.esession)        
+        echallenge = self.get_echallenge(b'S1.12')
         
+        connect.send(b'CHALLENGEA;' + echallenge)
+        
+    def state_S1C_end(self, connect):
+        message = connect.recv(1024)
+        protocol_cd = message[:2]
+        self.test.assertEqual(protocol_cd, b'OK')
+    
+    def run(self):
+        try:
+            time.sleep(3) # Waiting previous test
+            connect = self.connect_to_server()
+            # State 0
+            self.state_S0(connect)
+            # State 1S
+            self.state_S1S_begin(connect)
+            self.state_S1S_end(connect)
+            # State 1C
+            self.state_S1C_begin(connect)
+            self.state_S1C_end(connect)
+        finally:
+            connect.close()
+            print("Client", self.number, ": disconnection with the server")     
+
+class Test_Server_Client_S1_KO(Test_Server_Client_S1_OK):
+    def __init__(self, host, port, test, number):
+        Test_Server_Client_S1_OK.__init__(self,host,port,test,number)
+
+    def state_S1C_begin(self, connect):
+        ctx = Cipher(self.ms, self.iv, 0, 'aes-256-cbc')
+        self.session = ctx.ciphering(self.esession)
+        echallenge = self.get_echallenge(b'S1.12', bug=True)        
+        connect.send(b'CHALLENGEA;' + echallenge)
+        
+    def state_S1C_end(self, connect):
+        message = connect.recv(1024)
         protocol_cd = message[:5]
         protocol_data = message[6:]
         self.test.assertEqual(protocol_cd, b'ERROR')
-        self.test.assertEqual(protocol_data, b'count does not exist') 
+        self.test.assertEqual(protocol_data, b'challenge rejected')
+    
+    def run(self):
+        try:
+            connect = self.connect_to_server()
+            # State 0
+            self.state_S0(connect)
+            # State 1S
+            self.state_S1S_begin(connect)
+            self.state_S1S_end(connect)
+            # State 1C
+            self.state_S1C_begin(connect)
+            self.state_S1C_end(connect)
+        finally:
+            connect.close()
+            print("Client", self.number, ": disconnection with the server")
+
+# -----------------------------------------------------------------------------
+# Test S21
+
+class Test_Server_Client_S21_OK(Test_Server_Client_S1_OK):
+    def __init__(self, host, port, test, number):
+        Test_Server_Client_S1_OK.__init__(self,host,port,test,number)
         
-    def state_S11(self, connect):
-        salt, ms = pbkdf2(self.password, salt=self.login)
-        ems = self.ephecc.encrypt(ms, pubkey=self.ephecc.get_pubkey())
-        elogin = self.ephecc.encrypt(self.login, pubkey=self.ephecc.get_pubkey())        
-        connect.send(b'CREATION;' + ems + b';' + elogin)
+    def state_S21_Begin(self, connect, bug=False):        
+        echallenge = self.get_echallenge(b'S21.7')     
         
-        #print("Client", self.number, "state_S11 : starting")
+        ho = hashlib.sha256()
+        if bug :
+            ho.update(hmac_sha512(self.ms, self.ms + self.login + b'bug')) # Wrong id
+        else:
+            ho.update(hmac_sha512(self.ms, self.ms + self.login)) # Good id
+        id = ho.digest()
+        eid = self.ephecc.encrypt(id, pubkey=self.ephecc.get_pubkey())
+        
+        elogin = self.ephecc.encrypt(self.login, pubkey=self.ephecc.get_pubkey())
+        
+        connect.send(echallenge + b';LOGIN;' + eid + b';' + elogin)
+
+    def state_S21_OK(self, connect):
+        #print("Client", self.number, "state_S21_KO : starting")    
         message = connect.recv(1024)
-        #print("Client", self.number, "state_S11 : receiving")
+        #print("Client", self.number, "state_S21_KO : receiving")
         
         protocol_cd = message[:2]
         self.test.assertEqual(protocol_cd, b'OK')
         
     def run(self):
         try:
+            time.sleep(3) # Waiting previous test
             connect = self.connect_to_server() 
             # State 0
             self.state_S0(connect)
-            # State 12
-            self.state_S12_Begin(connect)
-            # State 12 KO
-            self.state_S12_KO(connect)
-            # State 11
-            self.state_S11(connect)
+            # State 1S
+            self.state_S1S_begin(connect)
+            self.state_S1S_end(connect)
+            # State 1C
+            self.state_S1C_begin(connect)
+            self.state_S1C_end(connect)
+            # State 21
+            self.state_S21_Begin(connect)
+            self.state_S21_OK(connect)
         finally:
             connect.close()
             print("Client", self.number, ": disconnection with the server")
 
-class Test_Server_Client_S12_KO_S11_KO(Test_Server_Client_S12_KO_S11_OK):
+class Test_Server_Client_S21_KO_ID(Test_Server_Client_S21_OK):
     def __init__(self, host, port, test, number):
-        Test_Server_Client_S12_KO_S11_OK.__init__(self,host,port,test,number)
-        self.password = 'This is the test password'.encode()
-        self.login = 'This is the client S12 login KO'.encode()
-        self.login2 = 'This is the client S12 login'.encode()
+        Test_Server_Client_S1_OK.__init__(self,host,port,test,number)
                 
-    def state_S11_KO(self, connect):
-        salt, ms = pbkdf2(self.password, salt=self.login2)
-        ems = self.ephecc.encrypt(ms, pubkey=self.ephecc.get_pubkey())
-        elogin = self.ephecc.encrypt(self.login2, pubkey=self.ephecc.get_pubkey())        
-        connect.send(b'CREATION;' + ems + b';' + elogin)
-        
-        #print("Client", self.number, "state_S11 : starting")
+    def state_S21_KO(self, connect):
+        #print("Client", self.number, "state_S21_KO : starting")    
         message = connect.recv(1024)
-        #print("Client", self.number, "state_S11 : receiving")
+        #print("Client", self.number, "state_S21_KO : receiving")
+        
+        protocol_cd = message[:5]
+        protocol_data = message[6:]
+        self.test.assertEqual(protocol_cd, b'ERROR')
+        self.test.assertEqual(protocol_data, b'incorrect id') 
+        
+    def run(self):
+        try:
+            connect = self.connect_to_server() 
+            # State 0
+            self.state_S0(connect)
+            # State 1S
+            self.state_S1S_begin(connect)
+            self.state_S1S_end(connect)
+            # State 1C
+            self.state_S1C_begin(connect)
+            self.state_S1C_end(connect)
+            # State 21
+            self.state_S21_Begin(connect, bug=True)
+            self.state_S21_KO(connect)
+        finally:
+            connect.close()
+            print("Client", self.number, ": disconnection with the server")
+
+class Test_Server_Client_S21_KO_COUNT(Test_Server_Client_S21_KO_ID):
+    def __init__(self, host, port, test, number):
+        Test_Server_Client_S21_KO_ID.__init__(self,host,port,test,number)
+                                
+    def state_S21_KO(self, connect):
+        #print("Client", self.number, "state_S22_KO : starting")
+        message = connect.recv(1024)
+        #print("Client", self.number, "state_S22_KO : receiving")
+        
+        protocol_cd = message[:5]
+        protocol_data = message[6:]
+        self.test.assertEqual(protocol_cd, b'ERROR')
+        self.test.assertEqual(protocol_data, b'count does not exist')
+        
+    def run(self):
+        try:
+            connect = self.connect_to_server() 
+            # State 0
+            self.state_S0(connect)
+            # State 1S
+            self.state_S1S_begin(connect)
+            self.state_S1S_end(connect)
+            # State 1C
+            self.state_S1C_begin(connect)
+            self.state_S1C_end(connect)
+            # State 21
+            self.state_S21_Begin(connect)
+            self.state_S21_KO(connect)
+        finally:
+            connect.close()
+            print("Client", self.number, ": disconnection with the server") 
+
+# -----------------------------------------------------------------------------
+# Test S22
+
+class Test_Server_Client_S22_OK(Test_Server_Client_S1_OK):
+    def __init__(self, host, port, test, number):
+        Test_Server_Client_S1_OK.__init__(self,host,port,test,number)
+        
+    def state_S22_Begin(self, connect, bug=False):        
+        echallenge = self.get_echallenge(b'S22.7')
+        
+        ho = hashlib.sha256()
+        if bug :
+            ho.update(hmac_sha512(self.ms, self.ms + self.login + b'bug')) # Wrong id
+        else:
+            ho.update(hmac_sha512(self.ms, self.ms + self.login)) # Good id
+        id = ho.digest()
+        eid = self.ephecc.encrypt(id, pubkey=self.ephecc.get_pubkey())
+
+        elogin = self.ephecc.encrypt(self.login, pubkey=self.ephecc.get_pubkey())        
+        
+        connect.send(echallenge + b';CREATION;' + eid + b';' + elogin)
+                
+    def state_S22_OK(self, connect):        
+        #print("Client", self.number, "state_S22 : starting")
+        message = connect.recv(1024)
+        #print("Client", self.number, "state_S22 : receiving")
+        
+        protocol_cd = message[:5]
+        self.test.assertEqual(protocol_cd, b'OK')
+        
+    def run(self):
+        try:
+            time.sleep(2) # Waiting previous test
+            connect = self.connect_to_server() 
+            # State 0
+            self.state_S0(connect)
+            # State 1S
+            self.state_S1S_begin(connect)
+            self.state_S1S_end(connect)
+            # State 1C
+            self.state_S1C_begin(connect)
+            self.state_S1C_end(connect)
+            # State 22
+            self.state_S22_Begin(connect)
+            self.state_S22_OK(connect)
+        finally:
+            connect.close()
+            print("Client", self.number, ": disconnection with the server")
+
+class Test_Server_Client_S22_KO_ID(Test_Server_Client_S22_OK):
+    def __init__(self, host, port, test, number):
+        Test_Server_Client_S22_OK.__init__(self,host,port,test,number)
+                
+    def state_S22_KO(self, connect):        
+        #print("Client", self.number, "state_S22 : starting")
+        message = connect.recv(1024)
+        #print("Client", self.number, "state_S22 : receiving")
+        
+        protocol_cd = message[:5]
+        protocol_data = message[6:]
+        self.test.assertEqual(protocol_cd, b'ERROR')
+        self.test.assertEqual(protocol_data, b'incorrect id')
+        
+    def run(self):
+        try:
+            time.sleep(3) # Waiting previous test
+            connect = self.connect_to_server() 
+            # State 0
+            self.state_S0(connect)
+            # State 1S
+            self.state_S1S_begin(connect)
+            self.state_S1S_end(connect)
+            # State 1C
+            self.state_S1C_begin(connect)
+            self.state_S1C_end(connect)
+            # State 22
+            self.state_S22_Begin(connect, bug=True)
+            self.state_S22_KO(connect)
+        finally:
+            connect.close()
+            print("Client", self.number, ": disconnection with the server")
+
+class Test_Server_Client_S22_KO_COUNT(Test_Server_Client_S22_OK):
+    def __init__(self, host, port, test, number):
+        Test_Server_Client_S22_OK.__init__(self,host,port,test,number)
+                
+    def state_S22_KO(self, connect):        
+        #print("Client", self.number, "state_S22 : starting")
+        message = connect.recv(1024)
+        #print("Client", self.number, "state_S22 : receiving")
         
         protocol_cd = message[:5]
         protocol_data = message[6:]
@@ -155,77 +379,24 @@ class Test_Server_Client_S12_KO_S11_KO(Test_Server_Client_S12_KO_S11_OK):
         
     def run(self):
         try:
-            time.sleep(2) # Waiting previous test
+            time.sleep(3) # Waiting previous test
             connect = self.connect_to_server() 
             # State 0
             self.state_S0(connect)
-            # State 12
-            self.state_S12_Begin(connect)
-            # State 12 KO
-            self.state_S12_KO(connect)
-            # State 11
-            self.state_S11_KO(connect)
-        finally:
-            connect.close()
-            print("Client", self.number, ": disconnection with the server")                    
-                    
-class Test_Server_Client_S12_KO(Test_Server_Client_S12_KO_S11_OK):
-    def __init__(self, host, port, test, number):
-        Test_Server_Client_S12_KO_S11_OK.__init__(self,host,port,test,number)
-        self.password = 'This is the test password'.encode()
-        self.login = 'This is the client S12 login'.encode()
-                
-    def state_S12_KO(self, connect):
-        #print("Client", self.number, "state_S12_KO : starting")
-        message = connect.recv(1024)
-        #print("Client", self.number, "state_S12_KO : receiving")
-        
-        protocol_cd = message[:5]
-        protocol_data = message[6:]
-        self.test.assertEqual(protocol_cd, b'ERROR')
-        self.test.assertEqual(protocol_data, b'wrong id')
-        
-    def run(self):
-        try:
-            time.sleep(2)  # Waiting previous test
-            connect = self.connect_to_server() 
-            # State 0
-            self.state_S0(connect)
-            # State 12
-            self.state_S12_Begin(connect, bug=True)
-            # State 12 KO
-            self.state_S12_KO(connect)
-        finally:
-            connect.close()
-            print("Client", self.number, ": disconnection with the server")            
-        
-class Test_Server_Client_S12_OK(Test_Server_Client_S12_KO_S11_OK):
-    def __init__(self, host, port, test, number):
-        Test_Server_Client_S12_KO_S11_OK.__init__(self,host,port,test,number)
-        self.password = 'This is the test password'.encode()
-        self.login = 'This is the client S12 login'.encode()
-                
-    def state_S12_OK(self, connect):                
-        #print("Client", self.number, "state_S12_OK : starting")
-        message = connect.recv(1024)
-        #print("Client", self.number, "state_S12_OK : receiving")
-        protocol_cd = message[:2]
-        self.test.assertEqual(protocol_cd, b'OK')
-        
-    def run(self):
-        try:
-            time.sleep(2) # Waiting previous test
-            connect = self.connect_to_server() 
-            # State 0
-            self.state_S0(connect)
-            # State 12
-            self.state_S12_Begin(connect)
-            self.state_S12_OK(connect)
+            # State 1S
+            self.state_S1S_begin(connect)
+            self.state_S1S_end(connect)
+            # State 1C
+            self.state_S1C_begin(connect)
+            self.state_S1C_end(connect)
+            # State 22
+            self.state_S22_Begin(connect)
+            self.state_S22_KO(connect)
         finally:
             connect.close()
             print("Client", self.number, ": disconnection with the server")
 
-class  Test_ServerTestCase(unittest.TestCase):
+class Test_ServerTestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         pass
@@ -239,12 +410,18 @@ class  Test_ServerTestCase(unittest.TestCase):
                     
     def test_Server(self):
         Test_Server_Client_S0(Configuration.host, Configuration.port, self, 1).start()
-        Test_Server_Client_S12_KO_S11_OK(Configuration.host, Configuration.port, self, 2).start()
+        Test_Server_Client_S1_OK(Configuration.host, Configuration.port, self, 2).start()
+        Test_Server_Client_S1_KO(Configuration.host, Configuration.port, self, 3).start()
+        Test_Server_Client_S21_KO_ID(Configuration.host, Configuration.port, self, 4).start()
+        Test_Server_Client_S21_KO_COUNT(Configuration.host, Configuration.port, self, 5).start()
         
         # Begin after 2 secondes
-        Test_Server_Client_S12_KO_S11_KO(Configuration.host, Configuration.port, self, 3).start()
-        Test_Server_Client_S12_KO(Configuration.host, Configuration.port, self, 4).start()
-        Test_Server_Client_S12_OK(Configuration.host, Configuration.port, self, 5).start()
+        Test_Server_Client_S22_OK(Configuration.host, Configuration.port, self, 6).start()        
+        
+        # Begin after 3 secondes
+        Test_Server_Client_S22_KO_ID(Configuration.host, Configuration.port, self, 7).start()
+        Test_Server_Client_S22_KO_COUNT(Configuration.host, Configuration.port, self, 8).start()
+        Test_Server_Client_S21_OK(Configuration.host, Configuration.port, self, 9).start()
 
         print("Use Ctrl+C to finish the test")
         try:

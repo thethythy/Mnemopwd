@@ -34,17 +34,12 @@ def singleton(the_class):
 # ---------------------------------------------------------
 # Compute client id
 
-def compute_client_id(client, ems, elogin):
-    """Compute a client id according to the protocol and return it with login"""
-    ms = client.ephecc.decrypt(ems)         # Decrypt master secret
-    login = client.ephecc.decrypt(elogin)   # Decrypt login
-                
-    # Compute client id
+def compute_client_id(ms, login):
+    """Compute a client id according to the protocol"""
     ho = hashlib.sha256()
     ho.update(hmac_sha512(ms, ms + login))
-    id = ho.digest()
-    
-    return id, ms, login # Return the client id, the master secret and the login
+    id = ho.digest()    
+    return id # Return the client id
 
 # ---------------------------------------------------------
 # Compute client data filename

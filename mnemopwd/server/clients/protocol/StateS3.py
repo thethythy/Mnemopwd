@@ -16,29 +16,35 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """
-State S2 : Login or CountCreation
+State S3 : Configuration or Data
 """
 
 from server.util.funcutils import singleton
 
 @singleton
-class StateS2():
-    """State S2 : select Login substate (S21) or CountCreation substate (S22) """
+class StateS3():
+    """State S3 : select Configuration substate (S31) or Data substate (S32) """
         
     def do(self, client, data):
-        """Action of the state S2: select substate S21 or S22"""
+        """Action of the state S3: select substate S31 or S32"""
         
-        is_cd_S21 = data[170:175] == b"LOGIN" # Test for S21 substate
-        is_cd_S22 = data[170:178] == b"CREATION" # Test for S22 substate
+        is_cd_S31 = data[170:183] == b"CONFIGURATION" # Test for S31 substate
+        is_cd_S321 = data[170:180] == b"SEARCHDATA" # Test for S321 substate
+        is_cd_S322 = data[170:180] == b"CREATEDATA" # Test for S322 substate
+        is_cd_S323 = data[170:180] == b"DELETEDATA" # Test for S323 substate
         
-        if is_cd_S21 :
-            client.state = client.states['21'] # S21 is the new state
-        if is_cd_S22 :
-            client.state = client.states['22'] # S22 is the new state
+        if is_cd_S31 :
+            client.state = client.states['31'] # S31 is the new state
+        if is_cd_S321 :
+            client.state = client.states['321'] # S321 is the new state
+        if is_cd_S322 :
+            client.state = client.states['322'] # S322 is the new state
+        if is_cd_S323 :
+            client.state = client.states['323'] # S323 is the new state
 
-        if is_cd_S21 or is_cd_S22 :
+        if is_cd_S31 or is_cd_S321 or is_cd_S322 or is_cd_S323 :
             # Schedule an execuction of the new state
             client.loop.run_in_executor(None, client.state.do, client, data)
         else:
             # Schedule a callback to client exception handler
-            client.loop.call_soon_threadsafe(client.exception_handler, Exception('protocol error'))
+            client.loop.call_soon_threadsafe(client.exception_handler, Exception('Protocol error'))
