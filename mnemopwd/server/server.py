@@ -46,8 +46,9 @@ class Server:
     
     def __init__(self):
         """Initialization"""
-        logging.basicConfig(filename='log/mnemopwds.log', level=logging.DEBUG, 
-            format='%(asctime)s %(levelname)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S')
+        logging.basicConfig(filename=Configuration.dbpath + '/mnemopwds.log', \
+                            level=logging.DEBUG, format='%(asctime)s %(levelname)s %(message)s', \
+                            datefmt='%m/%d/%Y %I:%M:%S')
         logging.info("-----------------------------------------------------------")
         
         # Create a i/o asynchronous loop

@@ -21,6 +21,7 @@ State S1S : Session
 
 from server.util.funcutils import singleton
 from pyelliptic import Cipher
+import os
 
 @singleton
 class StateS1S():
@@ -37,9 +38,9 @@ class StateS1S():
             ems = data[8:209] # Master secret encrypted
             ms = client.ephecc.decrypt(ems) # Decrypt master secret
             
-            session = b'123' # Random session number TODO
+            session = (os.urandom(256))[64:128] # Random session value
             
-            iv = Cipher.gen_IV('aes-256-cbc') # TODO configuration value            
+            iv = Cipher.gen_IV('aes-256-cbc')
             ctx = Cipher(ms, iv, 1, 'aes-256-cbc')
             esession = ctx.ciphering(session) # Encrypt session number
             

@@ -403,7 +403,10 @@ class Test_ServerTestCase(unittest.TestCase):
     
     def setUp(self):
         self.path = 'test/data'
-        for child in Path(self.path).iterdir(): Path(child).unlink()
+        if not Path(self.path).exists() :
+            Path(self.path).mkdir(mode=0o777)
+        else:
+            for child in Path(self.path).iterdir(): Path(child).unlink()
 
     def tearDown(self):
         pass

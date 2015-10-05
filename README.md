@@ -10,7 +10,7 @@ that is a high level wrapper of OpenSSL (see https://github.com/yann2192/pyellip
 
 See OpenSSL web site for more information (https://www.openssl.org)
 
-Require Python3, OpenSSL
+Require Python3.4 or newer, OpenSSL
 
 Always use the last version for security.
 
