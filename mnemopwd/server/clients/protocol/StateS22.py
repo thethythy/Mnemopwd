@@ -21,7 +21,6 @@ State S22 : CountCreation
 
 from server.util.funcutils import singleton
 from server.clients.protocol.StateSCC import StateSCC
-from server.util.funcutils import compute_client_id, compute_client_filename
 from server.clients.DBHandler import DBHandler
 
 @singleton
@@ -44,7 +43,7 @@ class StateS22(StateSCC):
 
                 # Compute client id
                 login = client.ephecc.decrypt(elogin)
-                id = compute_client_id(client.ms, login)
+                id = self.compute_client_id(client.ms, login)
                         
                 # Get id from client
                 id_from_client = client.ephecc.decrypt(eid)
@@ -55,7 +54,7 @@ class StateS22(StateSCC):
                     raise Exception('incorrect id')
 
                 # Try to create a new database
-                filename = compute_client_filename(id, client.ms, login)
+                filename = self.compute_client_filename(id, client.ms, login)
                 result = DBHandler.new(client.db_path, filename)
                 
                 if result:

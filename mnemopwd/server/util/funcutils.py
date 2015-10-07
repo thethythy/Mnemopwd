@@ -18,10 +18,6 @@
 # ---------------------------------------------------------
 # Singleton class
 
-import hashlib
-import base64
-from pyelliptic.hash import hmac_sha512
-
 def singleton(the_class):
     instances = {} # Dictionary of singleton objects
     def get_instance():
@@ -30,30 +26,3 @@ def singleton(the_class):
             instances[the_class] = the_class()
         return instances[the_class]
     return get_instance
-
-# ---------------------------------------------------------
-# Compute client id
-
-def compute_client_id(ms, login):
-    """Compute a client id according to the protocol"""
-    ho = hashlib.sha256()
-    ho.update(hmac_sha512(ms, ms + login))
-    id = ho.digest()    
-    return id # Return the client id
-
-# ---------------------------------------------------------
-# Compute client data filename
-
-def compute_client_filename(id, ms, login):
-    """Compute a filename"""    
-    
-    # Compute login hash
-    ho = hashlib.sha256()
-    ho.update(hmac_sha512(ms, login))
-    hlogin = ho.digest()
-    
-    # Filename construction
-    filename = (base64.b32encode(hlogin))[:52] + (base64.b32encode(id))[:52]
-    
-    return filename.decode() # Return client data filename (a string)
-

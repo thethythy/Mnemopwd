@@ -19,10 +19,13 @@
 State SCC : Challenge Controller
 """
 
+import hashlib
+import base64
+from pyelliptic import hmac_sha512
 from pyelliptic import hmac_sha256
 
 class StateSCC():
-    """Challenge controller"""
+    """Challenge controller and others useful methods"""
     
     def control_challenge(self, client, data, var):
         """Action of the state SCC: control the challenge answer"""
@@ -45,4 +48,23 @@ class StateSCC():
         
         else:
             return True
+
+    def compute_client_id(self, ms, login):
+        """Compute a client id"""
+        ho = hashlib.sha256()
+        ho.update(hmac_sha512(ms, ms + login))
+        return ho.digest()
+
+    def compute_client_filename(self, id, ms, login):
+        """Compute a client database filename"""
+    
+        # Compute login hash
+        ho = hashlib.sha256()
+        ho.update(hmac_sha512(ms, login))
+        hlogin = ho.digest()
+    
+        # Filename construction
+        filename = (base64.b32encode(hlogin))[:52] + (base64.b32encode(id))[:52]
+    
+        return filename.decode() # Return client database filename (a string)
 

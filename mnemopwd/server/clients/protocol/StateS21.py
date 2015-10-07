@@ -21,7 +21,6 @@ State S21 : Login
 
 from server.util.funcutils import singleton
 from server.clients.protocol.StateSCC import StateSCC
-from server.util.funcutils import compute_client_id, compute_client_filename
 from server.clients.DBHandler import DBHandler
 
 @singleton
@@ -44,7 +43,7 @@ class StateS21(StateSCC):
 
                 # Compute client id
                 login = client.ephecc.decrypt(elogin)
-                id = compute_client_id(client.ms, login)
+                id = self.compute_client_id(client.ms, login)
                         
                 # Get id from client
                 id_from_client = client.ephecc.decrypt(eid)
@@ -55,7 +54,7 @@ class StateS21(StateSCC):
                     raise Exception('incorrect id')
             
                 # Test if login exists
-                filename = compute_client_filename(id, client.ms, login)
+                filename = self.compute_client_filename(id, client.ms, login)
                 exist = DBHandler.exist(client.db_path, filename)
             
                 # If login is OK and ids are equal
