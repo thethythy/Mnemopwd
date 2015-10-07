@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """
-State S22 : CountCreation
+State S22 : Creation
 """
 
 from server.util.funcutils import singleton
@@ -25,10 +25,10 @@ from server.clients.DBHandler import DBHandler
 
 @singleton
 class StateS22(StateSCC):
-    """State S22 : CountCreation"""
+    """State S22 : Creation"""
         
     def do(self, client, data):
-        """Action of the state S22: create an id and store it"""
+        """Action of the state S22: create a new user account"""
         try:
             
             # Control challenge
