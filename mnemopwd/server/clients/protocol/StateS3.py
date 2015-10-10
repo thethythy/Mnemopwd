@@ -1,48 +1,68 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2015 Thierry Lemeunier <thierry at lemeunier dot net>
+# Copyright (c) 2015, Thierry Lemeunier <thierry at lemeunier dot net>
+# All rights reserved.
 #
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# Redistribution and use in source and binary forms, with or without modification,
+# are permitted provided that the following conditions are met:
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+# 1. Redistributions of source code must retain the above copyright notice, this 
+# list of conditions and the following disclaimer.
 #
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+# this list of conditions and the following disclaimer in the documentation
+# and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+# THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+# PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
+# CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+# EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+# OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+# OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+# ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 
 """
-State S3 : Configuration or Data
+State S3 : administration or data operations
 """
 
 from server.util.funcutils import singleton
 
 @singleton
 class StateS3():
-    """State S3 : select Configuration substate (S31) or Data substate (S32) """
+    """State S3 : select substate (S31, S32, S33, S34, S35, S36 or S37) """
         
     def do(self, client, data):
-        """Action of the state S3: select substate S31 or S32"""
+        """Action of the state S3: select a substate"""
         
-        is_cd_S31 = data[170:183] == b"CONFIGURATION" # Test for S31 substate
-        is_cd_S321 = data[170:180] == b"SEARCHDATA" # Test for S321 substate
-        is_cd_S322 = data[170:180] == b"CREATEDATA" # Test for S322 substate
-        is_cd_S323 = data[170:180] == b"DELETEDATA" # Test for S323 substate
+        is_cd_S31 = data[170:183] == b"CONFIGURATION"   # Test for S31 substate
+        is_cd_S32 = data[170:181] == b"IMPORTATION"     # Test for S32 substate
+        is_cd_S33 = data[170:181] == b"EXPORTATION"     # Test for S33 substate
+        is_cd_S34 = data[170:188] == b"DELETION"        # Test for S34 substate
+        is_cd_S35 = data[170:180] == b"SEARCHDATA"      # Test for S35 substate
+        is_cd_S36 = data[170:177] == b"ADDDATA"         # Test for S36 substate
+        is_cd_S37 = data[170:180] == b"DELETEDATA"      # Test for S37 substate
         
         if is_cd_S31 :
             client.state = client.states['31'] # S31 is the new state
-        if is_cd_S321 :
-            client.state = client.states['321'] # S321 is the new state
-        if is_cd_S322 :
-            client.state = client.states['322'] # S322 is the new state
-        if is_cd_S323 :
-            client.state = client.states['323'] # S323 is the new state
+        if is_cd_S32 :
+            client.state = client.states['32'] # S32 is the new state
+        if is_cd_S33 :
+            client.state = client.states['33'] # S33 is the new state
+        if is_cd_S34 :
+            client.state = client.states['34'] # S34 is the new state
+        if is_cd_S35 :
+            client.state = client.states['35'] # S35 is the new state
+        if is_cd_S36 :
+            client.state = client.states['36'] # S36 is the new state
+        if is_cd_S37 :
+            client.state = client.states['37'] # S37 is the new state
 
-        if is_cd_S31 or is_cd_S321 or is_cd_S322 or is_cd_S323 :
+        if is_cd_S31 or is_cd_S32 or is_cd_S33 or is_cd_S34 or is_cd_S35 or is_cd_S36 or is_cd_S37 :
             # Schedule an execuction of the new state
             client.loop.run_in_executor(None, client.state.do, client, data)
         else:

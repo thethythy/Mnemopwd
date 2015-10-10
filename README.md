@@ -14,6 +14,9 @@ Require Python3.4 or newer, OpenSSL
 
 Always use the last version for security.
 
+Copyright (c) 2015, Thierry Lemeunier <thierry at lemeunier dot net>
+under BSD Licence
+
 Features :
 ----------
 
