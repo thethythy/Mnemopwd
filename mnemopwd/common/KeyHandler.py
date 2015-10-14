@@ -45,7 +45,7 @@ class KeyHandler:
     # Intern methods
     # --------------
     
-    def __init__(self, msecret, cur1='sect571r1', cip1='aes-256-cbc', cur2=None, cip2=None, cur3=None, cip3=None):
+    def __init__(self, msecret, cur1='sect571r1', cip1='aes-256-cbc', cur2='', cip2='', cur3='', cip3=''):
         """Object initializer"""
         # Compute ikey
         ho = hashlib.sha512()
@@ -136,7 +136,7 @@ class KeyHandler:
     
     def _compute_ecc_(self, curve, secret, stagename):
         """Creates a new ECC object"""
-        if curve is None:
+        if curve == '':
             return None
         else:
             ho = hashlib.sha512()
@@ -148,18 +148,18 @@ class KeyHandler:
     # Extern Methods
     # --------------
 
-    def encrypt(self, stage, data):
+    def encrypt(self, stage, cleartext):
         """Encryption at a certain stage"""
         ecc, ciphername = self._get_ecc_(stage)
-        if ecc is not None:
-            return ecc.encrypt(data, ecc.get_pubkey(), ephemcurve=ecc.get_curve(), ciphername=ciphername)
+        if ecc is not None :
+            return ecc.encrypt(cleartext, ecc.get_pubkey(), ephemcurve=ecc.get_curve(), ciphername=ciphername)
         else:
-            return data
+            return cleartext
     
     def decrypt(self, stage, cyphertext):
         """Decryption at a certain stage"""
         ecc, ciphername = self._get_ecc_(stage)
-        if ecc is not None:
+        if ecc is not None :
             return ecc.decrypt(cyphertext, ciphername=ciphername)
         else:
             return cyphertext

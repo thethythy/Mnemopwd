@@ -35,6 +35,10 @@ from server.clients.protocol.StateS2 import StateS2
 from server.clients.protocol.StateS21 import StateS21
 from server.clients.protocol.StateS22 import StateS22
 from server.clients.protocol.StateS3 import StateS3
+from server.clients.protocol.StateS31 import StateS31
+from pyelliptic import OpenSSL
+from common.CryptoHandler import CryptoHandler
+from common.KeyHandler import KeyHandler
 
 """
 The client connection handler
@@ -50,7 +54,7 @@ class ClientHandler(asyncio.Protocol):
         # The protocol states
         self.states = {'0':StateS0(), '1S':StateS1S(), '1C':StateS1C(), \
                        '2':StateS2(), '21':StateS21(), '22':StateS22(), \
-                       '3':StateS3()}
+                       '3':StateS3(), '31':StateS31()}
         
     def connection_made(self, transport):
         """Connection starting : set default protocol state and start it"""
@@ -80,3 +84,49 @@ class ClientHandler(asyncio.Protocol):
         """Exception handler for actions executed by the executor"""
         logging.critical('Closing connection with {} because server detects an error : {}'.format(self.peername, exc))
         self.transport.close()
+        
+    def configure_crypto(self, config_demand):
+        """Configure cryptographic handler"""
+        
+        print(config_demand)
+        
+        # Control curve and cipher names
+        try:
+            for i, name in enumerate(config_demand.split(';')) :
+                if name != '' and i % 2 == 0: 
+                    OpenSSL.get_curve(name) # Control curve name
+                elif name != '': 
+                    OpenSSL.get_cipher(name) # Control cipher name
+        except:
+            return False
+        
+        # Configure crypto handler
+        result = 1
+        try:
+            if self.dbhandler['config'] != config_demand :
+                # Case 2 : new configuration demand
+                self.dbhandler['config_temp'] = config_demand
+                logging.warning('New configuration {} from {}'.format(config_demand, self.peername))
+                result = 2
+            else:
+                # Case 1 : same configuration
+                logging.info('Same configuration {} from {}'.format(config_demand, self.peername))
+        
+        except KeyError:
+            # Case 1 : no configuration exist 
+            self.dbhandler['config'] = config_demand
+            logging.info('First configuration {} from {}'.format(config_demand, self.peername))
+        
+        except:
+            # Unexpected error
+            return False
+        
+        finally:
+            # Configure client with actual cryptographic suite 
+            config_actual = (self.dbhandler['config']).split(';')
+            keyH = KeyHandler(self.ms, cur1=config_actual[0], cip1=config_actual[1], \
+                                       cur2=config_actual[2], cip2=config_actual[3], \
+                                       cur3=config_actual[4], cip3=config_actual[5])
+            self.cryptoH = CryptoHandler(keyH)
+            
+        return result

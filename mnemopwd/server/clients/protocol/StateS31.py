@@ -25,56 +25,47 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-
 """
-State S22 : Creation
+State S31 : configuration operation
 """
 
 from server.util.funcutils import singleton
 from server.clients.protocol.StateSCC import StateSCC
-from server.clients.DBHandler import DBHandler
 
 @singleton
-class StateS22(StateSCC):
-    """State S22 : Creation"""
+class StateS31(StateSCC):
+    """State S31 : configuration of the cryptographic handler"""
         
     def do(self, client, data):
-        """Action of the state S22: create a new user account"""
+        """Action of the state S31: obtain (and eventually change) cryptographic configuration"""
         try:
             
             # Control challenge
-            if self.control_challenge(client, data, b'S22.7') :
-            
-                # Test for S22 command
-                is_cd_S22 = data[170:178] == b"CREATION"
-                if not is_cd_S22 : raise Exception('protocol error')
-
-                eid = data[179:348] # id encrypted
-                elogin = data[349:] # Login encrypted 
-
-                # Compute client id
-                login = client.ephecc.decrypt(elogin)
-                id = self.compute_client_id(client.ms, login)
-                        
-                # Get id from client
-                id_from_client = client.ephecc.decrypt(eid)
-            
-                # If ids are not equal
-                if id != id_from_client :
-                    client.transport.write(b'ERROR;' + b'incorrect id')
-                    raise Exception('incorrect id')
-
-                # Try to create a new database
-                filename = self.compute_client_filename(id, client.ms, login)
-                result = DBHandler.new(client.db_path, filename)
+            if self.control_challenge(client, data, b'S31.6') :
                 
-                if result:
-                    client.dbhandler = DBHandler(client.db_path, filename)
-                    client.transport.write(b'OK')
-                    client.state = client.states['3'] # Next state
+                # Test for S31 command
+                is_cd_S31 = data[170:183] == b"CONFIGURATION"
+                if not is_cd_S31 : raise Exception('protocol error')
+            
+                econfig = data[184:]    # Encrypted configuration string
+                config = client.ephecc.decrypt(econfig) # Decrypt configuration string
+                
+                # Try to configure client cryptographic handler
+                result = client.configure_crypto(config.decode())
+                
+                print(result)
+                
+                if result == False:
+                    client.transport.write(b'ERROR;' + b'wrong configuration')
+                    raise Exception('wrong configuration {}'.format(config.decode()))
+                
                 else:
-                    client.transport.write(b'ERROR;' + b'user account already used')
-                    raise Exception('user account already used')
+                    client.transport.write(b'OK;' + (str(result)).encode()) # Send result value
+                    
+                    if result == 2:
+                        pass # TODO
+                    
+                    client.state = client.states['3'] # New client state
             
         except Exception as exc:
             # Schedule a callback to client exception handler

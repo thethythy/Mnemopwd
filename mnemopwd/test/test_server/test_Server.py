@@ -272,7 +272,7 @@ class Test_Server_Client_S21_KO_COUNT(Test_Server_Client_S21_KO_ID):
         protocol_cd = message[:5]
         protocol_data = message[6:]
         self.test.assertEqual(protocol_cd, b'ERROR')
-        self.test.assertEqual(protocol_data, b'count does not exist')
+        self.test.assertEqual(protocol_data, b'user account does not exist')
         
     def run(self):
         try:
@@ -310,7 +310,7 @@ class Test_Server_Client_S22_OK(Test_Server_Client_S1_OK):
         id = ho.digest()
         eid = self.ephecc.encrypt(id, pubkey=self.ephecc.get_pubkey())
 
-        elogin = self.ephecc.encrypt(self.login, pubkey=self.ephecc.get_pubkey())        
+        elogin = self.ephecc.encrypt(self.login, pubkey=self.ephecc.get_pubkey())    
         
         connect.send(echallenge + b';CREATION;' + eid + b';' + elogin)
                 
@@ -386,7 +386,7 @@ class Test_Server_Client_S22_KO_COUNT(Test_Server_Client_S22_OK):
         protocol_cd = message[:5]
         protocol_data = message[6:]
         self.test.assertEqual(protocol_cd, b'ERROR')
-        self.test.assertEqual(protocol_data, b'count already used')
+        self.test.assertEqual(protocol_data, b'user account already used')
         
     def run(self):
         try:
@@ -407,6 +407,126 @@ class Test_Server_Client_S22_KO_COUNT(Test_Server_Client_S22_OK):
             connect.close()
             print("Client", self.number, ": disconnection with the server")
 
+# -----------------------------------------------------------------------------
+# Test S31
+
+class Test_Server_Client_S31_OK_SAME_CONGIG(Test_Server_Client_S21_OK):
+    def __init__(self, host, port, test, number):
+        Test_Server_Client_S21_OK.__init__(self,host,port,test,number)
+        self.curve1 = "sect571r1"
+        self.cipher1 = "aes-256-cbc"
+        self.curve2 = ""
+        self.cipher2 = ""
+        self.curve3 = ""
+        self.cipher3 = ""
+        
+    def state_S31_Begin(self, connect):
+        config = self.curve1 + ";" + self.cipher1 + ";" + self.curve2 + ";" + self.cipher2 + ";" + self.curve3 + ";" + self.cipher3
+        econfig = self.ephecc.encrypt(config, pubkey=self.ephecc.get_pubkey())
+        echallenge = self.get_echallenge(b'S31.6')        
+        connect.send(echallenge + b';CONFIGURATION;' + econfig)
+        
+    def state_S31_OK(self, connect, value):
+        message = connect.recv(1024)
+        protocol_cd = message[:2]
+        protocol_data = message[3:]
+        self.test.assertEqual(protocol_cd, b'OK')
+        self.test.assertEqual(protocol_data, value)
+        
+        print(protocol_data)
+        
+    def run(self):
+        try:
+            time.sleep(4) # Waiting previous test
+            connect = self.connect_to_server() 
+            # State 0
+            self.state_S0(connect)
+            # State 1S
+            self.state_S1S_begin(connect)
+            self.state_S1S_end(connect)
+            # State 1C
+            self.state_S1C_begin(connect)
+            self.state_S1C_end(connect)
+            # State 21
+            self.state_S21_Begin(connect)
+            self.state_S21_OK(connect)
+            # State 31
+            self.state_S31_Begin(connect)
+            self.state_S31_OK(connect, b'1')
+        finally:
+            connect.close()
+            print("Client", self.number, ": disconnection with the server")
+
+class Test_Server_Client_S31_OK_NEW_CONFIG(Test_Server_Client_S31_OK_SAME_CONGIG):
+    def __init__(self, host, port, test, number):
+        Test_Server_Client_S31_OK_SAME_CONGIG.__init__(self,host,port,test,number)
+        self.curve1 = "sect571r1"
+        self.cipher1 = "aes-256-cbc"
+        self.curve2 = "secp256k1"
+        self.cipher2 = "aes-128-cbc"
+        self.curve3 = ""
+        self.cipher3 = ""
+        
+    def run(self):
+        try:
+            time.sleep(5) # Waiting previous test
+            connect = self.connect_to_server() 
+            # State 0
+            self.state_S0(connect)
+            # State 1S
+            self.state_S1S_begin(connect)
+            self.state_S1S_end(connect)
+            # State 1C
+            self.state_S1C_begin(connect)
+            self.state_S1C_end(connect)
+            # State 21
+            self.state_S21_Begin(connect)
+            self.state_S21_OK(connect)
+            # State 31
+            self.state_S31_Begin(connect)
+            self.state_S31_OK(connect, b'2')
+        finally:
+            connect.close()
+            print("Client", self.number, ": disconnection with the server")
+            print("Use Ctrl+c to finish the test")
+            
+class Test_Server_Client_S31_KO(Test_Server_Client_S31_OK_SAME_CONGIG):
+    def __init__(self, host, port, test, number):
+        Test_Server_Client_S31_OK_SAME_CONGIG.__init__(self,host,port,test,number)
+        self.curve3 = "bad curve name"
+        
+    def state_S31_KO(self, connect):
+        message = connect.recv(1024)
+        protocol_cd = message[:5]
+        protocol_data = message[6:]
+        self.test.assertEqual(protocol_cd, b'ERROR')
+        self.test.assertEqual(protocol_data, b'wrong configuration')
+        
+    def run(self):
+        try:
+            time.sleep(4) # Waiting previous test
+            connect = self.connect_to_server() 
+            # State 0
+            self.state_S0(connect)
+            # State 1S
+            self.state_S1S_begin(connect)
+            self.state_S1S_end(connect)
+            # State 1C
+            self.state_S1C_begin(connect)
+            self.state_S1C_end(connect)
+            # State 21
+            self.state_S21_Begin(connect)
+            self.state_S21_OK(connect)
+            # State 31
+            self.state_S31_Begin(connect)
+            self.state_S31_KO(connect)
+        finally:
+            connect.close()
+            print("Client", self.number, ": disconnection with the server")
+            print("Use Ctrl+c to finish the test")
+
+# -----------------------------------------------------------------------------
+
 class Test_ServerTestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -423,21 +543,28 @@ class Test_ServerTestCase(unittest.TestCase):
         pass
                     
     def test_Server(self):
-        Test_Server_Client_S0(Configuration.host, Configuration.port, self, 1).start()
-        Test_Server_Client_S1_OK(Configuration.host, Configuration.port, self, 2).start()
-        Test_Server_Client_S1_KO(Configuration.host, Configuration.port, self, 3).start()
-        Test_Server_Client_S21_KO_ID(Configuration.host, Configuration.port, self, 4).start()
-        Test_Server_Client_S21_KO_COUNT(Configuration.host, Configuration.port, self, 5).start()
+        #Test_Server_Client_S0(Configuration.host, Configuration.port, self, 1).start()
+        #Test_Server_Client_S1_OK(Configuration.host, Configuration.port, self, 2).start()
+        #Test_Server_Client_S1_KO(Configuration.host, Configuration.port, self, 3).start()
+        #Test_Server_Client_S21_KO_ID(Configuration.host, Configuration.port, self, 4).start()
+        #Test_Server_Client_S21_KO_COUNT(Configuration.host, Configuration.port, self, 5).start()
         
         # Begin after 2 secondes
-        Test_Server_Client_S22_OK(Configuration.host, Configuration.port, self, 6).start()        
+        Test_Server_Client_S22_OK(Configuration.host, Configuration.port, self, 6).start()     
         
         # Begin after 3 secondes
-        Test_Server_Client_S22_KO_ID(Configuration.host, Configuration.port, self, 7).start()
-        Test_Server_Client_S22_KO_COUNT(Configuration.host, Configuration.port, self, 8).start()
-        Test_Server_Client_S21_OK(Configuration.host, Configuration.port, self, 9).start()
+        #Test_Server_Client_S22_KO_ID(Configuration.host, Configuration.port, self, 7).start()
+        #Test_Server_Client_S22_KO_COUNT(Configuration.host, Configuration.port, self, 8).start()
+        #Test_Server_Client_S21_OK(Configuration.host, Configuration.port, self, 9).start()
+        
+        # Begin after 4 secondes
+        #Test_Server_Client_S31_OK_SAME_CONGIG(Configuration.host, Configuration.port, self, 10).start()
+        #Test_Server_Client_S31_OK_SAME_CONGIG(Configuration.host, Configuration.port, self, 11).start()
+        Test_Server_Client_S31_KO(Configuration.host, Configuration.port, self, 12).start()
+        
+        # Begin after 5 secondes
+        #Test_Server_Client_S31_OK_NEW_CONFIG(Configuration.host, Configuration.port, self, 13).start()
 
-        print("Use Ctrl+C to finish the test")
         try:
             Configuration.dbpath = self.path
             s = Server()

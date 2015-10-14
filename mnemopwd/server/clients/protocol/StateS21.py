@@ -76,8 +76,8 @@ class StateS21(StateSCC):
                 
                 # If login is unknown
                 elif id == id_from_client and not exist :
-                    client.transport.write(b'ERROR;' + b'count does not exist')
-                    raise Exception('count does not exist')
+                    client.transport.write(b'ERROR;' + b'user account does not exist')
+                    raise Exception('user account does not exist')
             
         except Exception as exc:
             # Schedule a callback to client exception handler

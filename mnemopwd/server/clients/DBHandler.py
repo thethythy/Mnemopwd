@@ -42,7 +42,18 @@ class DBHandler:
     
     def __init__(self, path, filename):
         """Set attributs"""
-        self.database_file = path + '/' + filename + '.db' # Client database file
+        self.database_file = path + '/' + filename # Client database file
+
+    def __getitem__(self, index):
+        """Get an item. Raise KeyError exception if index does not exist"""
+        with shelve.open(self.database_file, flag='r') as db:
+            value = db[index]
+        return value
+    
+    def __setitem__(self, index, value):
+        """Set an item"""
+        with shelve.open(self.database_file, flag='w') as db:
+            db[index] = value
 
     # Extern methods
     
