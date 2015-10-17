@@ -17,18 +17,19 @@
 
 import unittest
 import logging
+import pickle
 from pyelliptic import hash as _hash
 from common.SecretInfoBlock import SecretInfoBlock
 from common.KeyHandler import KeyHandler
-from common.CryptoHandler import CryptoHandler
 
 class  SecretInfoBlockTestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         logging.basicConfig(filename='test/test_common/test_SecretInfoBlock.log')
-        ikey = "this is the key for testing".encode()
-        keyh = KeyHandler(ikey, cur2='secp256k1', cip2='aes-128-cbc', cur3='sect283r1', cip3='rc4')
-        cryptoh = CryptoHandler(keyh)
+        SecretInfoBlockTestCase.ikey = "this is the key for testing".encode()
+        SecretInfoBlockTestCase.keyh = KeyHandler(SecretInfoBlockTestCase.ikey, \
+                                                  cur2='secp256k1', cip2='aes-128-cbc', \
+                                                  cur3='sect283r1', cip3='rc4')
         
     @classmethod
     def tearDownClass(cls):
@@ -36,10 +37,19 @@ class  SecretInfoBlockTestCase(unittest.TestCase):
     
     def setUp(self):
         self.nbInfo1 = 1
-        self.foo1 = SecretInfoBlock()
-        self.hmac1 = _hash.hmac_sha512(CryptoHandler.keyH.ikey, (str(self.foo1.__dict__)).encode())
+        self.foo1 = SecretInfoBlock(SecretInfoBlockTestCase.keyh)
+        
+        # Compute hmac
+        state = self.foo1.__dict__.copy()
+        del state['keyH']
+        state_list = list(state['_infos'].items())
+        state_list.append(('_nbInfo', state['_nbInfo']))
+        state_list.sort()
+        sorted_list =  str(state_list).encode()
+        self.hmac1 = _hash.hmac_sha512(SecretInfoBlockTestCase.keyh.ikey, sorted_list)
+        
         self.nbInfo2 = 2
-        self.foo2 = SecretInfoBlock(self.nbInfo2)
+        self.foo2 = SecretInfoBlock(SecretInfoBlockTestCase.keyh, self.nbInfo2)
         self.value = "value".encode()
 
     def tearDown(self):
