@@ -135,8 +135,8 @@ class InfoBlock:
     def __contains__(self, value):
         """Tests if the value exists at least in one entry.
         Attention : it is not the usual behaviour (that works usually on keys not on values)"""
-        for key, value in self.infos.items() :
-            if self.infos[key] == value :
+        for key in self.infos :
+            if self[key] == value :
                 return True
         return False
     
