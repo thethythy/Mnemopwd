@@ -100,14 +100,17 @@ class  SecretInfoBlockTestCase(unittest.TestCase):
     def test__setstate__(self):
         state = self.foo1.__getstate__()
         self.foo1.__setstate__(state)
+        self.foo1.control_integrity(SecretInfoBlockTestCase.keyh)
         
         state = {"_infos":{}, "_nbInfo":2, "fingerprint":self.hmac1}
         with self.assertRaises(AssertionError):
             self.foo1.__setstate__(state)
+            self.foo1.control_integrity(SecretInfoBlockTestCase.keyh)
             
         state = {"_infos":{"info1":self.value}, "_nbInfo":1, "fingerprint":self.hmac1}
         with self.assertRaises(AssertionError):
             self.foo1.__setstate__(state)
+            self.foo1.control_integrity(SecretInfoBlockTestCase.keyh)
 
     def test__verifyindex__(self):
         with self.assertRaises(TypeError):

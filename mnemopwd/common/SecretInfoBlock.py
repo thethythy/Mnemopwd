@@ -41,10 +41,7 @@ controlled at load time. This treatment is done by server part of the applicatio
 """
 
 import logging
-import re
-import pickle
 from common.InfoBlock import InfoBlock
-from common.KeyHandler import KeyHandler
 from pyelliptic import hash
 
 class SecretInfoBlock(InfoBlock):
@@ -59,14 +56,14 @@ class SecretInfoBlock(InfoBlock):
     Method(s): none
     
     """
+    
+    # Intern methods
+    # --------------
 
     def __init__(self, keyH, nbInfo=1):
         """Object initialization. By default, the number of secret informations is set to one."""
         InfoBlock.__init__(self, nbInfo)
         self.keyH = keyH
-
-    # Intern methods
-    # --------------
     
     def __sorted_state__(self, state):
         """Return a bytes string from a sorted list of the state"""
@@ -88,15 +85,7 @@ class SecretInfoBlock(InfoBlock):
         return state
     
     def __setstate__(self, state):
-        """Restores the objet's state after controlling the integrity.
-        If integrity control fails, an AssertionError is raised."""
-        fingerprint = state["fingerprint"]  # Store the fingerprint
-        del state["fingerprint"] # Delete the fingerprint entry to compute the hmac
-        hmac = hash.hmac_sha512(self.keyH.ikey, self.__sorted_state__(state)) # Compute the hmac
-        condition = hash.equals(fingerprint, hmac) # The hmac must be equal to the fingerprint 
-        if not condition :
-            logging.critical("Intergrity checking fails on a SecretInfoBlock object")
-        assert condition
+        """Restores the objet's state"""
         self.__dict__.update(state)
     
     def __getitem__(self, index):
@@ -114,3 +103,28 @@ class SecretInfoBlock(InfoBlock):
         ciphertext2 = self.keyH.encrypt(1, ciphertext1)
         ciphertext = self.keyH.encrypt(2, ciphertext2)
         self.infos[index] = ciphertext
+        
+    # Extern methods
+    # --------------
+    
+    def control_integrity(self, keyH):
+        """Control integrity. Must be call only once after __setstate__
+        If integrity control fails, an AssertionError is raised."""
+        state = self.__dict__
+        
+        # Store the fingerprint
+        fingerprint = state["fingerprint"]
+        
+        # Delete the fingerprint entry
+        del state["fingerprint"]
+        
+        # Compute the hmac
+        hmac = hash.hmac_sha512(keyH.ikey, self.__sorted_state__(state))
+        
+        # The hmac must be equal to the fingerprint 
+        condition = hash.equals(fingerprint, hmac)
+        if not condition :
+            logging.critical("Intergrity checking fails on a SecretInfoBlock object")
+        assert condition
+        
+        self.keyH = keyH  # Store the key handler
