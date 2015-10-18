@@ -60,7 +60,7 @@ class SecretInfoBlock(InfoBlock):
     # Intern methods
     # --------------
 
-    def __init__(self, keyH, nbInfo=1):
+    def __init__(self, keyH=None, nbInfo=1):
         """Object initialization. By default, the number of secret informations is set to one."""
         InfoBlock.__init__(self, nbInfo)
         self.keyH = keyH
@@ -81,13 +81,14 @@ class SecretInfoBlock(InfoBlock):
         except:
             pass
         # Compute hmac with the key handler
-        state["fingerprint"] = hash.hmac_sha512(self.keyH.ikey, self.__sorted_state__(state))
+        message = self.__sorted_state__(state) + self.keyH.config.encode()
+        state["fingerprint"] = hash.hmac_sha512(self.keyH.ikey, message)
         return state
     
     def __setstate__(self, state):
         """Restores the objet's state"""
         self.__dict__.update(state)
-    
+        
     def __getitem__(self, index):
         """Decrypt value after being restored from a block"""
         self._verify_index_(index) # Verify if the index parameter is valid
@@ -119,7 +120,8 @@ class SecretInfoBlock(InfoBlock):
         del state["fingerprint"]
         
         # Compute the hmac
-        hmac = hash.hmac_sha512(keyH.ikey, self.__sorted_state__(state))
+        message = self.__sorted_state__(state) + keyH.config.encode()
+        hmac = hash.hmac_sha512(keyH.ikey, message)
         
         # The hmac must be equal to the fingerprint 
         condition = hash.equals(fingerprint, hmac)

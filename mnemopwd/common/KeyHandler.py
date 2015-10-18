@@ -38,6 +38,7 @@ class KeyHandler:
    
     Attribut(s) :
     - ikey : key for integrity operations (bytes array)
+    - config : string of the cryptographic suite
     - eccs : list of dictionaries of ECC object and cipher name for operations of each stage
       For example, for stage one : eccs[0] == {'ecc':ECC_object, 'cipher':'cipher_name'}
     """
@@ -53,6 +54,7 @@ class KeyHandler:
         self.ikey = ho.digest() # The key for integrity operations
         
         # Create ECC objects
+        self.config = cur1 + ";" + cip1 + ";" + cur2 + ";" + cip2 + ";" + cur3 + ";" + cip3
         self.eccs = [] # The list to store ECC objects and cipher names
         self.eccs.append({'ecc':self._compute_ecc_(cur1, msecret, 'first'), 'cipher':cip1}) # The first stage ECC
         self.eccs.append({'ecc':self._compute_ecc_(cur2, msecret, 'second'), 'cipher':cip2}) # The second stage ECC
