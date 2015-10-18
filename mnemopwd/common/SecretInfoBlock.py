@@ -46,7 +46,8 @@ from pyelliptic import hash
 
 class SecretInfoBlock(InfoBlock):
     """
-    Dictionnary of secret informations
+    Dictionnary of secret informations.
+    It is a subclass of InfoBlock.
     
     Property(ies): none
     

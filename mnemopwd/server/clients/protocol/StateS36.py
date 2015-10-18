@@ -26,43 +26,43 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 """
-State S31 : configuration operation
+State S36 : add data operation
 """
 
 from server.util.funcutils import singleton
 from server.clients.protocol.StateSCC import StateSCC
+import pickle
 
 @singleton
-class StateS31(StateSCC):
-    """State S31 : configuration of the cryptographic handler"""
+class StateS36(StateSCC):
+    """State S36 : add a secret information block"""
         
     def do(self, client, data):
-        """Action of the state S31: obtain (and eventually change) cryptographic configuration"""
+        """Action of the state S36: add a secret information block"""
         try:
             
             # Control challenge
-            if self.control_challenge(client, data, b'S31.6') :
+            if self.control_challenge(client, data, b'S36.6') :
                 
                 # Test for S31 command
-                is_cd_S31 = data[170:183] == b"CONFIGURATION"
+                is_cd_S31 = data[170:177] == b"ADDDATA"
                 if not is_cd_S31 : raise Exception('protocol error')
             
-                econfig = data[184:]    # Encrypted configuration string
-                config = client.ephecc.decrypt(econfig) # Decrypt configuration string
+                bsib = data[178:] # One secret information block in pickle format
                 
-                # Try to configure client cryptographic handler
-                result = client.configure_crypto(config.decode())
+                try:
+                    sib = pickle.loads(bsib) # One secret information block object
+                    sib.control_integrity(client.keyH) # Configure and check integrity           
                 
-                if result == False:
-                    client.transport.write(b'ERROR;' + b'wrong configuration')
-                    raise Exception('wrong configuration {}'.format(config.decode()))
+                except AssertionError:
+                    client.transport.write(b'ERROR;' + b'data rejected') # Send an error message
+                    raise Exception('data rejected')
                 
                 else:
-                    client.transport.write(b'OK;' + (str(result)).encode()) # Send result value
-                    
-                    if result == 2:
-                        pass # TODO
-                    
+                    # Add a secret information block
+                    index = client.dbhandler.add_data(sib)
+                     
+                    client.transport.write(b'OK;' + (str(index)).encode()) # Send index value
                     client.state = client.states['3'] # New client state
             
         except Exception as exc:

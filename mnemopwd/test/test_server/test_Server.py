@@ -25,15 +25,17 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-
 import unittest
 import threading
 import socket
 import ssl
 import time
+import pickle
 from pathlib import Path
 from server.server import Server
 from server.util.Configuration import Configuration
+from common.KeyHandler import KeyHandler
+from common.SecretInfoBlock import SecretInfoBlock
 from pyelliptic import ECC
 from pyelliptic import OpenSSL
 from pyelliptic import Cipher
@@ -71,7 +73,7 @@ class Test_Server_Client_S0(threading.Thread):
     
     def state_S0(self, connect):
         #print("Client", self.number, "state_S0 : starting")
-        message = connect.recv(1024)
+        message = connect.recv(4096)
         #print("Client", self.number, "state_S0 : receiving")
         
         protocol_cd = message[:10]
@@ -90,8 +92,8 @@ class Test_Server_Client_S0(threading.Thread):
             print("Client", self.number, ": disconnection with the server")
 
 # -----------------------------------------------------------------------------
-# Test S1            
-            
+# Test S1
+
 class Test_Server_Client_S1_OK(Test_Server_Client_S0):
     def __init__(self, host, port, test, number):
         Test_Server_Client_S0.__init__(self,host,port,test,number)
@@ -105,12 +107,12 @@ class Test_Server_Client_S1_OK(Test_Server_Client_S0):
         connect.send(b'SESSION;' + ems)
 
     def state_S1S_end(self, connect):
-        message = connect.recv(1024)
+        message = connect.recv(4096)
         protocol_cd = message[:10]
         blocksize = OpenSSL.get_cipher('aes-256-cbc').get_blocksize()
         self.iv = message[11:11+blocksize]
-        self.esession = message[12+blocksize:]        
-        self.test.assertEqual(protocol_cd, b'CHALLENGER')        
+        self.esession = message[12+blocksize:]
+        self.test.assertEqual(protocol_cd, b'CHALLENGER')
     
     def get_echallenge(self, var, bug=False):
         if bug:
@@ -121,13 +123,13 @@ class Test_Server_Client_S1_OK(Test_Server_Client_S0):
     
     def state_S1C_begin(self, connect):
         ctx = Cipher(self.ms, self.iv, 0, 'aes-256-cbc')
-        self.session = ctx.ciphering(self.esession)        
+        self.session = ctx.ciphering(self.esession)
         echallenge = self.get_echallenge(b'S1.12')
         
         connect.send(b'CHALLENGEA;' + echallenge)
         
     def state_S1C_end(self, connect):
-        message = connect.recv(1024)
+        message = connect.recv(4096)
         protocol_cd = message[:2]
         self.test.assertEqual(protocol_cd, b'OK')
     
@@ -145,7 +147,7 @@ class Test_Server_Client_S1_OK(Test_Server_Client_S0):
             self.state_S1C_end(connect)
         finally:
             connect.close()
-            print("Client", self.number, ": disconnection with the server")     
+            print("Client", self.number, ": disconnection with the server")
 
 class Test_Server_Client_S1_KO(Test_Server_Client_S1_OK):
     def __init__(self, host, port, test, number):
@@ -154,11 +156,11 @@ class Test_Server_Client_S1_KO(Test_Server_Client_S1_OK):
     def state_S1C_begin(self, connect):
         ctx = Cipher(self.ms, self.iv, 0, 'aes-256-cbc')
         self.session = ctx.ciphering(self.esession)
-        echallenge = self.get_echallenge(b'S1.12', bug=True)        
+        echallenge = self.get_echallenge(b'S1.12', bug=True)
         connect.send(b'CHALLENGEA;' + echallenge)
         
     def state_S1C_end(self, connect):
-        message = connect.recv(1024)
+        message = connect.recv(4096)
         protocol_cd = message[:5]
         protocol_data = message[6:]
         self.test.assertEqual(protocol_cd, b'ERROR')
@@ -203,7 +205,7 @@ class Test_Server_Client_S21_OK(Test_Server_Client_S1_OK):
 
     def state_S21_OK(self, connect):
         #print("Client", self.number, "state_S21_KO : starting")    
-        message = connect.recv(1024)
+        message = connect.recv(4096)
         #print("Client", self.number, "state_S21_KO : receiving")
         
         protocol_cd = message[:2]
@@ -234,7 +236,7 @@ class Test_Server_Client_S21_KO_ID(Test_Server_Client_S21_OK):
                 
     def state_S21_KO(self, connect):
         #print("Client", self.number, "state_S21_KO : starting")    
-        message = connect.recv(1024)
+        message = connect.recv(4096)
         #print("Client", self.number, "state_S21_KO : receiving")
         
         protocol_cd = message[:5]
@@ -266,7 +268,7 @@ class Test_Server_Client_S21_KO_COUNT(Test_Server_Client_S21_KO_ID):
                                 
     def state_S21_KO(self, connect):
         #print("Client", self.number, "state_S22_KO : starting")
-        message = connect.recv(1024)
+        message = connect.recv(4096)
         #print("Client", self.number, "state_S22_KO : receiving")
         
         protocol_cd = message[:5]
@@ -316,7 +318,7 @@ class Test_Server_Client_S22_OK(Test_Server_Client_S1_OK):
                 
     def state_S22_OK(self, connect):        
         #print("Client", self.number, "state_S22 : starting")
-        message = connect.recv(1024)
+        message = connect.recv(4096)
         #print("Client", self.number, "state_S22 : receiving")
         
         protocol_cd = message[:5]
@@ -347,7 +349,7 @@ class Test_Server_Client_S22_KO_ID(Test_Server_Client_S22_OK):
                 
     def state_S22_KO(self, connect):        
         #print("Client", self.number, "state_S22 : starting")
-        message = connect.recv(1024)
+        message = connect.recv(4096)
         #print("Client", self.number, "state_S22 : receiving")
         
         protocol_cd = message[:5]
@@ -380,7 +382,7 @@ class Test_Server_Client_S22_KO_COUNT(Test_Server_Client_S22_OK):
                 
     def state_S22_KO(self, connect):        
         #print("Client", self.number, "state_S22 : starting")
-        message = connect.recv(1024)
+        message = connect.recv(4096)
         #print("Client", self.number, "state_S22 : receiving")
         
         protocol_cd = message[:5]
@@ -423,17 +425,15 @@ class Test_Server_Client_S31_OK_SAME_CONGIG(Test_Server_Client_S21_OK):
     def state_S31_Begin(self, connect):
         config = self.curve1 + ";" + self.cipher1 + ";" + self.curve2 + ";" + self.cipher2 + ";" + self.curve3 + ";" + self.cipher3
         econfig = self.ephecc.encrypt(config, pubkey=self.ephecc.get_pubkey())
-        echallenge = self.get_echallenge(b'S31.6')        
+        echallenge = self.get_echallenge(b'S31.6')
         connect.send(echallenge + b';CONFIGURATION;' + econfig)
         
     def state_S31_OK(self, connect, value):
-        message = connect.recv(1024)
+        message = connect.recv(4096)
         protocol_cd = message[:2]
         protocol_data = message[3:]
         self.test.assertEqual(protocol_cd, b'OK')
         self.test.assertEqual(protocol_data, value)
-        
-        print(protocol_data)
         
     def run(self):
         try:
@@ -496,7 +496,7 @@ class Test_Server_Client_S31_KO(Test_Server_Client_S31_OK_SAME_CONGIG):
         self.curve3 = "bad curve name"
         
     def state_S31_KO(self, connect):
-        message = connect.recv(1024)
+        message = connect.recv(4096)
         protocol_cd = message[:5]
         protocol_data = message[6:]
         self.test.assertEqual(protocol_cd, b'ERROR')
@@ -527,6 +527,90 @@ class Test_Server_Client_S31_KO(Test_Server_Client_S31_OK_SAME_CONGIG):
 
 # -----------------------------------------------------------------------------
 
+class Test_Server_Client_S36_OK(Test_Server_Client_S31_OK_SAME_CONGIG):
+    def __init__(self, host, port, test, number):
+        Test_Server_Client_S31_OK_SAME_CONGIG.__init__(self,host,port,test,number)
+
+    def state_S36_Begin(self, connect, bug=False):
+        
+        if bug :
+            self.keyH = KeyHandler(self.ms, cur1=self.curve1, cip1='rc4')
+        else:
+            self.keyH = KeyHandler(self.ms, cur1=self.curve1, cip1=self.cipher1)
+        sib = SecretInfoBlock(self.keyH)
+        sib['info1'] = "secret information"
+        
+        echallenge = self.get_echallenge(b'S36.6')
+        connect.send(echallenge + b';ADDDATA;' + pickle.dumps(sib))
+        
+    def state_S36_OK(self, connect):
+        message = connect.recv(4096)
+        protocol_cd = message[:2]
+        self.test.assertEqual(protocol_cd, b'OK')
+        
+    def run(self):
+        try:
+            time.sleep(4) # Waiting previous test
+            connect = self.connect_to_server() 
+            # State 0
+            self.state_S0(connect)
+            # State 1S
+            self.state_S1S_begin(connect)
+            self.state_S1S_end(connect)
+            # State 1C
+            self.state_S1C_begin(connect)
+            self.state_S1C_end(connect)
+            # State 21
+            self.state_S21_Begin(connect)
+            self.state_S21_OK(connect)
+            # State 31
+            self.state_S31_Begin(connect)
+            self.state_S31_OK(connect, b'1')
+            # State 36
+            self.state_S36_Begin(connect)
+            self.state_S36_OK(connect)
+        finally:
+            connect.close()
+            print("Client", self.number, ": disconnection with the server")
+
+class Test_Server_Client_S36_KO(Test_Server_Client_S36_OK):
+    def __init__(self, host, port, test, number):
+        Test_Server_Client_S36_OK.__init__(self,host,port,test,number)
+    
+    def state_S36_KO(self, connect):
+        message = connect.recv(4096)
+        protocol_cd = message[:5]
+        protocol_data = message[6:]
+        self.test.assertEqual(protocol_cd, b'ERROR')
+        self.test.assertEqual(protocol_data, b'data rejected')
+        
+    def run(self):
+        try:
+            time.sleep(4) # Waiting previous test
+            connect = self.connect_to_server() 
+            # State 0
+            self.state_S0(connect)
+            # State 1S
+            self.state_S1S_begin(connect)
+            self.state_S1S_end(connect)
+            # State 1C
+            self.state_S1C_begin(connect)
+            self.state_S1C_end(connect)
+            # State 21
+            self.state_S21_Begin(connect)
+            self.state_S21_OK(connect)
+            # State 31
+            self.state_S31_Begin(connect)
+            self.state_S31_OK(connect, b'1')
+            # State 36
+            self.state_S36_Begin(connect, bug=True)
+            self.state_S36_KO(connect)
+        finally:
+            connect.close()
+            print("Client", self.number, ": disconnection with the server")
+
+# -----------------------------------------------------------------------------
+
 class Test_ServerTestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -541,29 +625,31 @@ class Test_ServerTestCase(unittest.TestCase):
 
     def tearDown(self):
         pass
-                    
+
     def test_Server(self):
-        #Test_Server_Client_S0(Configuration.host, Configuration.port, self, 1).start()
-        #Test_Server_Client_S1_OK(Configuration.host, Configuration.port, self, 2).start()
-        #Test_Server_Client_S1_KO(Configuration.host, Configuration.port, self, 3).start()
-        #Test_Server_Client_S21_KO_ID(Configuration.host, Configuration.port, self, 4).start()
-        #Test_Server_Client_S21_KO_COUNT(Configuration.host, Configuration.port, self, 5).start()
+        Test_Server_Client_S0(Configuration.host, Configuration.port, self, 1).start()
+        Test_Server_Client_S1_OK(Configuration.host, Configuration.port, self, 2).start()
+        Test_Server_Client_S1_KO(Configuration.host, Configuration.port, self, 3).start()
+        Test_Server_Client_S21_KO_ID(Configuration.host, Configuration.port, self, 4).start()
+        Test_Server_Client_S21_KO_COUNT(Configuration.host, Configuration.port, self, 5).start()
         
         # Begin after 2 secondes
-        Test_Server_Client_S22_OK(Configuration.host, Configuration.port, self, 6).start()     
+        Test_Server_Client_S22_OK(Configuration.host, Configuration.port, self, 6).start()
         
         # Begin after 3 secondes
-        #Test_Server_Client_S22_KO_ID(Configuration.host, Configuration.port, self, 7).start()
-        #Test_Server_Client_S22_KO_COUNT(Configuration.host, Configuration.port, self, 8).start()
-        #Test_Server_Client_S21_OK(Configuration.host, Configuration.port, self, 9).start()
+        Test_Server_Client_S22_KO_ID(Configuration.host, Configuration.port, self, 7).start()
+        Test_Server_Client_S22_KO_COUNT(Configuration.host, Configuration.port, self, 8).start()
+        Test_Server_Client_S21_OK(Configuration.host, Configuration.port, self, 9).start()
         
         # Begin after 4 secondes
-        #Test_Server_Client_S31_OK_SAME_CONGIG(Configuration.host, Configuration.port, self, 10).start()
-        #Test_Server_Client_S31_OK_SAME_CONGIG(Configuration.host, Configuration.port, self, 11).start()
+        Test_Server_Client_S31_OK_SAME_CONGIG(Configuration.host, Configuration.port, self, 10).start()
+        Test_Server_Client_S31_OK_SAME_CONGIG(Configuration.host, Configuration.port, self, 11).start()
         Test_Server_Client_S31_KO(Configuration.host, Configuration.port, self, 12).start()
+        Test_Server_Client_S36_OK(Configuration.host, Configuration.port, self, 13).start()
+        Test_Server_Client_S36_KO(Configuration.host, Configuration.port, self, 14).start()
         
         # Begin after 5 secondes
-        #Test_Server_Client_S31_OK_NEW_CONFIG(Configuration.host, Configuration.port, self, 13).start()
+        Test_Server_Client_S31_OK_NEW_CONFIG(Configuration.host, Configuration.port, self, 15).start()
 
         try:
             Configuration.dbpath = self.path

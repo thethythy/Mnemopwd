@@ -60,18 +60,25 @@ class DBHandler:
     @staticmethod
     def new(path, filename):
         """Try to create a new db"""
-        print('hello world')
-        
         if DBHandler.exist(path, filename) :
             return False
         else:
             # Create a new database file with good permissions
-            with shelve.open(path + '/' + filename, flag='n') as db: db['nb_sibs'] = 0
-            os.chmod(path + '/' + filename + '.db', stat.S_IRUSR | stat.S_IWUSR | stat.S_IREAD | stat.S_IWRITE)
+            with shelve.open(path + '/' + filename, flag='n') as db:
+                db['nb_sibs'] = 0
+            os.chmod(path + '/' + filename + '.db', \
+                     stat.S_IRUSR | stat.S_IWUSR | stat.S_IREAD | stat.S_IWRITE)
             return True
     
     @staticmethod
     def exist(path, filename):
         """Test if the data file exist"""
-        print("hello world 2", filename)
         return os.path.exists(path + '/' + filename + '.db')
+        
+    def add_data(self, sib):
+        """Add a secret information block and return his index (a string)"""
+        nb_sibs = self['nb_sibs'] + 1   # Increment the number of block
+        self['nb_sibs'] = nb_sibs       # Store the new number of block
+        index = str(nb_sibs)            # The index
+        self[index] = sib               # Store the block
+        return index                    # Return the index of the block

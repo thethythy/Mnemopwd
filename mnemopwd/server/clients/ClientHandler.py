@@ -36,8 +36,8 @@ from server.clients.protocol.StateS21 import StateS21
 from server.clients.protocol.StateS22 import StateS22
 from server.clients.protocol.StateS3 import StateS3
 from server.clients.protocol.StateS31 import StateS31
+from server.clients.protocol.StateS36 import StateS36
 from pyelliptic import OpenSSL
-from common.CryptoHandler import CryptoHandler
 from common.KeyHandler import KeyHandler
 
 """
@@ -54,8 +54,8 @@ class ClientHandler(asyncio.Protocol):
         # The protocol states
         self.states = {'0':StateS0(), '1S':StateS1S(), '1C':StateS1C(), \
                        '2':StateS2(), '21':StateS21(), '22':StateS22(), \
-                       '3':StateS3(), '31':StateS31()}
-        
+                       '3':StateS3(), '31':StateS31(), '36':StateS36()}
+
     def connection_made(self, transport):
         """Connection starting : set default protocol state and start it"""
         self.transport = transport
@@ -87,8 +87,6 @@ class ClientHandler(asyncio.Protocol):
         
     def configure_crypto(self, config_demand):
         """Configure cryptographic handler"""
-        
-        print(config_demand)
         
         # Control curve and cipher names
         try:
@@ -122,11 +120,10 @@ class ClientHandler(asyncio.Protocol):
             return False
         
         finally:
-            # Configure client with actual cryptographic suite 
+            # Configure client with actual cryptographic suite
             config_actual = (self.dbhandler['config']).split(';')
-            keyH = KeyHandler(self.ms, cur1=config_actual[0], cip1=config_actual[1], \
-                                       cur2=config_actual[2], cip2=config_actual[3], \
-                                       cur3=config_actual[4], cip3=config_actual[5])
-            self.cryptoH = CryptoHandler(keyH)
+            self.keyH = KeyHandler(self.ms, cur1=config_actual[0], cip1=config_actual[1], \
+                                            cur2=config_actual[2], cip2=config_actual[3], \
+                                            cur3=config_actual[4], cip3=config_actual[5])
             
         return result
