@@ -30,7 +30,7 @@ State S36 : add data operation
 """
 
 from server.util.funcutils import singleton
-from server.clients.protocol.StateSCC import StateSCC
+from server.clients.protocol import StateSCC
 import pickle
 
 @singleton
@@ -60,7 +60,7 @@ class StateS36(StateSCC):
                 
                 else:
                     # Add a secret information block
-                    index = client.dbhandler.add_data(sib)
+                    index = client.dbH.add_data(sib)
                      
                     client.transport.write(b'OK;' + (str(index)).encode()) # Send index value
                     client.state = client.states['3'] # New client state

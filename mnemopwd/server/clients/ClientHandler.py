@@ -28,17 +28,12 @@
 
 import asyncio
 import logging
-from server.clients.protocol.StateS0 import StateS0
-from server.clients.protocol.StateS1S import StateS1S
-from server.clients.protocol.StateS1C import StateS1C
-from server.clients.protocol.StateS2 import StateS2
-from server.clients.protocol.StateS21 import StateS21
-from server.clients.protocol.StateS22 import StateS22
-from server.clients.protocol.StateS3 import StateS3
-from server.clients.protocol.StateS31 import StateS31
-from server.clients.protocol.StateS36 import StateS36
+import os
+from server.clients.protocol import *
 from pyelliptic import OpenSSL
 from common.KeyHandler import KeyHandler
+from common.SecretInfoBlock import SecretInfoBlock
+from server.clients.DBHandler import DBHandler
 
 """
 The client connection handler
@@ -49,7 +44,7 @@ class ClientHandler(asyncio.Protocol):
     
     def __init__(self, loop, path):
         """Initialize the handler"""
-        self.db_path = path # The path to the database
+        self.dbpath = path # The path to the database
         self.loop = loop # The i/o asynchronous loop
         # The protocol states
         self.states = {'0':StateS0(), '1S':StateS1S(), '1C':StateS1C(), \
@@ -101,9 +96,9 @@ class ClientHandler(asyncio.Protocol):
         # Configure crypto handler
         result = 1
         try:
-            if self.dbhandler['config'] != config_demand :
+            if self.dbH['config'] != config_demand :
                 # Case 2 : new configuration demand
-                self.dbhandler['config_temp'] = config_demand
+                self.dbH['config_tmp'] = config_demand
                 logging.warning('New configuration {} from {}'.format(config_demand, self.peername))
                 result = 2
             else:
@@ -112,7 +107,7 @@ class ClientHandler(asyncio.Protocol):
         
         except KeyError:
             # Case 1 : no configuration exist 
-            self.dbhandler['config'] = config_demand
+            self.dbH['config'] = config_demand
             logging.info('First configuration {} from {}'.format(config_demand, self.peername))
         
         except:
@@ -121,9 +116,64 @@ class ClientHandler(asyncio.Protocol):
         
         finally:
             # Configure client with actual cryptographic suite
-            config_actual = (self.dbhandler['config']).split(';')
+            config_actual = (self.dbH['config']).split(';')
             self.keyH = KeyHandler(self.ms, cur1=config_actual[0], cip1=config_actual[1], \
                                             cur2=config_actual[2], cip2=config_actual[3], \
                                             cur3=config_actual[4], cip3=config_actual[5])
-            
+        # Return False (wrong configuration) or 1 (same or first) or 2 (new)
         return result
+        
+    def update_crypto(self):
+        """Change all secret informations with the new cryptographic configuration"""
+        
+        try :
+        
+            # Create an empty database
+            if DBHandler.new(self.dbH.path, self.dbH.filename + '_tmp') :
+        
+                # Create new handlers
+                dbhandler_tmp = DBHandler(self.dbH.path, self.dbH.filename + '_tmp')
+                config_tmp = self.dbH['config_tmp']
+                dbhandler_tmp['config'] = config_tmp
+                config = config_tmp.split(';')
+                keyhandler_tmp = KeyHandler(self.ms, cur1=config[0], cip1=config[1], \
+                                                     cur2=config[2], cip2=config[3], \
+                                                     cur3=config[4], cip3=config[5])
+            
+                print(self.dbH['nb_sibs'])
+            
+                # Data exchange
+                nb_sibs = self.dbH['nb_sibs']
+                if nb_sibs > 0 :
+                    for i in range(1, nb_sibs + 1) :
+                        sib = self.dbH[str(i)]    # Original secret information block
+                        sib.keyH = self.keyH      # Set actual keyhandler
+                        if sib.nbInfo > 0 :
+                            sib_tmp = SecretInfoBlock(keyhandler_tmp, sib.nbInfo) # New sib
+                            for j in range(1, sib.nbInfo + 1) : # For all sib in original database
+                                print(sib['info' + str(j)])
+                                sib_tmp['info' + str(j)] = sib['info' + str(j)] # Exchange
+                                assert sib_tmp['info' + str(j)] == sib['info' + str(j)] # Verification
+                            dbhandler_tmp.add_data(sib_tmp) # Store new sib in the new database
+                            
+                # Delete original database
+                os.unlink(self.dbH.path + '/' + self.dbH.filename + '.db')
+                # Rename temporary database
+                os.rename(self.dbH.path + '/' + self.dbH.filename + '_tmp.db', \
+                          self.dbH.path + '/' + self.dbH.filename + '.db')
+                # Update handlers of the client handler
+                self.dbH = dbhandler_tmp
+                self.keyH = keyhandler_tmp
+                
+            else:
+                raise Exception() # Not enough space left ? bad directory ? permission problem ?
+            
+        except:
+            # Delete temporary database
+            os.unlink(self.dbH.path + '/' + self.dbH.filename + '_tmp.db')
+            # Delete new configuration string
+            del self.dbH['config_tmp']
+            return False
+            
+        return True
+        

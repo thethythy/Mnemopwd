@@ -91,8 +91,11 @@ class KeyHandler:
             # Control that secret < order
             bn_order = OpenSSL.BN_new() # Create a BIGNUM structure to store order
             OpenSSL.EC_GROUP_get_order(ec_group, bn_order, bn_ctx); # Get the order
+            warning = True
             while OpenSSL.BN_cmp(bn_secret, bn_order) >= 0 : # If secret >= order
-                logging.warning("Decrease secret because it is > of order of the curve %s", cur)
+                if warning:
+                    logging.warning("Decrease secret because it is > of order of the curve %s", cur)
+                    warning = False
                 new_number_bits = (OpenSSL.BN_num_bytes(bn_secret) - 1) * 8 # Decrease the size by 8 bits
                 OpenSSL.BN_mask_bits(bn_secret, new_number_bits) # Truncate
             

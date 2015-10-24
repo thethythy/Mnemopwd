@@ -31,7 +31,7 @@ State S22 : Creation
 """
 
 from server.util.funcutils import singleton
-from server.clients.protocol.StateSCC import StateSCC
+from server.clients.protocol import StateSCC
 from server.clients.DBHandler import DBHandler
 
 @singleton
@@ -66,10 +66,10 @@ class StateS22(StateSCC):
 
                 # Try to create a new database
                 filename = self.compute_client_filename(id, client.ms, login)
-                result = DBHandler.new(client.db_path, filename)
+                result = DBHandler.new(client.dbpath, filename)
                 
                 if result:
-                    client.dbhandler = DBHandler(client.db_path, filename)
+                    client.dbH = DBHandler(client.dbpath, filename)
                     client.transport.write(b'OK')
                     client.state = client.states['3'] # Next state
                 else:

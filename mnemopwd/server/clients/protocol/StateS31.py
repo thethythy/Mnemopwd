@@ -30,7 +30,7 @@ State S31 : configuration operation
 """
 
 from server.util.funcutils import singleton
-from server.clients.protocol.StateSCC import StateSCC
+from server.clients.protocol import StateSCC
 
 @singleton
 class StateS31(StateSCC):
@@ -58,10 +58,16 @@ class StateS31(StateSCC):
                     raise Exception('wrong configuration {}'.format(config.decode()))
                 
                 else:
-                    client.transport.write(b'OK;' + (str(result)).encode()) # Send result value
+                    
+                    if result == 1:
+                        client.transport.write(b'OK;' + b'1') # Send result value
                     
                     if result == 2:
-                        pass # TODO
+                        if client.update_crypto() : # Re-do all secret information encryption
+                            client.transport.write(b'OK;' + b'2') # Send result value
+                        else:
+                            client.transport.write(b'ERROR;' + b'S31 operation aborted')
+                            raise Exception('S31 operation aborted')
                     
                     client.state = client.states['3'] # New client state
             

@@ -31,7 +31,7 @@ State S21 : Login
 """
 
 from server.util.funcutils import singleton
-from server.clients.protocol.StateSCC import StateSCC
+from server.clients.protocol import StateSCC
 from server.clients.DBHandler import DBHandler
 
 @singleton
@@ -66,11 +66,11 @@ class StateS21(StateSCC):
             
                 # Test if login exists
                 filename = self.compute_client_filename(id, client.ms, login)
-                exist = DBHandler.exist(client.db_path, filename)
+                exist = DBHandler.exist(client.dbpath, filename)
             
                 # If login is OK and ids are equal
                 if id == id_from_client and exist :
-                    client.dbhandler = DBHandler(client.db_path, filename)
+                    client.dbH = DBHandler(client.dbpath, filename)
                     client.transport.write(b'OK')
                     client.state = client.states['3']
                 

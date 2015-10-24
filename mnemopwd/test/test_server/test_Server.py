@@ -423,7 +423,9 @@ class Test_Server_Client_S31_OK_SAME_CONGIG(Test_Server_Client_S21_OK):
         self.cipher3 = ""
         
     def state_S31_Begin(self, connect):
-        config = self.curve1 + ";" + self.cipher1 + ";" + self.curve2 + ";" + self.cipher2 + ";" + self.curve3 + ";" + self.cipher3
+        config = self.curve1 + ";" + self.cipher1 + ";" + \
+                 self.curve2 + ";" + self.cipher2 + ";" + \
+                 self.curve3 + ";" + self.cipher3
         econfig = self.ephecc.encrypt(config, pubkey=self.ephecc.get_pubkey())
         echallenge = self.get_echallenge(b'S31.6')
         connect.send(echallenge + b';CONFIGURATION;' + econfig)
@@ -488,8 +490,7 @@ class Test_Server_Client_S31_OK_NEW_CONFIG(Test_Server_Client_S31_OK_SAME_CONGIG
         finally:
             connect.close()
             print("Client", self.number, ": disconnection with the server")
-            print("Use Ctrl+c to finish the test")
-            
+
 class Test_Server_Client_S31_KO(Test_Server_Client_S31_OK_SAME_CONGIG):
     def __init__(self, host, port, test, number):
         Test_Server_Client_S31_OK_SAME_CONGIG.__init__(self,host,port,test,number)
@@ -523,9 +524,9 @@ class Test_Server_Client_S31_KO(Test_Server_Client_S31_OK_SAME_CONGIG):
         finally:
             connect.close()
             print("Client", self.number, ": disconnection with the server")
-            print("Use Ctrl+c to finish the test")
 
 # -----------------------------------------------------------------------------
+# Test S36
 
 class Test_Server_Client_S36_OK(Test_Server_Client_S31_OK_SAME_CONGIG):
     def __init__(self, host, port, test, number):
@@ -609,6 +610,50 @@ class Test_Server_Client_S36_KO(Test_Server_Client_S36_OK):
             connect.close()
             print("Client", self.number, ": disconnection with the server")
 
+class Test_Server_Client_S36_OK_NEW_CONFIG(Test_Server_Client_S31_OK_NEW_CONFIG):
+    def __init__(self, host, port, test, number):
+        Test_Server_Client_S31_OK_NEW_CONFIG.__init__(self,host,port,test,number)
+
+    def state_S36_Begin(self, connect):
+        self.keyH = KeyHandler(self.ms, cur1=self.curve1, cip1=self.cipher1, \
+                                        cur2=self.curve2, cip2=self.cipher2)
+        sib = SecretInfoBlock(self.keyH)
+        sib['info1'] = "secret information"
+        
+        echallenge = self.get_echallenge(b'S36.6')
+        connect.send(echallenge + b';ADDDATA;' + pickle.dumps(sib))
+        
+    def state_S36_OK(self, connect):
+        message = connect.recv(4096)
+        protocol_cd = message[:2]
+        self.test.assertEqual(protocol_cd, b'OK')
+        
+    def run(self):
+        try:
+            time.sleep(6) # Waiting previous test
+            connect = self.connect_to_server() 
+            # State 0
+            self.state_S0(connect)
+            # State 1S
+            self.state_S1S_begin(connect)
+            self.state_S1S_end(connect)
+            # State 1C
+            self.state_S1C_begin(connect)
+            self.state_S1C_end(connect)
+            # State 21
+            self.state_S21_Begin(connect)
+            self.state_S21_OK(connect)
+            # State 31
+            self.state_S31_Begin(connect)
+            self.state_S31_OK(connect, b'1')
+            # State 36
+            self.state_S36_Begin(connect)
+            self.state_S36_OK(connect)
+        finally:
+            connect.close()
+            print("Client", self.number, ": disconnection with the server")
+            print("Use Ctrl+c to finish the test")
+
 # -----------------------------------------------------------------------------
 
 class Test_ServerTestCase(unittest.TestCase):
@@ -627,29 +672,33 @@ class Test_ServerTestCase(unittest.TestCase):
         pass
 
     def test_Server(self):
-        Test_Server_Client_S0(Configuration.host, Configuration.port, self, 1).start()
-        Test_Server_Client_S1_OK(Configuration.host, Configuration.port, self, 2).start()
-        Test_Server_Client_S1_KO(Configuration.host, Configuration.port, self, 3).start()
-        Test_Server_Client_S21_KO_ID(Configuration.host, Configuration.port, self, 4).start()
-        Test_Server_Client_S21_KO_COUNT(Configuration.host, Configuration.port, self, 5).start()
+        #Test_Server_Client_S0(Configuration.host, Configuration.port, self, 1).start()
+        #Test_Server_Client_S1_OK(Configuration.host, Configuration.port, self, 2).start()
+        #Test_Server_Client_S1_KO(Configuration.host, Configuration.port, self, 3).start()
+        #Test_Server_Client_S21_KO_ID(Configuration.host, Configuration.port, self, 4).start()
+        #Test_Server_Client_S21_KO_COUNT(Configuration.host, Configuration.port, self, 5).start()
         
         # Begin after 2 secondes
         Test_Server_Client_S22_OK(Configuration.host, Configuration.port, self, 6).start()
         
         # Begin after 3 secondes
-        Test_Server_Client_S22_KO_ID(Configuration.host, Configuration.port, self, 7).start()
-        Test_Server_Client_S22_KO_COUNT(Configuration.host, Configuration.port, self, 8).start()
-        Test_Server_Client_S21_OK(Configuration.host, Configuration.port, self, 9).start()
+        #Test_Server_Client_S22_KO_ID(Configuration.host, Configuration.port, self, 7).start()
+        #Test_Server_Client_S22_KO_COUNT(Configuration.host, Configuration.port, self, 8).start()
+        #Test_Server_Client_S21_OK(Configuration.host, Configuration.port, self, 9).start()
         
         # Begin after 4 secondes
-        Test_Server_Client_S31_OK_SAME_CONGIG(Configuration.host, Configuration.port, self, 10).start()
-        Test_Server_Client_S31_OK_SAME_CONGIG(Configuration.host, Configuration.port, self, 11).start()
-        Test_Server_Client_S31_KO(Configuration.host, Configuration.port, self, 12).start()
-        Test_Server_Client_S36_OK(Configuration.host, Configuration.port, self, 13).start()
-        Test_Server_Client_S36_KO(Configuration.host, Configuration.port, self, 14).start()
+        #Test_Server_Client_S31_OK_SAME_CONGIG(Configuration.host, Configuration.port, self, 10).start()
+        #Test_Server_Client_S31_OK_SAME_CONGIG(Configuration.host, Configuration.port, self, 11).start()
+        #Test_Server_Client_S31_KO(Configuration.host, Configuration.port, self, 12).start()
+        Test_Server_Client_S36_OK(Configuration.host, Configuration.port, self, 13.1).start()
+        Test_Server_Client_S36_OK(Configuration.host, Configuration.port, self, 13.2).start()
+        #Test_Server_Client_S36_KO(Configuration.host, Configuration.port, self, 14).start()
         
         # Begin after 5 secondes
         Test_Server_Client_S31_OK_NEW_CONFIG(Configuration.host, Configuration.port, self, 15).start()
+        
+        # Begin after 6 secondes
+        Test_Server_Client_S36_OK_NEW_CONFIG(Configuration.host, Configuration.port, self, 16).start()
 
         try:
             Configuration.dbpath = self.path
