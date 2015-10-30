@@ -35,10 +35,13 @@ import os.path
 import stat
 import shelve
 import re
+import threading
 from server.util.Configuration import Configuration
 
 class DBHandler:
     """Database handler"""
+    
+    lock = threading.Lock()             # Lock object for control database access
     
     # Intern methods
     
@@ -49,14 +52,22 @@ class DBHandler:
         
     def __getitem__(self, index):
         """Get an item. Raise KeyError exception if index does not exist"""
-        with shelve.open(self.path + '/' + self.filename, flag='r') as db:
-            value = db[index]
+        with DBHandler.lock:
+            with shelve.open(self.path + '/' + self.filename, flag='r') as db:
+                value = db[index]
         return value
     
     def __setitem__(self, index, value):
         """Set an item"""
-        with shelve.open(self.path + '/' + self.filename, flag='w') as db:
-            db[index] = value
+        with DBHandler.lock:
+            with shelve.open(self.path + '/' + self.filename, flag='w') as db:
+                db[index] = value
+                
+    def __delitem__(self, index):
+        """Delete an item"""
+        with DBHandler.lock:
+            with shelve.open(self.path + '/' + self.filename, flag='w') as db:
+                del db[index]
 
     # Extern methods
     
