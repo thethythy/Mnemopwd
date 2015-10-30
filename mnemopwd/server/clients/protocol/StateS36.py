@@ -39,8 +39,8 @@ class StateS36(StateSCC):
         
     def do(self, client, data):
         """Action of the state S36: add a secret information block"""
+        
         try:
-            
             # Control challenge
             if self.control_challenge(client, data, b'S36.6') :
                 
@@ -52,17 +52,20 @@ class StateS36(StateSCC):
                 
                 try:
                     sib = pickle.loads(bsib) # One secret information block object
-                    sib.control_integrity(client.keyH) # Configure and check integrity           
+                    sib.control_integrity(client.keyH) # Configure and check integrity
                 
                 except AssertionError:
-                    client.transport.write(b'ERROR;' + b'data rejected') # Send an error message
+                    # Send an error message
+                    message = b'ERROR;' + b'data rejected'
+                    client.loop.call_soon_threadsafe(client.transport.write, message)
                     raise Exception('data rejected')
                 
                 else:
                     # Add a secret information block
                     index = client.dbH.add_data(sib)
-                     
-                    client.transport.write(b'OK;' + (str(index)).encode()) # Send index value
+                    # Send index value
+                    message = b'OK;' + (str(index)).encode()
+                    client.loop.call_soon_threadsafe(client.transport.write, message)
                     client.state = client.states['3'] # New client state
             
         except Exception as exc:

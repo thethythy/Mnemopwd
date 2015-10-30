@@ -39,8 +39,8 @@ class StateSCC():
     
     def control_challenge(self, client, data, var):
         """Action of the state SCC: control the challenge answer"""
+        
         try:
-              
             echallenge = data[:169] # Encrypted challenge
             challenge = client.ephecc.decrypt(echallenge) # Decrypting challenge
             
@@ -48,7 +48,9 @@ class StateSCC():
             challenge_bis = hmac_sha256(client.ms, client.session + var)
             
             if challenge != challenge_bis :
-                client.transport.write(b'ERROR;' + b"challenge rejected") # Send challenge rejected
+                # Send challenge rejected
+                message = b'ERROR;' + b"challenge rejected"
+                client.loop.call_soon_threadsafe(client.transport.write, message)
                 raise Exception("challenge rejected")
             
         except Exception as exc:

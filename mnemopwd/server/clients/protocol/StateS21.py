@@ -40,8 +40,8 @@ class StateS21(StateSCC):
         
     def do(self, client, data):
         """Action of the state S21: control client login and id"""
+        
         try:
-            
             # Control challenge
             if self.control_challenge(client, data, b'S21.7') :
             
@@ -61,7 +61,8 @@ class StateS21(StateSCC):
             
                 # If ids are not equal
                 if id != id_from_client :
-                    client.transport.write(b'ERROR;' + b'incorrect id')
+                    message = b'ERROR;' + b'incorrect id'
+                    client.loop.call_soon_threadsafe(client.transport.write, message)
                     raise Exception('incorrect id')
             
                 # Test if login exists
@@ -71,12 +72,13 @@ class StateS21(StateSCC):
                 # If login is OK and ids are equal
                 if id == id_from_client and exist :
                     client.dbH = DBHandler(client.dbpath, filename)
-                    client.transport.write(b'OK')
+                    client.loop.call_soon_threadsafe(client.transport.write, b'OK')
                     client.state = client.states['3']
                 
                 # If login is unknown
                 elif id == id_from_client and not exist :
-                    client.transport.write(b'ERROR;' + b'user account does not exist')
+                    message = b'ERROR;' + b'user account does not exist'
+                    client.loop.call_soon_threadsafe(client.transport.write, message)
                     raise Exception('user account does not exist')
             
         except Exception as exc:

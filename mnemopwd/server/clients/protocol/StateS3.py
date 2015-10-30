@@ -34,7 +34,7 @@ from server.util.funcutils import singleton
 
 @singleton
 class StateS3():
-    """State S3 : select substate (S31, S32, S33, S34, S35, S36 or S37) """
+    """State S3 : select substate (S31, S32, S33, S34, S35, S36, S37 or S38) """
         
     def do(self, client, data):
         """Action of the state S3: select a substate"""
@@ -46,6 +46,7 @@ class StateS3():
         is_cd_S35 = data[170:180] == b"SEARCHDATA"      # Test for S35 substate
         is_cd_S36 = data[170:177] == b"ADDDATA"         # Test for S36 substate
         is_cd_S37 = data[170:180] == b"DELETEDATA"      # Test for S37 substate
+        is_cd_S38 = data[170:180] == b"UPDATEDATA"      # Test for S38 substate
         
         if is_cd_S31 :
             client.state = client.states['31'] # S31 is the new state
@@ -61,8 +62,10 @@ class StateS3():
             client.state = client.states['36'] # S36 is the new state
         if is_cd_S37 :
             client.state = client.states['37'] # S37 is the new state
-
-        if is_cd_S31 or is_cd_S32 or is_cd_S33 or is_cd_S34 or is_cd_S35 or is_cd_S36 or is_cd_S37 :
+        if is_cd_S38 :
+            client.state = client.states['38'] # S38 is the new state
+            
+        if is_cd_S31 or is_cd_S32 or is_cd_S33 or is_cd_S34 or is_cd_S35 or is_cd_S36 or is_cd_S37 or is_cd_S38 :
             # Schedule an execuction of the new state
             client.loop.run_in_executor(None, client.state.do, client, data)
         else:

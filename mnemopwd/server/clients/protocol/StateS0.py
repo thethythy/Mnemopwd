@@ -39,13 +39,17 @@ class StateS0():
         
     def do(self, client, data):
         """Action of the state S0: send an ephemeral server public key"""
+        
         try:
             ephecc = ECC() # Create an ephemeral keypair
-            message = b'KEYSHARING;' + ephecc.get_pubkey() # The message to send            
-            client.transport.write(message) # Send the message
+            # Send the message
+            message = b'KEYSHARING;' + ephecc.get_pubkey()
+            client.loop.call_soon_threadsafe(client.transport.write, message)
+        
         except Exception as exc:
             # Schedule a callback to client exception handler
             client.loop.call_soon_threadsafe(client.exception_handler, exc)
+        
         else:
             client.ephecc = ephecc # Store the ephemeral keypair
             client.state = client.states['1S'] # Next state

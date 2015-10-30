@@ -40,8 +40,8 @@ class StateS1S():
         
     def do(self, client, data):
         """Action of the state S1S: establish a session number and a challenge request"""
+        
         try:
-
             # Test for S1S command
             is_cd_S1S = data[:7] == b"SESSION"
             if not is_cd_S1S : raise Exception('protocol error')
@@ -56,7 +56,8 @@ class StateS1S():
             esession = ctx.ciphering(session) # Encrypt session number
             
             # Send challenge request
-            client.transport.write(b'CHALLENGER;' + iv + b';' + esession)
+            message = b'CHALLENGER;' + iv + b';' + esession
+            client.loop.call_soon_threadsafe(client.transport.write, message)
             
         except Exception as exc:
             # Schedule a callback to client exception handler

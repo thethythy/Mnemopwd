@@ -38,8 +38,8 @@ class StateS31(StateSCC):
         
     def do(self, client, data):
         """Action of the state S31: obtain (and eventually change) cryptographic configuration"""
+        
         try:
-            
             # Control challenge
             if self.control_challenge(client, data, b'S31.6') :
                 
@@ -54,19 +54,25 @@ class StateS31(StateSCC):
                 result = client.configure_crypto(config.decode())
                 
                 if result == False:
-                    client.transport.write(b'ERROR;' + b'wrong configuration')
+                    message = b'ERROR;' + b'wrong configuration'
+                    client.loop.call_soon_threadsafe(client.transport.write, message)
                     raise Exception('wrong configuration {}'.format(config.decode()))
                 
                 else:
                     
                     if result == 1:
-                        client.transport.write(b'OK;' + b'1') # Send result value
+                        # Send result value
+                        message = b'OK;' + b'1'
+                        client.loop.call_soon_threadsafe(client.transport.write, message)
                     
                     if result == 2:
                         if client.update_crypto() : # Re-do all secret information encryption
-                            client.transport.write(b'OK;' + b'2') # Send result value
+                            # Send result value
+                            message = b'OK;' + b'2'
+                            client.loop.call_soon_threadsafe(client.transport.write, message)
                         else:
-                            client.transport.write(b'ERROR;' + b'S31 operation aborted')
+                            message = b'ERROR;' + b'S31 operation aborted'
+                            client.loop.call_soon_threadsafe(client.transport.write, message)
                             raise Exception('S31 operation aborted')
                     
                     client.state = client.states['3'] # New client state

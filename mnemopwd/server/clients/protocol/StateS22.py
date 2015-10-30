@@ -40,8 +40,8 @@ class StateS22(StateSCC):
         
     def do(self, client, data):
         """Action of the state S22: create a new user account"""
+
         try:
-            
             # Control challenge
             if self.control_challenge(client, data, b'S22.7') :
             
@@ -61,7 +61,8 @@ class StateS22(StateSCC):
             
                 # If ids are not equal
                 if id != id_from_client :
-                    client.transport.write(b'ERROR;' + b'incorrect id')
+                    message = b'ERROR;' + b'incorrect id'
+                    client.loop.call_soon_threadsafe(client.transport.write, message)
                     raise Exception('incorrect id')
 
                 # Try to create a new database
@@ -70,10 +71,11 @@ class StateS22(StateSCC):
                 
                 if result:
                     client.dbH = DBHandler(client.dbpath, filename)
-                    client.transport.write(b'OK')
+                    client.loop.call_soon_threadsafe(client.transport.write, b'OK')
                     client.state = client.states['3'] # Next state
                 else:
-                    client.transport.write(b'ERROR;' + b'user account already used')
+                    message = b'ERROR;' + b'user account already used'
+                    client.loop.call_soon_threadsafe(client.transport.write, message)
                     raise Exception('user account already used')
             
         except Exception as exc:

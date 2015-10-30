@@ -39,8 +39,8 @@ class StateS1C():
         
     def do(self, client, data):
         """Action of the state S1C: control challenge answer"""
+        
         try:
-
             # Test for S1C command
             is_cd_S1C = data[:10] == b"CHALLENGEA"
             if not is_cd_S1C : raise Exception('protocol error')
@@ -52,9 +52,12 @@ class StateS1C():
             challenge_bis = hmac_sha256(client.ms, client.session + b'S1.12')
             
             if challenge == challenge_bis :
-                client.transport.write(b'OK') # Send challenge accepted
+                 # Send challenge accepted 
+                client.loop.call_soon_threadsafe(client.transport.write, b'OK')
             else:
-                client.transport.write(b'ERROR;' + b"challenge rejected") # Send challenge rejected
+                # Send challenge rejected
+                message = b'ERROR;' + b'challenge rejected'
+                client.loop.call_soon_threadsafe(client.transport.write, message)
                 raise Exception("challenge rejected")
             
         except Exception as exc:
