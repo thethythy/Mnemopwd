@@ -45,7 +45,7 @@ class  SecretInfoBlockTestCase(unittest.TestCase):
         state_list = list(state['_infos'].items())
         state_list.append(('_nbInfo', state['_nbInfo']))
         state_list.sort()
-        sorted_list =  str(state_list).encode()
+        sorted_list =  str(state_list).encode() + SecretInfoBlockTestCase.keyh.config.encode()
         self.hmac1 = _hash.hmac_sha512(SecretInfoBlockTestCase.keyh.ikey, sorted_list)
         
         self.nbInfo2 = 2

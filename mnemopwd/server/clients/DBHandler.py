@@ -34,6 +34,8 @@ import os
 import os.path
 import stat
 import shelve
+import re
+from server.util.Configuration import Configuration
 
 class DBHandler:
     """Database handler"""
@@ -42,9 +44,9 @@ class DBHandler:
     
     def __init__(self, path, filename):
         """Set attributs"""
-        self.path = path         # Client database path
-        self.filename = filename # Client database filename
-
+        self.path = path                # Client database path
+        self.filename = filename        # Client database filename
+        
     def __getitem__(self, index):
         """Get an item. Raise KeyError exception if index does not exist"""
         with shelve.open(self.path + '/' + self.filename, flag='r') as db:
@@ -66,7 +68,7 @@ class DBHandler:
         else:
             # Create a new database file with good permissions
             with shelve.open(path + '/' + filename, flag='n') as db:
-                db['nb_sibs'] = 0
+                db['nbsibs'] = 0
             os.chmod(path + '/' + filename + '.db', \
                      stat.S_IRUSR | stat.S_IWUSR | stat.S_IREAD | stat.S_IWRITE)
             return True
@@ -78,8 +80,28 @@ class DBHandler:
         
     def add_data(self, sib):
         """Add a secret information block and return his index (a string)"""
-        nb_sibs = self['nb_sibs'] + 1   # Increment the number of block
-        self['nb_sibs'] = nb_sibs       # Store the new number of block
-        index = str(nb_sibs)            # The index
-        self[index] = sib               # Store the block
-        return index                    # Return the index of the block
+        nbsibs = self['nbsibs'] + 1   # Increment the number of block
+        self['nbsibs'] = nbsibs       # Store the new number of block
+        index = str(nbsibs)           # The index
+        self[index] = sib             # Store the block
+        return index                  # Return the index of the block
+        
+    def search_data(self, keyH, pattern):
+        """Search secret information matching the pattern"""
+        tabsibs = []                # Table of sibs
+        nbsibs = self['nbsibs']     # Number of sibs
+        if nbsibs > 0:
+            for i in range(1, nbsibs + 1): # For all sibs
+                sib = self[str(i)]  # Get sib
+                sib.keyH = keyH     # Set actual keyhandler
+                if sib.nbInfo > 0 :
+                
+                    if Configuration.search_mode == 'first' :
+                        if re.search(pattern, sib['info1'].decode()) is not None :
+                            tabsibs.append((i,sib)) # Pattern matching so add sib in table
+                    else:
+                        for j in range(1, sib.nbInfo + 1) : # For all info in sib
+                            if re.search(pattern, sib['info' + str(j)].decode()) is not None :
+                                tabsibs.append((i,sib)) # Pattern matching so add sib in table
+                                break
+        return tabsibs

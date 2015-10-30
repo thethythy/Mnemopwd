@@ -42,7 +42,7 @@ class InfoBlock:
     
     Attribut(s):
     - _infos : do not directly access to this attribut but use infos property
-    - _nbInfo : do not directly access to this attribut but use infos property
+    - _nbInfo : do not directly access to this attribut but use nbInfo property
     
     Method(s): none
     
@@ -134,7 +134,7 @@ class InfoBlock:
 
     def __contains__(self, value):
         """Tests if the value exists at least in one entry.
-        Attention : it is not the usual behaviour (that works usually on keys not on values)"""
+        Warning : it is not the usual behaviour (that works usually on keys not on values)"""
         for key in self.infos :
             if self[key] == value :
                 return True

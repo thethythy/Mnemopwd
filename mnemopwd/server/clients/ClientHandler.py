@@ -49,7 +49,8 @@ class ClientHandler(asyncio.Protocol):
         # The protocol states
         self.states = {'0':StateS0(), '1S':StateS1S(), '1C':StateS1C(), \
                        '2':StateS2(), '21':StateS21(), '22':StateS22(), \
-                       '3':StateS3(), '31':StateS31(), '36':StateS36()}
+                       '3':StateS3(), '31':StateS31(), '35':StateS35(), \
+                       '36':StateS36()}
 
     def connection_made(self, transport):
         """Connection starting : set default protocol state and start it"""
@@ -74,7 +75,7 @@ class ClientHandler(asyncio.Protocol):
     def data_received(self, data):
         """Data received"""
         self.loop.run_in_executor(None, self.state.do, self, data) # Future excecution
-
+        
     def exception_handler(self, exc):
         """Exception handler for actions executed by the executor"""
         logging.critical('Closing connection with {} because server detects an error : {}'.format(self.peername, exc))
@@ -86,10 +87,11 @@ class ClientHandler(asyncio.Protocol):
         # Control curve and cipher names
         try:
             for i, name in enumerate(config_demand.split(';')) :
-                if name != '' and i % 2 == 0: 
-                    OpenSSL.get_curve(name) # Control curve name
-                elif name != '': 
-                    OpenSSL.get_cipher(name) # Control cipher name
+                if name != '': 
+                    if i % 2 == 0: 
+                        OpenSSL.get_curve(name) # Control curve name
+                    else: 
+                        OpenSSL.get_cipher(name) # Control cipher name
         except:
             return False
         
@@ -120,6 +122,7 @@ class ClientHandler(asyncio.Protocol):
             self.keyH = KeyHandler(self.ms, cur1=config_actual[0], cip1=config_actual[1], \
                                             cur2=config_actual[2], cip2=config_actual[3], \
                                             cur3=config_actual[4], cip3=config_actual[5])
+        
         # Return False (wrong configuration) or 1 (same or first) or 2 (new)
         return result
         
@@ -132,29 +135,26 @@ class ClientHandler(asyncio.Protocol):
             if DBHandler.new(self.dbH.path, self.dbH.filename + '_tmp') :
         
                 # Create new handlers
-                dbhandler_tmp = DBHandler(self.dbH.path, self.dbH.filename + '_tmp')
+                dbH_tmp = DBHandler(self.dbH.path, self.dbH.filename + '_tmp')
                 config_tmp = self.dbH['config_tmp']
-                dbhandler_tmp['config'] = config_tmp
+                dbH_tmp['config'] = config_tmp
                 config = config_tmp.split(';')
-                keyhandler_tmp = KeyHandler(self.ms, cur1=config[0], cip1=config[1], \
-                                                     cur2=config[2], cip2=config[3], \
-                                                     cur3=config[4], cip3=config[5])
-            
-                print(self.dbH['nb_sibs'])
-            
+                keyH_tmp = KeyHandler(self.ms, cur1=config[0], cip1=config[1], \
+                                               cur2=config[2], cip2=config[3], \
+                                               cur3=config[4], cip3=config[5])
+                
                 # Data exchange
-                nb_sibs = self.dbH['nb_sibs']
-                if nb_sibs > 0 :
-                    for i in range(1, nb_sibs + 1) :
+                nbsibs = self.dbH['nbsibs']
+                if nbsibs > 0 :
+                    for i in range(1, nbsibs + 1) :
                         sib = self.dbH[str(i)]    # Original secret information block
                         sib.keyH = self.keyH      # Set actual keyhandler
                         if sib.nbInfo > 0 :
-                            sib_tmp = SecretInfoBlock(keyhandler_tmp, sib.nbInfo) # New sib
+                            sib_tmp = SecretInfoBlock(keyH_tmp, sib.nbInfo) # New sib
                             for j in range(1, sib.nbInfo + 1) : # For all sib in original database
-                                print(sib['info' + str(j)])
                                 sib_tmp['info' + str(j)] = sib['info' + str(j)] # Exchange
                                 assert sib_tmp['info' + str(j)] == sib['info' + str(j)] # Verification
-                            dbhandler_tmp.add_data(sib_tmp) # Store new sib in the new database
+                            dbH_tmp.add_data(sib_tmp) # Store new sib in the new database
                             
                 # Delete original database
                 os.unlink(self.dbH.path + '/' + self.dbH.filename + '.db')
@@ -162,8 +162,8 @@ class ClientHandler(asyncio.Protocol):
                 os.rename(self.dbH.path + '/' + self.dbH.filename + '_tmp.db', \
                           self.dbH.path + '/' + self.dbH.filename + '.db')
                 # Update handlers of the client handler
-                self.dbH = dbhandler_tmp
-                self.keyH = keyhandler_tmp
+                self.dbH = dbH_tmp
+                self.keyH = keyH_tmp
                 
             else:
                 raise Exception() # Not enough space left ? bad directory ? permission problem ?
@@ -174,6 +174,6 @@ class ClientHandler(asyncio.Protocol):
             # Delete new configuration string
             del self.dbH['config_tmp']
             return False
-            
+        
         return True
         

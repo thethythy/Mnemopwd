@@ -46,6 +46,8 @@ class MyParserAction(argparse.Action):
         super(MyParserAction, self).__init__(option_strings, dest, **kwargs)
         
     def __call__(self, parser, namespace, values, option_string=None):
+        if option_string in ['-m', '--searchmode'] :
+            Configuration.search_mode = values
         if option_string in ['-s', '--poolsize'] :
             Configuration.poolsize = values
         if option_string in ['-d', '--dbpath'] :
@@ -62,12 +64,13 @@ class Configuration:
     
     configfile = os.path.expanduser('~') + '/.mnemopwd' # Configuration file
     dbpath = os.path.expanduser('~') + '/mnemopwddata' # Default database path
-    version = '0.1'     # Server version
-    host = '127.0.0.1'  # Default host
-    port = 62230        # Default port
-    port_min = 49152    # Minimum port value
-    port_max = 65535    # Maximum port value
-    poolsize = 10       # Default pool executor size
+    version = '0.1'       # Server version
+    host = '127.0.0.1'    # Default host
+    port = 62230          # Default port
+    port_min = 49152      # Minimum port value
+    port_max = 65535      # Maximum port value
+    poolsize = 10         # Default pool executor size
+    search_mode = 'first' # Search mode
     
     @staticmethod
     def __test_dbpath__(path):
@@ -117,13 +120,15 @@ class Configuration:
             Configuration.port = int(fileparser['DEFAULT']['port'])
             Configuration.dbpath = fileparser['DEFAULT']['dbpath']
             Configuration.poolsize = int(fileparser['DEFAULT']['poolsize'])
+            Configuration.search_pool = fileparser['DEFAULT']['search_mode']
     
     @staticmethod
     def __create_config_file__(fileparser):
         """Method to create default configuration file"""
         fileparser['DEFAULT'] = {'port': str(Configuration.port), \
                                  'dbpath': Configuration.dbpath, \
-                                 'poolsize': str(Configuration.poolsize)}
+                                 'poolsize': str(Configuration.poolsize), \
+                                 'search_mode': Configuration.search_mode}
         with open(Configuration.configfile, 'w') as configfile:
             fileparser.write(configfile)
         os.chmod(Configuration.configfile, stat.S_IRUSR | stat.S_IWUSR | stat.S_IREAD | stat.S_IWRITE)
@@ -154,12 +159,17 @@ class Configuration:
                                metavar='path', type=str, help="the directory to store \
                                secret data; it will be created if it does not exist; \
                                if the directory already exists only the user must \
-                               have read, write and execution permissions.", \
+                               have read, write and execution permissions", \
                                action=MyParserAction)
         # Pool executor size
         argparser.add_argument('-s', '--poolsize', type=int, default=Configuration.poolsize, \
                                metavar='pool_size', help="the size of the pool of execution", \
                                action=MyParserAction)
+        # Search mode
+        argparser.add_argument('-m', '--searchmode', type=str, default=Configuration.search_mode, \
+                               metavar='search_mode', help="the search mode; 'first' for \
+                               searching only on first secret information and 'all' for \
+                               searching on all informations", action=MyParserAction)
         # Program version
         argparser.add_argument('-v', '--version', action='version', version='version ' + Configuration.version)
         
@@ -173,3 +183,4 @@ if __name__ == '__main__':
     print(Configuration.dbpath)
     print(Configuration.port)
     print(Configuration.poolsize)
+    print(Configuration.search_mode)
