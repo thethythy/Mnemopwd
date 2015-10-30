@@ -106,7 +106,6 @@ class DBHandler:
                 sib = self[str(i)]  # Get sib
                 sib.keyH = keyH     # Set actual keyhandler
                 if sib.nbInfo > 0 :
-                
                     if Configuration.search_mode == 'first' :
                         if re.search(pattern, sib['info1'].decode()) is not None :
                             tabsibs.append((i,sib)) # Pattern matching so add sib in table
