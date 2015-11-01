@@ -53,7 +53,7 @@ class ClientHandler(asyncio.Protocol):
         self.states = {'0':StateS0(), '1S':StateS1S(), '1C':StateS1C(), \
                        '2':StateS2(), '21':StateS21(), '22':StateS22(), \
                        '3':StateS3(), '31':StateS31(), '35':StateS35(), \
-                       '36':StateS36()}
+                       '36':StateS36(), '38':StateS38()}
 
     def connection_made(self, transport):
         """Connection starting : set default protocol state and start it"""

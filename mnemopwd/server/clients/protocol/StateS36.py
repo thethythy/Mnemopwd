@@ -44,9 +44,9 @@ class StateS36(StateSCC):
             # Control challenge
             if self.control_challenge(client, data, b'S36.6') :
                 
-                # Test for S31 command
-                is_cd_S31 = data[170:177] == b"ADDDATA"
-                if not is_cd_S31 : raise Exception('protocol error')
+                # Test for S36 command
+                is_cd_S36 = data[170:177] == b"ADDDATA"
+                if not is_cd_S36 : raise Exception('protocol error')
             
                 bsib = data[178:] # One secret information block in pickle format
                 

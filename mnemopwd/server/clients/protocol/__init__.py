@@ -29,7 +29,7 @@ __author__ = "Thierry Lemeunier <thierry at lemeunier dot net>"
 __date__ = "$6 oct. 2015 9:25:12$"
 
 __all__ = ['StateSCC', 'StateS0',  'StateS1C' , 'StateS1S', 'StateS2', 'StateS3', \
-           'StateS21', 'StateS22', 'StateS31', 'StateS35', 'StateS36']
+           'StateS21', 'StateS22', 'StateS31', 'StateS35', 'StateS36', 'StateS38']
            
 from .StateS0 import StateS0
 from .StateS1S import StateS1S
@@ -42,3 +42,4 @@ from .StateS22 import StateS22
 from .StateS31 import StateS31
 from .StateS35 import StateS35
 from .StateS36 import StateS36
+from .StateS38 import StateS38

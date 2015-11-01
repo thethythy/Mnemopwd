@@ -115,3 +115,17 @@ class DBHandler:
                                 tabsibs.append((i,sib)) # Pattern matching so add sib in table
                                 break
         return tabsibs
+        
+    def update_data(self, index, sib):
+        """Update a secret information block"""
+        try:
+            index = int(index)      # Test index conversion in int
+            index = str(index)      # index as a string type
+            oldsib = self[index]    # Get actual sib (can raise a KeyError exception)
+            self[index] = sib       # Set updated sib
+            return True
+        except ValueError:
+            return False
+        except KeyError:
+            return False
+    
