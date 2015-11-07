@@ -150,16 +150,30 @@ class ClientHandler(asyncio.Protocol):
                     # Data exchange
                     nbsibs = self.dbH['nbsibs']
                     if nbsibs > 0 :
+                    
+                        dbH_tmp['nbsibs'] = nbsibs           # Same 'nbsibs' value
+                        dbH_tmp['index'] = self.dbH['index'] # Same 'index' value
+                        
                         for i in range(1, nbsibs + 1) :
-                            sib = self.dbH[str(i)]    # Original secret information block
-                            sib.keyH = self.keyH      # Set actual keyhandler
+
+                            try:
+                                sib = self.dbH[str(i)] # Original secret information block
+                            except KeyError:
+                                continue # Continue with the next key
+
+                            sib.keyH = self.keyH # Set actual KeyHandler
                             if sib.nbInfo > 0 :
-                                sib_tmp = SecretInfoBlock(keyH_tmp, sib.nbInfo) # New sib
-                                for j in range(1, sib.nbInfo + 1) : # For all sib in original database
-                                    sib_tmp['info' + str(j)] = sib['info' + str(j)] # Exchange
-                                    assert sib_tmp['info' + str(j)] == sib['info' + str(j)] # Verification
-                                dbH_tmp.add_data(sib_tmp) # Store new sib in the new database
-                            
+                                # New sib with new KeyHandler
+                                sib_tmp = SecretInfoBlock(keyH_tmp, sib.nbInfo)
+                                # For all secret information
+                                for j in range(1, sib.nbInfo + 1) :
+                                    # Exchange
+                                    sib_tmp['info' + str(j)] = sib['info' + str(j)]
+                                    # Verification
+                                    assert sib_tmp['info' + str(j)] == sib['info' + str(j)]
+                                # Store new sib in the new database with index respect
+                                dbH_tmp[str(i)] = sib_tmp
+                                
                     # Delete original database
                     os.unlink(self.dbH.path + '/' + self.dbH.filename + '.db')
                     # Rename temporary database

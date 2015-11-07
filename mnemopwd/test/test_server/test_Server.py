@@ -755,7 +755,14 @@ class Test_Server_Client_S35_OK(Test_Server_Client_S31_OK_SAME_CONFIG):
         #print('nbsibs: ', nbsibs)
         #print(tab_protocol_data)
         
-        tab_protocol_data = tab_protocol_data[1].split(b';', maxsplit=1)
+        if nbsibs > 0:
+            if len(tab_protocol_data) == 1:
+                tab_protocol_data.append("")
+            while len(tab_protocol_data) <= 1:
+                tab_protocol_data[1] += connect.recv(1024)
+            
+            tab_protocol_data = tab_protocol_data[1].split(b';', maxsplit=1)
+        
         for i in range(nbsibs):
             protocol_cd = tab_protocol_data[0]
             self.test.assertEqual(protocol_cd, b'SIB')
