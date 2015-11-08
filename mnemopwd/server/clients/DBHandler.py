@@ -69,6 +69,7 @@ class DBHandler:
     - add_data: a method for adding a secret information block in database
     - search_data: a method for searching secret information blocks matching a pattern
     - update_data: a method for updating a secret information block in database
+    - delete_data: a method for deleting a secret information block in database
     """
     
     lock = threading.Lock()             # Lock object for control database access
@@ -132,24 +133,24 @@ class DBHandler:
         
     def search_data(self, keyH, pattern):
         """Search secret information matching the pattern. Return a list of sib found."""
-        tabsibs = []                # Table of sibs
-        nbsibs = self['nbsibs']     # Number of sibs
+        tabsibs = []             # Table of sibs
+        nbsibs = self['nbsibs']  # Number of sibs
         if nbsibs > 0: 
-            for i in range(1, nbsibs + 1): # For all sibs
+            for i in range(1, self['index'] + 1): # For all sibs
                 try:
                     sib = self[str(i)]  # Get sib (can raise a KeyError exception)
-                    sib.keyH = keyH     # Set actual KeyHandler
-                    if sib.nbInfo > 0 :
-                        if Configuration.search_mode == 'first' :
-                            if re.search(pattern, sib['info1'].decode()) is not None :
-                                tabsibs.append((i,sib)) # Pattern matching so add sib in table
-                        else:
-                            for j in range(1, sib.nbInfo + 1) : # For all info in sib
-                                if re.search(pattern, sib['info' + str(j)].decode()) is not None :
-                                    tabsibs.append((i,sib)) # Pattern matching so add sib in table
-                                    break # One info match so stop loop now
                 except KeyError:
-                    pass
+                    continue  # Try next key
+                sib.keyH = keyH  # Set actual KeyHandler
+                if sib.nbInfo > 0 :
+                    if Configuration.search_mode == 'first' :
+                        if re.search(pattern, sib['info1'].decode()) is not None :
+                            tabsibs.append((i,sib)) # Pattern matching so add sib in table
+                    else:
+                        for j in range(1, sib.nbInfo + 1) : # For all info in sib
+                            if re.search(pattern, sib['info' + str(j)].decode()) is not None :
+                                tabsibs.append((i,sib)) # Pattern matching so add sib in table
+                                break # One info match so stop loop now
         return tabsibs
         
     def update_data(self, index, sib):
@@ -159,6 +160,20 @@ class DBHandler:
             index = str(index)      # index as a string type
             oldsib = self[index]    # Get actual sib (can raise a KeyError exception)
             self[index] = sib       # Set updated sib
+            return True
+        except ValueError:
+            return False
+        except KeyError:
+            return False
+            
+    def delete_data(self, index):
+        """Delete a secret information block. Return a boolean."""
+        try:
+            index = int(index)      # Conversion in int (can raise a ValueError exception)
+            index = str(index)      # index as a string type
+            del self[index]                 # Delete entry at index (can raise a KeyError exception)
+            nbsibs = self['nbsibs'] - 1     # Decrement the number of block
+            self['nbsibs'] = nbsibs         # Store the new number of block
             return True
         except ValueError:
             return False

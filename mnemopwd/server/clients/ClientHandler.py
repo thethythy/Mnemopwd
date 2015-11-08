@@ -53,7 +53,7 @@ class ClientHandler(asyncio.Protocol):
         self.states = {'0':StateS0(), '1S':StateS1S(), '1C':StateS1C(), \
                        '2':StateS2(), '21':StateS21(), '22':StateS22(), \
                        '3':StateS3(), '31':StateS31(), '35':StateS35(), \
-                       '36':StateS36(), '38':StateS38()}
+                       '36':StateS36(), '37':StateS37(), '38':StateS38()}
 
     def connection_made(self, transport):
         """Connection starting : set default protocol state and start it"""
@@ -149,12 +149,13 @@ class ClientHandler(asyncio.Protocol):
                 
                     # Data exchange
                     nbsibs = self.dbH['nbsibs']
+                    index = self.dbH['index']
                     if nbsibs > 0 :
                     
-                        dbH_tmp['nbsibs'] = nbsibs           # Same 'nbsibs' value
-                        dbH_tmp['index'] = self.dbH['index'] # Same 'index' value
+                        dbH_tmp['nbsibs'] = nbsibs  # Same 'nbsibs' value
+                        dbH_tmp['index'] = index    # Same 'index' value
                         
-                        for i in range(1, nbsibs + 1) :
+                        for i in range(1, index + 1) : # For all sibs
 
                             try:
                                 sib = self.dbH[str(i)] # Original secret information block
@@ -171,7 +172,7 @@ class ClientHandler(asyncio.Protocol):
                                     sib_tmp['info' + str(j)] = sib['info' + str(j)]
                                     # Verification
                                     assert sib_tmp['info' + str(j)] == sib['info' + str(j)]
-                                # Store new sib in the new database with index respect
+                                # Store new sib in the new database with same index
                                 dbH_tmp[str(i)] = sib_tmp
                                 
                     # Delete original database
