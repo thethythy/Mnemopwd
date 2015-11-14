@@ -310,8 +310,10 @@ class Test_Server_Client_S21_KO_COUNT(Test_Server_Client_S21_KO_ID):
 # Test S22
 
 class Test_Server_Client_S22_OK(Test_Server_Client_S1_OK):
-    def __init__(self, host, port, test, number, begin=None):
+    def __init__(self, host, port, test, number, login=None, begin=None):
         Test_Server_Client_S1_OK.__init__(self,host,port,test,number)
+        if login is not None:
+            self.login = login
         self.begin = begin
     
     def state_S22_Begin(self, connect, bug=False):
@@ -546,6 +548,65 @@ class Test_Server_Client_S31_KO(Test_Server_Client_S31_OK_SAME_CONFIG):
             # State 31
             self.state_S31_Begin(connect)
             self.state_S31_KO(connect)
+        finally:
+            connect.close()
+            print("Client", self.number, self.sockname, ": disconnection with the server")
+
+# -----------------------------------------------------------------------------
+# Test S34
+
+class Test_Server_Client_S34_OK(Test_Server_Client_S31_OK_SAME_CONFIG):
+    def __init__(self, host, port, test, number, begin=None):
+        Test_Server_Client_S31_OK_SAME_CONFIG.__init__(self,host,port,test,number)
+        self.begin = begin
+        self.login = 'This is the client login for testing S34'.encode()
+
+    def state_S34_Begin(self, connect, bug=False):
+        echallenge = self.get_echallenge(b'S34.7')
+        
+        ho = hashlib.sha256()
+        if bug :
+            ho.update(hmac_sha512(self.ms, self.ms + self.login + b'bug')) # Wrong id
+        else:
+            ho.update(hmac_sha512(self.ms, self.ms + self.login)) # Good id
+        id = ho.digest()
+        eid = self.ephecc.encrypt(id, pubkey=self.ephecc.get_pubkey())
+
+        elogin = self.ephecc.encrypt(self.login, pubkey=self.ephecc.get_pubkey())
+        
+        #print(self, "S34_OK starting send")
+        connect.send(echallenge + b';DELETION;' + eid + b';' + elogin)
+        #print(self, "S34_OK ending send")
+                
+    def state_S34_OK(self, connect):
+        #print(self, "S34_OK starting recv")
+        message = connect.recv(1024)
+        #print(self, "S34_OK ending recv")
+        
+        protocol_cd = message[:5]
+        self.test.assertEqual(protocol_cd, b'OK')
+
+    def run(self):
+        try:
+            time.sleep(self.begin) # Waiting previous test
+            connect = self.connect_to_server() 
+            # State 0
+            self.state_S0(connect)
+            # State 1S
+            self.state_S1S_begin(connect)
+            self.state_S1S_end(connect)
+            # State 1C
+            self.state_S1C_begin(connect)
+            self.state_S1C_end(connect)
+            # State 21
+            self.state_S21_Begin(connect)
+            self.state_S21_OK(connect)
+            # State 31
+            self.state_S31_Begin(connect)
+            self.state_S31_OK(connect, b'1')
+            # State 36
+            self.state_S34_Begin(connect)
+            self.state_S34_OK(connect)
         finally:
             connect.close()
             print("Client", self.number, self.sockname, ": disconnection with the server")
@@ -1210,7 +1271,9 @@ class Test_ServerTestCase(unittest.TestCase):
         Test_Server_Client_S21_KO_COUNT(Configuration.host, Configuration.port, self, 5).start()
         
         # Begin after 2 secondes
-        Test_Server_Client_S22_OK(Configuration.host, Configuration.port, self, 6, 2).start()
+        Test_Server_Client_S22_OK(Configuration.host, Configuration.port, self, 6, begin=2).start()
+        login = 'This is the client login for testing S34'.encode()
+        Test_Server_Client_S22_OK(Configuration.host, Configuration.port, self, 6, login=login, begin=2).start()
         
         # Begin after 3 secondes
         Test_Server_Client_S22_KO_ID(Configuration.host, Configuration.port, self, 7, 3).start()

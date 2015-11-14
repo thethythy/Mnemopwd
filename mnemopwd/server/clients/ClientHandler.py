@@ -53,7 +53,8 @@ class ClientHandler(asyncio.Protocol):
         self.states = {'0':StateS0(), '1S':StateS1S(), '1C':StateS1C(), \
                        '2':StateS2(), '21':StateS21(), '22':StateS22(), \
                        '3':StateS3(), '31':StateS31(), '35':StateS35(), \
-                       '36':StateS36(), '37':StateS37(), '38':StateS38()}
+                       '34':StateS34(),'36':StateS36(), '37':StateS37(), \
+                       '38':StateS38()}
 
     def connection_made(self, transport):
         """Connection starting : set default protocol state and start it"""
@@ -72,7 +73,6 @@ class ClientHandler(asyncio.Protocol):
             logging.info('Disconnection from {}'.format(self.peername))
         else:
             logging.warning('Lost connection from {}'.format(self.peername))
-        # TODO : nothing to do here ????
         self.transport.close()
 
     def data_received(self, data):
