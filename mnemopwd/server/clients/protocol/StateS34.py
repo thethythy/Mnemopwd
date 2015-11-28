@@ -29,6 +29,7 @@
 State S34 : Deletion
 """
 
+import logging
 from server.util.funcutils import singleton
 from server.clients.protocol import StateSCC
 from server.clients.DBHandler import DBHandler
@@ -81,6 +82,7 @@ class StateS34(StateSCC):
                 if result:
                     client.loop.call_soon_threadsafe(client.transport.write, b'OK')
                     client.loop.call_soon_threadsafe(client.transport.close)
+                    logging.warning('User account {} deletion from {}'.format(filename, client.peername))
                 
                 # If deletion has failed for some reason
                 else:

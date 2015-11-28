@@ -565,10 +565,7 @@ class Test_Server_Client_S34_OK(Test_Server_Client_S31_OK_SAME_CONFIG):
         echallenge = self.get_echallenge(b'S34.7')
         
         ho = hashlib.sha256()
-        if bug :
-            ho.update(hmac_sha512(self.ms, self.ms + self.login + b'bug')) # Wrong id
-        else:
-            ho.update(hmac_sha512(self.ms, self.ms + self.login)) # Good id
+        ho.update(hmac_sha512(self.ms, self.ms + self.login)) # Good id
         id = ho.digest()
         eid = self.ephecc.encrypt(id, pubkey=self.ephecc.get_pubkey())
 
@@ -1264,59 +1261,60 @@ class Test_ServerTestCase(unittest.TestCase):
         pass
 
     def test_Server(self):
-        Test_Server_Client_S0(Configuration.host, Configuration.port, self, 1).start()
-        Test_Server_Client_S1_OK(Configuration.host, Configuration.port, self, 2).start()
-        Test_Server_Client_S1_KO(Configuration.host, Configuration.port, self, 3).start()
-        Test_Server_Client_S21_KO_ID(Configuration.host, Configuration.port, self, 4).start()
-        Test_Server_Client_S21_KO_COUNT(Configuration.host, Configuration.port, self, 5).start()
+        #Test_Server_Client_S0(Configuration.host, Configuration.port, self, 1).start()
+        #Test_Server_Client_S1_OK(Configuration.host, Configuration.port, self, 2).start()
+        #Test_Server_Client_S1_KO(Configuration.host, Configuration.port, self, 3).start()
+        #Test_Server_Client_S21_KO_ID(Configuration.host, Configuration.port, self, 4).start()
+        #Test_Server_Client_S21_KO_COUNT(Configuration.host, Configuration.port, self, 5).start()
         
         # Begin after 2 secondes
-        Test_Server_Client_S22_OK(Configuration.host, Configuration.port, self, 6, begin=2).start()
+        #Test_Server_Client_S22_OK(Configuration.host, Configuration.port, self, 6, begin=2).start()
         login = 'This is the client login for testing S34'.encode()
         Test_Server_Client_S22_OK(Configuration.host, Configuration.port, self, 6, login=login, begin=2).start()
         
         # Begin after 3 secondes
-        Test_Server_Client_S22_KO_ID(Configuration.host, Configuration.port, self, 7, 3).start()
-        Test_Server_Client_S22_KO_COUNT(Configuration.host, Configuration.port, self, 8, 3).start()
-        Test_Server_Client_S21_OK(Configuration.host, Configuration.port, self, 9, 3).start()
+        #Test_Server_Client_S22_KO_ID(Configuration.host, Configuration.port, self, 7, 3).start()
+        #Test_Server_Client_S22_KO_COUNT(Configuration.host, Configuration.port, self, 8, 3).start()
+        #Test_Server_Client_S21_OK(Configuration.host, Configuration.port, self, 9, 3).start()
         
         # Begin after 4 secondes
-        Test_Server_Client_S31_OK_SAME_CONFIG(Configuration.host, Configuration.port, self, 10, 4).start()
-        Test_Server_Client_S31_OK_SAME_CONFIG(Configuration.host, Configuration.port, self, 11, 4).start()
-        Test_Server_Client_S31_KO(Configuration.host, Configuration.port, self, 12, 4).start()
-        Test_Server_Client_S36_OK_1(Configuration.host, Configuration.port, self, 13, 4).start()
-        Test_Server_Client_S36_OK_2(Configuration.host, Configuration.port, self, 14, 4).start()
-        Test_Server_Client_S36_KO(Configuration.host, Configuration.port, self, 15, 4).start()
+        #Test_Server_Client_S31_OK_SAME_CONFIG(Configuration.host, Configuration.port, self, 10, 4).start()
+        #Test_Server_Client_S31_OK_SAME_CONFIG(Configuration.host, Configuration.port, self, 11, 4).start()
+        #Test_Server_Client_S31_KO(Configuration.host, Configuration.port, self, 12, 4).start()
+        #Test_Server_Client_S36_OK_1(Configuration.host, Configuration.port, self, 13, 4).start()
+        #Test_Server_Client_S36_OK_2(Configuration.host, Configuration.port, self, 14, 4).start()
+        #Test_Server_Client_S36_KO(Configuration.host, Configuration.port, self, 15, 4).start()
         
         # Begin after 6 secondes
-        Test_Server_Client_S35_OK(Configuration.host, Configuration.port, self, 16, 2, 6).start()
-        Test_Server_Client_S38_OK(Configuration.host, Configuration.port, self, 17, 6).start()
-        Test_Server_Client_S38_KO_1(Configuration.host, Configuration.port, self, 18, 6).start()
-        Test_Server_Client_S38_KO_2(Configuration.host, Configuration.port, self, 19, 6).start()
+        #Test_Server_Client_S35_OK(Configuration.host, Configuration.port, self, 16, 2, 6).start()
+        #Test_Server_Client_S38_OK(Configuration.host, Configuration.port, self, 17, 6).start()
+        #Test_Server_Client_S38_KO_1(Configuration.host, Configuration.port, self, 18, 6).start()
+        #Test_Server_Client_S38_KO_2(Configuration.host, Configuration.port, self, 19, 6).start()
         
         # Begin after 7 secondes
-        Test_Server_Client_S37_OK(Configuration.host, Configuration.port, self, 20, 7).start()
-        Test_Server_Client_S37_KO_1(Configuration.host, Configuration.port, self, 21, 7).start()
-        Test_Server_Client_S37_KO_2(Configuration.host, Configuration.port, self, 22, 7).start()
+        #Test_Server_Client_S37_OK(Configuration.host, Configuration.port, self, 20, 7).start()
+        #Test_Server_Client_S37_KO_1(Configuration.host, Configuration.port, self, 21, 7).start()
+        #Test_Server_Client_S37_KO_2(Configuration.host, Configuration.port, self, 22, 7).start()
         
         # Begin after 8 secondes
-        Test_Server_Client_S35_OK(Configuration.host, Configuration.port, self, 23, 1, 8).start()
+        Test_Server_Client_S34_OK(Configuration.host, Configuration.port, self, 23, 8).start()
+        #Test_Server_Client_S35_OK(Configuration.host, Configuration.port, self, 24, 1, 8).start()
         
         # Begin after 9 secondes
-        Test_Server_Client_S36_OK_1(Configuration.host, Configuration.port, self, 24, 9).start()
-        Test_Server_Client_S36_OK_2(Configuration.host, Configuration.port, self, 25, 9).start()
+        #Test_Server_Client_S36_OK_1(Configuration.host, Configuration.port, self, 25, 9).start()
+        #Test_Server_Client_S36_OK_2(Configuration.host, Configuration.port, self, 26, 9).start()
         
         # Begin after 10 secondes
-        Test_Server_Client_S35_OK(Configuration.host, Configuration.port, self, 26, 3, 10).start()
+        #Test_Server_Client_S35_OK(Configuration.host, Configuration.port, self, 27, 3, 10).start()
         
         # Begin after 11 secondes
-        Test_Server_Client_S31_OK_NEW_CONFIG(Configuration.host, Configuration.port, self, 27, 11).start()
+        #Test_Server_Client_S31_OK_NEW_CONFIG(Configuration.host, Configuration.port, self, 28, 11).start()
         
         # Begin after 12 secondes
-        Test_Server_Client_S36_OK_NEW_CONFIG(Configuration.host, Configuration.port, self, 28, 12).start()
+        #Test_Server_Client_S36_OK_NEW_CONFIG(Configuration.host, Configuration.port, self, 29, 12).start()
         
         # Begin after 13 secondes
-        Test_Server_Client_S35_OK_NEW_CONFIG(Configuration.host, Configuration.port, self, 29, 3, 13).start()
+        #Test_Server_Client_S35_OK_NEW_CONFIG(Configuration.host, Configuration.port, self, 30, 3, 13).start()
 
         try:
             Configuration.dbpath = self.path

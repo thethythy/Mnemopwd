@@ -120,6 +120,15 @@ class DBHandler:
     def exist(path, filename):
         """Test if the database file exist"""
         return os.path.exists(path + '/' + filename + '.db')
+    
+    @staticmethod
+    def delete(path, filename):
+        """Try to delete database file"""
+        result = False
+        with DBHandler.lock:
+            os.unlink(path + '/' + filename + '.db')
+            result = not os.path.exists(path + '/' + filename + '.db')
+        return result
         
     def add_data(self, sib):
         """Add a secret information block and return his index (a string)"""
