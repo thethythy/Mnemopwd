@@ -64,10 +64,12 @@ class DBHandler:
     - filename: a string for the databse file name (instance attribut)
     
     Method(s):
-    - new: a static method for database creation
-    - exist: a static method for testing if a database already exist
+    - new: a static method for database file creation
+    - exist: a static method for testing if a database file already exist
+    - delete: a static method for deleting a database file
     - add_data: a method for adding a secret information block in database
     - search_data: a method for searching secret information blocks matching a pattern
+    - get_data: a method for getting all secret information blocks
     - update_data: a method for updating a secret information block in database
     - delete_data: a method for deleting a secret information block in database
     """
@@ -141,7 +143,7 @@ class DBHandler:
         return index                  # Return the index of the block
         
     def search_data(self, keyH, pattern):
-        """Search secret information matching the pattern. Return a list of sib found."""
+        """Search secret information matching the pattern. Return a list of found sibs."""
         tabsibs = []             # Table of sibs
         nbsibs = self['nbsibs']  # Number of sibs
         if nbsibs > 0: 
@@ -161,7 +163,19 @@ class DBHandler:
                                 tabsibs.append((i,sib)) # Pattern matching so add sib in table
                                 break # One info match so stop loop now
         return tabsibs
-        
+    
+    def get_data(self, keyH):
+        """Return a list of all sibs"""
+        tabsibs = []             # Table of sibs
+        nbsibs = self['nbsibs']  # Number of sibs
+        if nbsibs > 0: 
+            for i in range(1, self['index'] + 1): # For all sibs
+                try: sib = self[str(i)]  # Get sib (can raise a KeyError exception)
+                except KeyError: continue  # Try next key
+                sib.keyH = keyH  # Set actual KeyHandler
+                if sib.nbInfo > 0 : tabsibs.append((i,sib))
+        return tabsibs
+    
     def update_data(self, index, sib):
         """Update a secret information block. Return a boolean."""
         try:

@@ -553,6 +553,102 @@ class Test_Server_Client_S31_KO(Test_Server_Client_S31_OK_SAME_CONFIG):
             print("Client", self.number, self.sockname, ": disconnection with the server")
 
 # -----------------------------------------------------------------------------
+# Test S32
+
+class Test_Server_Client_S32_OK(Test_Server_Client_S31_OK_SAME_CONFIG):
+    def __init__(self, host, port, test, number, nbsibs, begin=None):
+        Test_Server_Client_S31_OK_SAME_CONFIG.__init__(self,host,port,test,number)
+        self.begin = begin
+        self.nbsibs = nbsibs
+    
+    def state_S32_Begin(self, connect):
+        self.keyH = KeyHandler(self.ms, cur1=self.curve1, cip1=self.cipher1)
+        echallenge = self.get_echallenge(b'S32.4')
+        connect.send(echallenge + b';EXPORTATION')
+
+    def state_S32_OK(self, connect):
+        message = connect.recv(1024)
+        protocol_cd = message[:2]
+        self.test.assertEqual(protocol_cd, b'OK')
+        
+        tab_protocol_data = message[3:].split(b';', maxsplit=1)
+        nbsibs = int(tab_protocol_data[0].decode())
+        
+        self.test.assertEqual(nbsibs, self.nbsibs)
+        
+        #print('nbsibs: ', nbsibs)
+        #print(tab_protocol_data)
+        
+        if nbsibs > 0:
+            if len(tab_protocol_data) == 1:
+                tab_protocol_data.append("")
+            while len(tab_protocol_data) <= 1:
+                tab_protocol_data[1] += connect.recv(4096)
+            
+            tab_protocol_data = tab_protocol_data[1].split(b';', maxsplit=1)
+        
+        for i in range(nbsibs):
+            protocol_cd = tab_protocol_data[0]
+            self.test.assertEqual(protocol_cd, b'SIB')
+            #print(protocol_cd)
+            
+            tab_protocol_data = tab_protocol_data[1].split(b';', maxsplit=1)
+            index = int((tab_protocol_data[0]).decode())
+            #print(index)
+           
+            tab_protocol_data = tab_protocol_data[1].split(b';', maxsplit=1)
+            taille = int((tab_protocol_data[0]).decode())
+            #print(taille)
+            
+            if taille > len(tab_protocol_data[1]) :
+                if (len(tab_protocol_data[1]) != 0):
+                    tab_protocol_data[1] += connect.recv(4096)
+                else:
+                    tab_protocol_data[1] = connect.recv(4096)
+            
+            psib = tab_protocol_data[1][:taille]
+            #print(psib)
+            sib = pickle.loads(psib)
+            sib.control_integrity(self.keyH)
+           
+            protocol_data = tab_protocol_data[1][taille+1:]
+            if len(protocol_data) == 0 and i != nbsibs - 1:
+                protocol_data = connect.recv(4096)
+            #print(protocol_data)
+            if len(protocol_data) != 0:
+                #print(protocol_data[0])
+                if protocol_data[0] == ord(';'):
+                    tab_protocol_data = protocol_data[1:].split(b';', maxsplit=1)
+                else:
+                    tab_protocol_data = protocol_data.split(b';', maxsplit=1)
+            #print(tab_protocol_data)
+        
+    def run(self):
+        try:
+            time.sleep(self.begin) # Waiting previous test
+            connect = self.connect_to_server() 
+            # State 0
+            self.state_S0(connect)
+            # State 1S
+            self.state_S1S_begin(connect)
+            self.state_S1S_end(connect)
+            # State 1C
+            self.state_S1C_begin(connect)
+            self.state_S1C_end(connect)
+            # State 21
+            self.state_S21_Begin(connect)
+            self.state_S21_OK(connect)
+            # State 31
+            self.state_S31_Begin(connect)
+            self.state_S31_OK(connect)
+            # State 32
+            self.state_S32_Begin(connect)
+            self.state_S32_OK(connect)
+        finally:
+            connect.close()
+            print("Client", self.number, self.sockname, ": disconnection with the server")
+
+# -----------------------------------------------------------------------------
 # Test S34
 
 class Test_Server_Client_S34_OK(Test_Server_Client_S31_OK_SAME_CONFIG):
@@ -699,7 +795,7 @@ class Test_Server_Client_S35_OK(Test_Server_Client_S31_OK_SAME_CONFIG):
             # State 31
             self.state_S31_Begin(connect)
             self.state_S31_OK(connect)
-            # State 36
+            # State 35
             self.state_S35_Begin(connect)
             self.state_S35_OK(connect)
         finally:
@@ -1261,60 +1357,61 @@ class Test_ServerTestCase(unittest.TestCase):
         pass
 
     def test_Server(self):
-        #Test_Server_Client_S0(Configuration.host, Configuration.port, self, 1).start()
-        #Test_Server_Client_S1_OK(Configuration.host, Configuration.port, self, 2).start()
-        #Test_Server_Client_S1_KO(Configuration.host, Configuration.port, self, 3).start()
-        #Test_Server_Client_S21_KO_ID(Configuration.host, Configuration.port, self, 4).start()
-        #Test_Server_Client_S21_KO_COUNT(Configuration.host, Configuration.port, self, 5).start()
+        Test_Server_Client_S0(Configuration.host, Configuration.port, self, 1).start()
+        Test_Server_Client_S1_OK(Configuration.host, Configuration.port, self, 2).start()
+        Test_Server_Client_S1_KO(Configuration.host, Configuration.port, self, 3).start()
+        Test_Server_Client_S21_KO_ID(Configuration.host, Configuration.port, self, 4).start()
+        Test_Server_Client_S21_KO_COUNT(Configuration.host, Configuration.port, self, 5).start()
         
         # Begin after 2 secondes
-        #Test_Server_Client_S22_OK(Configuration.host, Configuration.port, self, 6, begin=2).start()
+        Test_Server_Client_S22_OK(Configuration.host, Configuration.port, self, 6, begin=2).start()
         login = 'This is the client login for testing S34'.encode()
         Test_Server_Client_S22_OK(Configuration.host, Configuration.port, self, 6, login=login, begin=2).start()
         
         # Begin after 3 secondes
-        #Test_Server_Client_S22_KO_ID(Configuration.host, Configuration.port, self, 7, 3).start()
-        #Test_Server_Client_S22_KO_COUNT(Configuration.host, Configuration.port, self, 8, 3).start()
-        #Test_Server_Client_S21_OK(Configuration.host, Configuration.port, self, 9, 3).start()
+        Test_Server_Client_S22_KO_ID(Configuration.host, Configuration.port, self, 7, 3).start()
+        Test_Server_Client_S22_KO_COUNT(Configuration.host, Configuration.port, self, 8, 3).start()
+        Test_Server_Client_S21_OK(Configuration.host, Configuration.port, self, 9, 3).start()
         
         # Begin after 4 secondes
-        #Test_Server_Client_S31_OK_SAME_CONFIG(Configuration.host, Configuration.port, self, 10, 4).start()
-        #Test_Server_Client_S31_OK_SAME_CONFIG(Configuration.host, Configuration.port, self, 11, 4).start()
-        #Test_Server_Client_S31_KO(Configuration.host, Configuration.port, self, 12, 4).start()
-        #Test_Server_Client_S36_OK_1(Configuration.host, Configuration.port, self, 13, 4).start()
-        #Test_Server_Client_S36_OK_2(Configuration.host, Configuration.port, self, 14, 4).start()
-        #Test_Server_Client_S36_KO(Configuration.host, Configuration.port, self, 15, 4).start()
+        Test_Server_Client_S31_OK_SAME_CONFIG(Configuration.host, Configuration.port, self, 10, 4).start()
+        Test_Server_Client_S31_OK_SAME_CONFIG(Configuration.host, Configuration.port, self, 11, 4).start()
+        Test_Server_Client_S31_KO(Configuration.host, Configuration.port, self, 12, 4).start()
+        Test_Server_Client_S36_OK_1(Configuration.host, Configuration.port, self, 13, 4).start()
+        Test_Server_Client_S36_OK_2(Configuration.host, Configuration.port, self, 14, 4).start()
+        Test_Server_Client_S36_KO(Configuration.host, Configuration.port, self, 15, 4).start()
         
         # Begin after 6 secondes
-        #Test_Server_Client_S35_OK(Configuration.host, Configuration.port, self, 16, 2, 6).start()
-        #Test_Server_Client_S38_OK(Configuration.host, Configuration.port, self, 17, 6).start()
-        #Test_Server_Client_S38_KO_1(Configuration.host, Configuration.port, self, 18, 6).start()
-        #Test_Server_Client_S38_KO_2(Configuration.host, Configuration.port, self, 19, 6).start()
+        Test_Server_Client_S35_OK(Configuration.host, Configuration.port, self, 16, 2, 6).start()
+        Test_Server_Client_S38_OK(Configuration.host, Configuration.port, self, 17, 6).start()
+        Test_Server_Client_S38_KO_1(Configuration.host, Configuration.port, self, 18, 6).start()
+        Test_Server_Client_S38_KO_2(Configuration.host, Configuration.port, self, 19, 6).start()
         
         # Begin after 7 secondes
-        #Test_Server_Client_S37_OK(Configuration.host, Configuration.port, self, 20, 7).start()
-        #Test_Server_Client_S37_KO_1(Configuration.host, Configuration.port, self, 21, 7).start()
-        #Test_Server_Client_S37_KO_2(Configuration.host, Configuration.port, self, 22, 7).start()
+        Test_Server_Client_S37_OK(Configuration.host, Configuration.port, self, 20, 7).start()
+        Test_Server_Client_S37_KO_1(Configuration.host, Configuration.port, self, 21, 7).start()
+        Test_Server_Client_S37_KO_2(Configuration.host, Configuration.port, self, 22, 7).start()
         
         # Begin after 8 secondes
         Test_Server_Client_S34_OK(Configuration.host, Configuration.port, self, 23, 8).start()
-        #Test_Server_Client_S35_OK(Configuration.host, Configuration.port, self, 24, 1, 8).start()
+        Test_Server_Client_S35_OK(Configuration.host, Configuration.port, self, 24, 1, 8).start()
         
         # Begin after 9 secondes
-        #Test_Server_Client_S36_OK_1(Configuration.host, Configuration.port, self, 25, 9).start()
-        #Test_Server_Client_S36_OK_2(Configuration.host, Configuration.port, self, 26, 9).start()
-        
-        # Begin after 10 secondes
-        #Test_Server_Client_S35_OK(Configuration.host, Configuration.port, self, 27, 3, 10).start()
+        Test_Server_Client_S36_OK_1(Configuration.host, Configuration.port, self, 25, 9).start()
+        Test_Server_Client_S36_OK_2(Configuration.host, Configuration.port, self, 26, 9).start()
         
         # Begin after 11 secondes
-        #Test_Server_Client_S31_OK_NEW_CONFIG(Configuration.host, Configuration.port, self, 28, 11).start()
+        Test_Server_Client_S35_OK(Configuration.host, Configuration.port, self, 27, 3, 11).start()
+        Test_Server_Client_S32_OK(Configuration.host, Configuration.port, self, 28, 3, 11).start()
         
         # Begin after 12 secondes
-        #Test_Server_Client_S36_OK_NEW_CONFIG(Configuration.host, Configuration.port, self, 29, 12).start()
+        Test_Server_Client_S31_OK_NEW_CONFIG(Configuration.host, Configuration.port, self, 29, 12).start()
         
         # Begin after 13 secondes
-        #Test_Server_Client_S35_OK_NEW_CONFIG(Configuration.host, Configuration.port, self, 30, 3, 13).start()
+        Test_Server_Client_S36_OK_NEW_CONFIG(Configuration.host, Configuration.port, self, 30, 13).start()
+        
+        # Begin after 14 secondes
+        Test_Server_Client_S35_OK_NEW_CONFIG(Configuration.host, Configuration.port, self, 31, 3, 14).start()
 
         try:
             Configuration.dbpath = self.path

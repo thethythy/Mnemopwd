@@ -40,8 +40,8 @@ class StateS3():
         """Action of the state S3: select a substate"""
         
         is_cd_S31 = data[170:183] == b"CONFIGURATION"   # Test for S31 substate
-        is_cd_S32 = data[170:181] == b"IMPORTATION"     # Test for S32 substate
-        is_cd_S33 = data[170:181] == b"EXPORTATION"     # Test for S33 substate
+        is_cd_S32 = data[170:181] == b"EXPORTATION"     # Test for S32 substate
+        is_cd_S33 = data[170:181] == b"IMPORTATION"     # Test for S33 substate
         is_cd_S34 = data[170:178] == b"DELETION"        # Test for S34 substate
         is_cd_S35 = data[170:180] == b"SEARCHDATA"      # Test for S35 substate
         is_cd_S36 = data[170:177] == b"ADDDATA"         # Test for S36 substate
