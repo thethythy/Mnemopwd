@@ -73,9 +73,7 @@ class Test_Server_Client_S0(threading.Thread):
         return connect
     
     def state_S0(self, connect):
-        #print(self, "S0 starting recv")
         message = connect.recv(4096)
-        #print(self, "S0 ending recv")
         
         protocol_cd = message[:10]
         protocol_data = message[11:]
@@ -105,14 +103,10 @@ class Test_Server_Client_S1_OK(Test_Server_Client_S0):
         salt, ms = pbkdf2(self.password, salt=self.login)
         self.ms = ms
         ems = self.ephecc.encrypt(self.ms, pubkey=self.ephecc.get_pubkey())
-        #print(self, "1S_OK starting send")
         connect.send(b'SESSION;' + ems)
-        #print(self, "1S_OK ending send")
 
     def state_S1S_end(self, connect):
-        #print(self, "1S_OK starting recv")
         message = connect.recv(4096)
-        #print(self, "1S_OK ending recv")
         protocol_cd = message[:10]
         blocksize = OpenSSL.get_cipher('aes-256-cbc').get_blocksize()
         self.iv = message[11:11+blocksize]
@@ -131,14 +125,10 @@ class Test_Server_Client_S1_OK(Test_Server_Client_S0):
         self.session = ctx.ciphering(self.esession)
         echallenge = self.get_echallenge(b'S1.12')
         
-        #print(self, "1C_OK starting send")
         connect.send(b'CHALLENGEA;' + echallenge)
-        #print(self, "1C_OK ending send")
         
     def state_S1C_end(self, connect):
-        #print(self, "1C_OK starting recv")
         message = connect.recv(4096)
-        #print(self, "1C_OK ending recv")
         protocol_cd = message[:2]
         self.test.assertEqual(protocol_cd, b'OK')
     
@@ -211,14 +201,10 @@ class Test_Server_Client_S21_OK(Test_Server_Client_S1_OK):
         
         elogin = self.ephecc.encrypt(self.login, pubkey=self.ephecc.get_pubkey())
         
-        #print(self, "21_OK starting send")
         connect.send(echallenge + b';LOGIN;' + eid + b';' + elogin)
-        #print(self, "21_OK ending send")
 
     def state_S21_OK(self, connect):
-        #print(self, "21_OK starting recv")
         message = connect.recv(4096)
-        #print(self, "21_OK ending recv")
         
         protocol_cd = message[:2]
         self.test.assertEqual(protocol_cd, b'OK')
@@ -247,9 +233,7 @@ class Test_Server_Client_S21_KO_ID(Test_Server_Client_S21_OK):
         Test_Server_Client_S1_OK.__init__(self,host,port,test,number)
                 
     def state_S21_KO(self, connect):
-        #print("Client", self.number, "state_S21_KO : starting")
         message = connect.recv(4096)
-        #print("Client", self.number, "state_S21_KO : receiving")
         
         protocol_cd = message[:5]
         protocol_data = message[6:]
@@ -279,9 +263,7 @@ class Test_Server_Client_S21_KO_COUNT(Test_Server_Client_S21_KO_ID):
         Test_Server_Client_S21_KO_ID.__init__(self,host,port,test,number)
     
     def state_S21_KO(self, connect):
-        #print("Client", self.number, "state_S22_KO : starting")
         message = connect.recv(4096)
-        #print("Client", self.number, "state_S22_KO : receiving")
         
         protocol_cd = message[:5]
         protocol_data = message[6:]
@@ -329,14 +311,10 @@ class Test_Server_Client_S22_OK(Test_Server_Client_S1_OK):
 
         elogin = self.ephecc.encrypt(self.login, pubkey=self.ephecc.get_pubkey())
         
-        #print(self, "S22_OK starting send")
         connect.send(echallenge + b';CREATION;' + eid + b';' + elogin)
-        #print(self, "S22_OK ending send")
                 
     def state_S22_OK(self, connect):
-        #print(self, "S22_OK starting recv")
         message = connect.recv(4096)
-        #print(self, "S22_OK ending recv")
         
         protocol_cd = message[:5]
         self.test.assertEqual(protocol_cd, b'OK')
@@ -366,9 +344,7 @@ class Test_Server_Client_S22_KO_ID(Test_Server_Client_S22_OK):
         self.begin = begin
     
     def state_S22_KO(self, connect):
-        #print("Client", self.number, "state_S22 : starting")
         message = connect.recv(4096)
-        #print("Client", self.number, "state_S22 : receiving")
         
         protocol_cd = message[:5]
         protocol_data = message[6:]
@@ -400,9 +376,7 @@ class Test_Server_Client_S22_KO_COUNT(Test_Server_Client_S22_OK):
         self.begin = begin
                 
     def state_S22_KO(self, connect):
-        #print("Client", self.number, "state_S22 : starting")
         message = connect.recv(4096)
-        #print("Client", self.number, "state_S22 : receiving")
         
         protocol_cd = message[:5]
         protocol_data = message[6:]
@@ -448,14 +422,10 @@ class Test_Server_Client_S31_OK_SAME_CONFIG(Test_Server_Client_S21_OK):
                  self.curve3 + ";" + self.cipher3
         econfig = self.ephecc.encrypt(config, pubkey=self.ephecc.get_pubkey())
         echallenge = self.get_echallenge(b'S31.6')
-        #print(self, "31_OK starting send")
         connect.send(echallenge + b';CONFIGURATION;' + econfig)
-        #print(self, "31_OK ending send")
         
     def state_S31_OK(self, connect, value=None):
-        #print(self, "31_OK starting recv")
         message = connect.recv(4096)
-        #print(self, "31_OK ending recv")
         protocol_cd = message[:2]
         protocol_data = message[3:]
         self.test.assertEqual(protocol_cd, b'OK')
@@ -649,16 +619,16 @@ class Test_Server_Client_S32_OK(Test_Server_Client_S31_OK_SAME_CONFIG):
             print("Client", self.number, self.sockname, ": disconnection with the server")
 
 # -----------------------------------------------------------------------------
-# Test S34
+# Test S33
 
-class Test_Server_Client_S34_OK(Test_Server_Client_S31_OK_SAME_CONFIG):
+class Test_Server_Client_S33_OK(Test_Server_Client_S31_OK_SAME_CONFIG):
     def __init__(self, host, port, test, number, begin=None):
         Test_Server_Client_S31_OK_SAME_CONFIG.__init__(self,host,port,test,number)
         self.begin = begin
-        self.login = 'This is the client login for testing S34'.encode()
+        self.login = 'This is the client login for testing S33'.encode()
 
-    def state_S34_Begin(self, connect, bug=False):
-        echallenge = self.get_echallenge(b'S34.7')
+    def state_S33_Begin(self, connect, bug=False):
+        echallenge = self.get_echallenge(b'S33.7')
         
         ho = hashlib.sha256()
         ho.update(hmac_sha512(self.ms, self.ms + self.login)) # Good id
@@ -667,15 +637,10 @@ class Test_Server_Client_S34_OK(Test_Server_Client_S31_OK_SAME_CONFIG):
 
         elogin = self.ephecc.encrypt(self.login, pubkey=self.ephecc.get_pubkey())
         
-        #print(self, "S34_OK starting send")
         connect.send(echallenge + b';DELETION;' + eid + b';' + elogin)
-        #print(self, "S34_OK ending send")
                 
-    def state_S34_OK(self, connect):
-        #print(self, "S34_OK starting recv")
+    def state_S33_OK(self, connect):
         message = connect.recv(1024)
-        #print(self, "S34_OK ending recv")
-        
         protocol_cd = message[:5]
         self.test.assertEqual(protocol_cd, b'OK')
 
@@ -697,30 +662,30 @@ class Test_Server_Client_S34_OK(Test_Server_Client_S31_OK_SAME_CONFIG):
             # State 31
             self.state_S31_Begin(connect)
             self.state_S31_OK(connect, b'1')
-            # State 36
-            self.state_S34_Begin(connect)
-            self.state_S34_OK(connect)
+            # State 33
+            self.state_S33_Begin(connect)
+            self.state_S33_OK(connect)
         finally:
             connect.close()
             print("Client", self.number, self.sockname, ": disconnection with the server")
 
 # -----------------------------------------------------------------------------
-# Test S35
+# Test S34
 
-class Test_Server_Client_S35_OK(Test_Server_Client_S31_OK_SAME_CONFIG):
+class Test_Server_Client_S34_OK(Test_Server_Client_S31_OK_SAME_CONFIG):
     def __init__(self, host, port, test, number, nbsibs, begin=None):
         Test_Server_Client_S31_OK_SAME_CONFIG.__init__(self,host,port,test,number)
         self.begin = begin
         self.nbsibs = nbsibs
 
-    def state_S35_Begin(self, connect):
+    def state_S34_Begin(self, connect):
         pattern = "secret"
         self.keyH = KeyHandler(self.ms, cur1=self.curve1, cip1=self.cipher1)
         epattern = self.ephecc.encrypt(pattern.encode(), pubkey=self.ephecc.get_pubkey())
-        echallenge = self.get_echallenge(b'S35.6')
+        echallenge = self.get_echallenge(b'S34.6')
         connect.send(echallenge + b';SEARCHDATA;' + epattern)
         
-    def state_S35_OK(self, connect):
+    def state_S34_OK(self, connect):
         message = connect.recv(1024)
         protocol_cd = message[:2]
         self.test.assertEqual(protocol_cd, b'OK')
@@ -796,27 +761,27 @@ class Test_Server_Client_S35_OK(Test_Server_Client_S31_OK_SAME_CONFIG):
             self.state_S31_Begin(connect)
             self.state_S31_OK(connect)
             # State 35
-            self.state_S35_Begin(connect)
-            self.state_S35_OK(connect)
+            self.state_S34_Begin(connect)
+            self.state_S34_OK(connect)
         finally:
             connect.close()
             print("Client", self.number, self.sockname, ": disconnection with the server")
 
-class Test_Server_Client_S35_OK_NEW_CONFIG(Test_Server_Client_S31_OK_NEW_CONFIG):
+class Test_Server_Client_S34_OK_NEW_CONFIG(Test_Server_Client_S31_OK_NEW_CONFIG):
     def __init__(self, host, port, test, number, nbsibs, begin=None):
         Test_Server_Client_S31_OK_NEW_CONFIG.__init__(self,host,port,test,number)
         self.begin = begin
         self.nbsibs = nbsibs
 
-    def state_S35_Begin(self, connect):
+    def state_S34_Begin(self, connect):
         pattern = "secret"
         self.keyH = KeyHandler(self.ms, cur1=self.curve1, cip1=self.cipher1, \
                                         cur2=self.curve2, cip2=self.cipher2)
         epattern = self.ephecc.encrypt(pattern.encode(), pubkey=self.ephecc.get_pubkey())
-        echallenge = self.get_echallenge(b'S35.6')
+        echallenge = self.get_echallenge(b'S34.6')
         connect.send(echallenge + b';SEARCHDATA;' + epattern)
         
-    def state_S35_OK(self, connect):
+    def state_S34_OK(self, connect):
         message = connect.recv(1024)
         protocol_cd = message[:2]
         self.test.assertEqual(protocol_cd, b'OK')
@@ -891,23 +856,23 @@ class Test_Server_Client_S35_OK_NEW_CONFIG(Test_Server_Client_S31_OK_NEW_CONFIG)
             # State 31
             self.state_S31_Begin(connect)
             self.state_S31_OK(connect)
-            # State 36
-            self.state_S35_Begin(connect)
-            self.state_S35_OK(connect)
+            # State 34
+            self.state_S34_Begin(connect)
+            self.state_S34_OK(connect)
         finally:
             connect.close()
             print("Client", self.number, self.sockname, ": disconnection with the server")
             print("Use Ctrl+c to finish the test")
 
 # -----------------------------------------------------------------------------
-# Test S36
+# Test S35
 
-class Test_Server_Client_S36_OK_1(Test_Server_Client_S31_OK_SAME_CONFIG):
+class Test_Server_Client_S35_OK_1(Test_Server_Client_S31_OK_SAME_CONFIG):
     def __init__(self, host, port, test, number, begin=None):
         Test_Server_Client_S31_OK_SAME_CONFIG.__init__(self,host,port,test,number)
         self.begin = begin
         
-    def state_S36_Begin(self, connect, bug=False):
+    def state_S35_Begin(self, connect, bug=False):
         
         if bug :
             self.keyH = KeyHandler(self.ms, cur1=self.curve1, cip1='rc4')
@@ -916,15 +881,11 @@ class Test_Server_Client_S36_OK_1(Test_Server_Client_S31_OK_SAME_CONFIG):
         sib = SecretInfoBlock(self.keyH)
         sib['info1'] = "secret information"
         
-        echallenge = self.get_echallenge(b'S36.6')
-        #print(self, "36_OK starting send")
+        echallenge = self.get_echallenge(b'S35.6')
         connect.send(echallenge + b';ADDDATA;' + pickle.dumps(sib))
-        #print(self, "36_OK ending send")
         
-    def state_S36_OK(self, connect):
-        #print(self, "36_OK starting recv")
+    def state_S35_OK(self, connect):
         message = connect.recv(4096)
-        #print(self, "36_OK ending recv")
         protocol_cd = message[:2]
         self.test.assertEqual(protocol_cd, b'OK')
         
@@ -947,18 +908,18 @@ class Test_Server_Client_S36_OK_1(Test_Server_Client_S31_OK_SAME_CONFIG):
             self.state_S31_Begin(connect)
             self.state_S31_OK(connect, b'1')
             # State 36
-            self.state_S36_Begin(connect)
-            self.state_S36_OK(connect)
+            self.state_S35_Begin(connect)
+            self.state_S35_OK(connect)
         finally:
             connect.close()
             print("Client", self.number, self.sockname, ": disconnection with the server")
 
-class Test_Server_Client_S36_OK_2(Test_Server_Client_S31_OK_SAME_CONFIG):
+class Test_Server_Client_S35_OK_2(Test_Server_Client_S31_OK_SAME_CONFIG):
     def __init__(self, host, port, test, number, begin=None):
         Test_Server_Client_S31_OK_SAME_CONFIG.__init__(self,host,port,test,number)
         self.begin = begin
         
-    def state_S36_Begin(self, connect, bug=False):
+    def state_S35_Begin(self, connect, bug=False):
         
         if bug :
             self.keyH = KeyHandler(self.ms, cur1=self.curve1, cip1='rc4')
@@ -972,15 +933,11 @@ class Test_Server_Client_S36_OK_2(Test_Server_Client_S31_OK_SAME_CONFIG):
         sib['info4'] = "password"
         sib['info5'] = "secret information"
         
-        echallenge = self.get_echallenge(b'S36.6')
-        #print(self, "36_OK starting send")
+        echallenge = self.get_echallenge(b'S35.6')
         connect.send(echallenge + b';ADDDATA;' + pickle.dumps(sib))
-        #print(self, "36_OK ending send")
         
-    def state_S36_OK(self, connect):
-        #print(self, "36_OK starting recv")
+    def state_S35_OK(self, connect):
         message = connect.recv(4096)
-        #print(self, "36_OK ending recv")
         protocol_cd = message[:2]
         self.test.assertEqual(protocol_cd, b'OK')
         
@@ -1003,18 +960,18 @@ class Test_Server_Client_S36_OK_2(Test_Server_Client_S31_OK_SAME_CONFIG):
             self.state_S31_Begin(connect)
             self.state_S31_OK(connect, b'1')
             # State 36
-            self.state_S36_Begin(connect)
-            self.state_S36_OK(connect)
+            self.state_S35_Begin(connect)
+            self.state_S35_OK(connect)
         finally:
             connect.close()
             print("Client", self.number, self.sockname, ": disconnection with the server")
 
-class Test_Server_Client_S36_KO(Test_Server_Client_S36_OK_1):
+class Test_Server_Client_S35_KO(Test_Server_Client_S35_OK_1):
     def __init__(self, host, port, test, number, begin=None):
-        Test_Server_Client_S36_OK_1.__init__(self,host,port,test,number)
+        Test_Server_Client_S35_OK_1.__init__(self,host,port,test,number)
         self.begin = begin
     
-    def state_S36_KO(self, connect):
+    def state_S35_KO(self, connect):
         message = connect.recv(4096)
         protocol_cd = message[:5]
         protocol_data = message[6:]
@@ -1039,28 +996,28 @@ class Test_Server_Client_S36_KO(Test_Server_Client_S36_OK_1):
             # State 31
             self.state_S31_Begin(connect)
             self.state_S31_OK(connect, b'1')
-            # State 36
-            self.state_S36_Begin(connect, bug=True)
-            self.state_S36_KO(connect)
+            # State 35
+            self.state_S35_Begin(connect, bug=True)
+            self.state_S35_KO(connect)
         finally:
             connect.close()
             print("Client", self.number, self.sockname, ": disconnection with the server")
 
-class Test_Server_Client_S36_OK_NEW_CONFIG(Test_Server_Client_S31_OK_NEW_CONFIG):
+class Test_Server_Client_S35_OK_NEW_CONFIG(Test_Server_Client_S31_OK_NEW_CONFIG):
     def __init__(self, host, port, test, number, begin=None):
         Test_Server_Client_S31_OK_NEW_CONFIG.__init__(self,host,port,test,number)
         self.begin = begin
 
-    def state_S36_Begin(self, connect):
+    def state_S35_Begin(self, connect):
         self.keyH = KeyHandler(self.ms, cur1=self.curve1, cip1=self.cipher1, \
                                         cur2=self.curve2, cip2=self.cipher2)
         sib = SecretInfoBlock(self.keyH)
         sib['info1'] = "secret information"
         
-        echallenge = self.get_echallenge(b'S36.6')
+        echallenge = self.get_echallenge(b'S35.6')
         connect.send(echallenge + b';ADDDATA;' + pickle.dumps(sib))
         
-    def state_S36_OK(self, connect):
+    def state_S35_OK(self, connect):
         message = connect.recv(4096)
         protocol_cd = message[:2]
         self.test.assertEqual(protocol_cd, b'OK')
@@ -1083,36 +1040,32 @@ class Test_Server_Client_S36_OK_NEW_CONFIG(Test_Server_Client_S31_OK_NEW_CONFIG)
             # State 31
             self.state_S31_Begin(connect)
             self.state_S31_OK(connect, b'1')
-            # State 36
-            self.state_S36_Begin(connect)
-            self.state_S36_OK(connect)
+            # State 35
+            self.state_S35_Begin(connect)
+            self.state_S35_OK(connect)
         finally:
             connect.close()
             print("Client", self.number, self.sockname, ": disconnection with the server")
 
 # -----------------------------------------------------------------------------
-# Test S37
+# Test S36
 
-class Test_Server_Client_S37_OK(Test_Server_Client_S31_OK_SAME_CONFIG):
+class Test_Server_Client_S36_OK(Test_Server_Client_S31_OK_SAME_CONFIG):
     def __init__(self, host, port, test, number, begin=None):
         Test_Server_Client_S31_OK_SAME_CONFIG.__init__(self,host,port,test,number)
         self.begin = begin
 
-    def state_S37_Begin(self, connect, bug=False):
-        echallenge = self.get_echallenge(b'S37.4')
-        #print(self, "37_OK starting send")
+    def state_S36_Begin(self, connect, bug=False):
+        echallenge = self.get_echallenge(b'S36.4')
         if bug == 1:
             connect.send(echallenge + b';DELETEDATA;' + b'1000')
         elif bug == 2:
             connect.send(echallenge + b';DELETEDATA;' + b'badindex')
         elif bug == False:
             connect.send(echallenge + b';DELETEDATA;' + b'1')
-        #print(self, "37_OK ending send")
         
-    def state_S37_OK(self, connect):
-        #print(self, "37_OK starting recv")
+    def state_S36_OK(self, connect):
         message = connect.recv(1024)
-        #print(self, "37_OK ending recv")
         protocol_cd = message[:2]
         self.test.assertEqual(protocol_cd, b'OK')
         
@@ -1134,7 +1087,130 @@ class Test_Server_Client_S37_OK(Test_Server_Client_S31_OK_SAME_CONFIG):
             # State 31
             self.state_S31_Begin(connect)
             self.state_S31_OK(connect, b'1')
-            # State 38
+            # State 36
+            self.state_S36_Begin(connect)
+            self.state_S36_OK(connect)
+        finally:
+            connect.close()
+            print("Client", self.number, self.sockname, ": disconnection with the server")
+
+class Test_Server_Client_S36_KO_1(Test_Server_Client_S36_OK):
+    def __init__(self, host, port, test, number, begin=None):
+        Test_Server_Client_S36_OK.__init__(self,host,port,test,number)
+        self.begin = begin
+        
+    def state_S36_KO(self, connect):
+        message = connect.recv(1024)
+        protocol_cd = message[:5]
+        self.test.assertEqual(protocol_cd, b'ERROR')
+        protocol_data = message[6:]
+        self.test.assertEqual(protocol_data, b'index rejected')
+        
+    def run(self):
+        try:
+            time.sleep(self.begin) # Waiting previous test
+            connect = self.connect_to_server() 
+            # State 0
+            self.state_S0(connect)
+            # State 1S
+            self.state_S1S_begin(connect)
+            self.state_S1S_end(connect)
+            # State 1C
+            self.state_S1C_begin(connect)
+            self.state_S1C_end(connect)
+            # State 21
+            self.state_S21_Begin(connect)
+            self.state_S21_OK(connect)
+            # State 31
+            self.state_S31_Begin(connect)
+            self.state_S31_OK(connect, b'1')
+            # State 36
+            self.state_S36_Begin(connect, bug=1)
+            self.state_S36_KO(connect)
+        finally:
+            connect.close()
+            print("Client", self.number, self.sockname, ": disconnection with the server")
+
+class Test_Server_Client_S36_KO_2(Test_Server_Client_S36_KO_1):
+    def __init__(self, host, port, test, number, begin=None):
+        Test_Server_Client_S36_KO_1.__init__(self,host,port,test,number)
+        self.begin = begin
+        
+    def run(self):
+        try:
+            time.sleep(self.begin) # Waiting previous test
+            connect = self.connect_to_server() 
+            # State 0
+            self.state_S0(connect)
+            # State 1S
+            self.state_S1S_begin(connect)
+            self.state_S1S_end(connect)
+            # State 1C
+            self.state_S1C_begin(connect)
+            self.state_S1C_end(connect)
+            # State 21
+            self.state_S21_Begin(connect)
+            self.state_S21_OK(connect)
+            # State 31
+            self.state_S31_Begin(connect)
+            self.state_S31_OK(connect, b'1')
+            # State 36
+            self.state_S36_Begin(connect, bug=2)
+            self.state_S36_KO(connect)
+        finally:
+            connect.close()
+            print("Client", self.number, self.sockname, ": disconnection with the server")
+
+# -----------------------------------------------------------------------------
+# Test S37
+
+class Test_Server_Client_S37_OK(Test_Server_Client_S31_OK_SAME_CONFIG):
+    def __init__(self, host, port, test, number, begin=None):
+        Test_Server_Client_S31_OK_SAME_CONFIG.__init__(self,host,port,test,number)
+        self.begin = begin
+
+    def state_S37_Begin(self, connect, bug=False):
+        self.keyH = KeyHandler(self.ms, cur1=self.curve1, cip1=self.cipher1)
+        sib = SecretInfoBlock(self.keyH)
+        sib.nbInfo = 5
+        sib['info1'] = "Gmail Account"
+        sib['info2'] = "login"
+        sib['info3'] = "login@gmail.com"
+        sib['info4'] = "password"
+        sib['info5'] = "my secret information"
+        
+        echallenge = self.get_echallenge(b'S37.5')
+        if bug == 1:
+            connect.send(echallenge + b';UPDATEDATA;' + b'1000;' + pickle.dumps(sib))
+        elif bug == 2:
+            connect.send(echallenge + b';UPDATEDATA;' + b'badindex;' + pickle.dumps(sib))
+        elif bug == False:
+            connect.send(echallenge + b';UPDATEDATA;' + b'2;' + pickle.dumps(sib))
+        
+    def state_S37_OK(self, connect):
+        message = connect.recv(1024)
+        protocol_cd = message[:2]
+        self.test.assertEqual(protocol_cd, b'OK')
+        
+    def run(self):
+        try:
+            time.sleep(self.begin) # Waiting previous test
+            connect = self.connect_to_server() 
+            # State 0
+            self.state_S0(connect)
+            # State 1S
+            self.state_S1S_begin(connect)
+            self.state_S1S_end(connect)
+            # State 1C
+            self.state_S1C_begin(connect)
+            self.state_S1C_end(connect)
+            # State 21
+            self.state_S21_Begin(connect)
+            self.state_S21_OK(connect)
+            # State 31
+            self.state_S31_Begin(connect)
+            self.state_S31_OK(connect, b'1')
+            # State 37
             self.state_S37_Begin(connect)
             self.state_S37_OK(connect)
         finally:
@@ -1147,9 +1223,7 @@ class Test_Server_Client_S37_KO_1(Test_Server_Client_S37_OK):
         self.begin = begin
         
     def state_S37_KO(self, connect):
-        #print(self, "37_OK starting recv")
         message = connect.recv(1024)
-        #print(self, "37_OK ending recv")
         protocol_cd = message[:5]
         self.test.assertEqual(protocol_cd, b'ERROR')
         protocol_data = message[6:]
@@ -1211,135 +1285,6 @@ class Test_Server_Client_S37_KO_2(Test_Server_Client_S37_KO_1):
             print("Client", self.number, self.sockname, ": disconnection with the server")
 
 # -----------------------------------------------------------------------------
-# Test S38
-
-class Test_Server_Client_S38_OK(Test_Server_Client_S31_OK_SAME_CONFIG):
-    def __init__(self, host, port, test, number, begin=None):
-        Test_Server_Client_S31_OK_SAME_CONFIG.__init__(self,host,port,test,number)
-        self.begin = begin
-
-    def state_S38_Begin(self, connect, bug=False):
-        self.keyH = KeyHandler(self.ms, cur1=self.curve1, cip1=self.cipher1)
-        sib = SecretInfoBlock(self.keyH)
-        sib.nbInfo = 5
-        sib['info1'] = "Gmail Account"
-        sib['info2'] = "login"
-        sib['info3'] = "login@gmail.com"
-        sib['info4'] = "password"
-        sib['info5'] = "my secret information"
-        
-        echallenge = self.get_echallenge(b'S38.5')
-        #print(self, "38_OK starting send")
-        if bug == 1:
-            connect.send(echallenge + b';UPDATEDATA;' + b'1000;' + pickle.dumps(sib))
-        elif bug == 2:
-            connect.send(echallenge + b';UPDATEDATA;' + b'badindex;' + pickle.dumps(sib))
-        elif bug == False:
-            connect.send(echallenge + b';UPDATEDATA;' + b'2;' + pickle.dumps(sib))
-        #print(self, "38_OK ending send")
-        
-    def state_S38_OK(self, connect):
-        #print(self, "38_OK starting recv")
-        message = connect.recv(1024)
-        #print(self, "38_OK ending recv")
-        protocol_cd = message[:2]
-        self.test.assertEqual(protocol_cd, b'OK')
-        
-    def run(self):
-        try:
-            time.sleep(self.begin) # Waiting previous test
-            connect = self.connect_to_server() 
-            # State 0
-            self.state_S0(connect)
-            # State 1S
-            self.state_S1S_begin(connect)
-            self.state_S1S_end(connect)
-            # State 1C
-            self.state_S1C_begin(connect)
-            self.state_S1C_end(connect)
-            # State 21
-            self.state_S21_Begin(connect)
-            self.state_S21_OK(connect)
-            # State 31
-            self.state_S31_Begin(connect)
-            self.state_S31_OK(connect, b'1')
-            # State 38
-            self.state_S38_Begin(connect)
-            self.state_S38_OK(connect)
-        finally:
-            connect.close()
-            print("Client", self.number, self.sockname, ": disconnection with the server")
-
-class Test_Server_Client_S38_KO_1(Test_Server_Client_S38_OK):
-    def __init__(self, host, port, test, number, begin=None):
-        Test_Server_Client_S38_OK.__init__(self,host,port,test,number)
-        self.begin = begin
-        
-    def state_S38_KO(self, connect):
-        #print(self, "38_OK starting recv")
-        message = connect.recv(1024)
-        #print(self, "38_OK ending recv")
-        protocol_cd = message[:5]
-        self.test.assertEqual(protocol_cd, b'ERROR')
-        protocol_data = message[6:]
-        self.test.assertEqual(protocol_data, b'index rejected')
-        
-    def run(self):
-        try:
-            time.sleep(self.begin) # Waiting previous test
-            connect = self.connect_to_server() 
-            # State 0
-            self.state_S0(connect)
-            # State 1S
-            self.state_S1S_begin(connect)
-            self.state_S1S_end(connect)
-            # State 1C
-            self.state_S1C_begin(connect)
-            self.state_S1C_end(connect)
-            # State 21
-            self.state_S21_Begin(connect)
-            self.state_S21_OK(connect)
-            # State 31
-            self.state_S31_Begin(connect)
-            self.state_S31_OK(connect, b'1')
-            # State 38
-            self.state_S38_Begin(connect, bug=1)
-            self.state_S38_KO(connect)
-        finally:
-            connect.close()
-            print("Client", self.number, self.sockname, ": disconnection with the server")
-
-class Test_Server_Client_S38_KO_2(Test_Server_Client_S38_KO_1):
-    def __init__(self, host, port, test, number, begin=None):
-        Test_Server_Client_S38_KO_1.__init__(self,host,port,test,number)
-        self.begin = begin
-        
-    def run(self):
-        try:
-            time.sleep(self.begin) # Waiting previous test
-            connect = self.connect_to_server() 
-            # State 0
-            self.state_S0(connect)
-            # State 1S
-            self.state_S1S_begin(connect)
-            self.state_S1S_end(connect)
-            # State 1C
-            self.state_S1C_begin(connect)
-            self.state_S1C_end(connect)
-            # State 21
-            self.state_S21_Begin(connect)
-            self.state_S21_OK(connect)
-            # State 31
-            self.state_S31_Begin(connect)
-            self.state_S31_OK(connect, b'1')
-            # State 38
-            self.state_S38_Begin(connect, bug=2)
-            self.state_S38_KO(connect)
-        finally:
-            connect.close()
-            print("Client", self.number, self.sockname, ": disconnection with the server")
-
-# -----------------------------------------------------------------------------
 
 class Test_ServerTestCase(unittest.TestCase):
     @classmethod
@@ -1365,7 +1310,7 @@ class Test_ServerTestCase(unittest.TestCase):
         
         # Begin after 2 secondes
         Test_Server_Client_S22_OK(Configuration.host, Configuration.port, self, 6, begin=2).start()
-        login = 'This is the client login for testing S34'.encode()
+        login = 'This is the client login for testing S33'.encode()
         Test_Server_Client_S22_OK(Configuration.host, Configuration.port, self, 6, login=login, begin=2).start()
         
         # Begin after 3 secondes
@@ -1377,41 +1322,41 @@ class Test_ServerTestCase(unittest.TestCase):
         Test_Server_Client_S31_OK_SAME_CONFIG(Configuration.host, Configuration.port, self, 10, 4).start()
         Test_Server_Client_S31_OK_SAME_CONFIG(Configuration.host, Configuration.port, self, 11, 4).start()
         Test_Server_Client_S31_KO(Configuration.host, Configuration.port, self, 12, 4).start()
-        Test_Server_Client_S36_OK_1(Configuration.host, Configuration.port, self, 13, 4).start()
-        Test_Server_Client_S36_OK_2(Configuration.host, Configuration.port, self, 14, 4).start()
-        Test_Server_Client_S36_KO(Configuration.host, Configuration.port, self, 15, 4).start()
+        Test_Server_Client_S35_OK_1(Configuration.host, Configuration.port, self, 13, 4).start()
+        Test_Server_Client_S35_OK_2(Configuration.host, Configuration.port, self, 14, 4).start()
+        Test_Server_Client_S35_KO(Configuration.host, Configuration.port, self, 15, 4).start()
         
         # Begin after 6 secondes
-        Test_Server_Client_S35_OK(Configuration.host, Configuration.port, self, 16, 2, 6).start()
-        Test_Server_Client_S38_OK(Configuration.host, Configuration.port, self, 17, 6).start()
-        Test_Server_Client_S38_KO_1(Configuration.host, Configuration.port, self, 18, 6).start()
-        Test_Server_Client_S38_KO_2(Configuration.host, Configuration.port, self, 19, 6).start()
+        Test_Server_Client_S34_OK(Configuration.host, Configuration.port, self, 16, 2, 6).start()
+        Test_Server_Client_S37_OK(Configuration.host, Configuration.port, self, 17, 6).start()
+        Test_Server_Client_S37_KO_1(Configuration.host, Configuration.port, self, 18, 6).start()
+        Test_Server_Client_S37_KO_2(Configuration.host, Configuration.port, self, 19, 6).start()
         
         # Begin after 7 secondes
-        Test_Server_Client_S37_OK(Configuration.host, Configuration.port, self, 20, 7).start()
-        Test_Server_Client_S37_KO_1(Configuration.host, Configuration.port, self, 21, 7).start()
-        Test_Server_Client_S37_KO_2(Configuration.host, Configuration.port, self, 22, 7).start()
+        Test_Server_Client_S36_OK(Configuration.host, Configuration.port, self, 20, 7).start()
+        Test_Server_Client_S36_KO_1(Configuration.host, Configuration.port, self, 21, 7).start()
+        Test_Server_Client_S36_KO_2(Configuration.host, Configuration.port, self, 22, 7).start()
         
         # Begin after 8 secondes
-        Test_Server_Client_S34_OK(Configuration.host, Configuration.port, self, 23, 8).start()
-        Test_Server_Client_S35_OK(Configuration.host, Configuration.port, self, 24, 1, 8).start()
+        Test_Server_Client_S33_OK(Configuration.host, Configuration.port, self, 23, 8).start()
+        Test_Server_Client_S34_OK(Configuration.host, Configuration.port, self, 24, 1, 8).start()
         
         # Begin after 9 secondes
-        Test_Server_Client_S36_OK_1(Configuration.host, Configuration.port, self, 25, 9).start()
-        Test_Server_Client_S36_OK_2(Configuration.host, Configuration.port, self, 26, 9).start()
+        Test_Server_Client_S35_OK_1(Configuration.host, Configuration.port, self, 25, 9).start()
+        Test_Server_Client_S35_OK_2(Configuration.host, Configuration.port, self, 26, 9).start()
         
         # Begin after 11 secondes
-        Test_Server_Client_S35_OK(Configuration.host, Configuration.port, self, 27, 3, 11).start()
+        Test_Server_Client_S34_OK(Configuration.host, Configuration.port, self, 27, 3, 11).start()
         Test_Server_Client_S32_OK(Configuration.host, Configuration.port, self, 28, 3, 11).start()
         
         # Begin after 12 secondes
         Test_Server_Client_S31_OK_NEW_CONFIG(Configuration.host, Configuration.port, self, 29, 12).start()
         
         # Begin after 13 secondes
-        Test_Server_Client_S36_OK_NEW_CONFIG(Configuration.host, Configuration.port, self, 30, 13).start()
+        Test_Server_Client_S35_OK_NEW_CONFIG(Configuration.host, Configuration.port, self, 30, 13).start()
         
         # Begin after 14 secondes
-        Test_Server_Client_S35_OK_NEW_CONFIG(Configuration.host, Configuration.port, self, 31, 3, 14).start()
+        Test_Server_Client_S34_OK_NEW_CONFIG(Configuration.host, Configuration.port, self, 31, 3, 14).start()
 
         try:
             Configuration.dbpath = self.path

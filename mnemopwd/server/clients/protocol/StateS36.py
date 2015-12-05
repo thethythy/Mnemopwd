@@ -26,47 +26,40 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 """
-State S36 : add data operation
+State S36 : delete data operation
 """
 
 from server.util.funcutils import singleton
 from server.clients.protocol import StateSCC
-import pickle
 
 @singleton
 class StateS36(StateSCC):
-    """State S36 : add a secret information block"""
+    """State S36 : delete a secret information block"""
         
     def do(self, client, data):
-        """Action of the state S36: add a secret information block"""
+        """Action of the state S36: delete a secret information block"""
         
         try:
             # Control challenge
-            if self.control_challenge(client, data, b'S36.6') :
+            if self.control_challenge(client, data, b'S36.4') :
                 
                 # Test for S36 command
-                is_cd_S36 = data[170:177] == b"ADDDATA"
+                is_cd_S36 = data[170:180] == b"DELETEDATA"
                 if not is_cd_S36 : raise Exception('protocol error')
-            
-                bsib = data[178:] # One secret information block in pickle format
                 
-                try:
-                    sib = pickle.loads(bsib) # One secret information block object
-                    sib.control_integrity(client.keyH) # Configure and check integrity
+                index = data[181:].decode() # sib index 
                 
-                except AssertionError:
-                    # Send an error message
-                    message = b'ERROR;' + b'data rejected'
-                    client.loop.call_soon_threadsafe(client.transport.write, message)
-                    raise Exception('data rejected')
-                
-                else:
-                    # Add a secret information block
-                    index = client.dbH.add_data(sib)
-                    # Send index value
-                    message = b'OK;' + (str(index)).encode()
-                    client.loop.call_soon_threadsafe(client.transport.write, message)
+                # Delete a secret information block
+                result = client.dbH.delete_data(index)
+                    
+                if result:
+                    # Send 'OK' message
+                    client.loop.call_soon_threadsafe(client.transport.write, b'OK')
                     client.state = client.states['3'] # New client state
+                else:
+                    message = b'ERROR;' + b'index rejected'
+                    client.loop.call_soon_threadsafe(client.transport.write, message)
+                    raise Exception('index rejected')
             
         except Exception as exc:
             # Schedule a callback to client exception handler

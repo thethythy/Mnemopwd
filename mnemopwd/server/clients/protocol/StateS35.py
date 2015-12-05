@@ -26,7 +26,7 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 """
-State S35 : search data operation
+State S35 : add data operation
 """
 
 from server.util.funcutils import singleton
@@ -35,38 +35,38 @@ import pickle
 
 @singleton
 class StateS35(StateSCC):
-    """State S35 : search a secret information"""
+    """State S35 : add a secret information block"""
         
     def do(self, client, data):
-        """Action of the state S35: search a secret information and return matching blocks"""
+        """Action of the state S35: add a secret information block"""
         
         try:
             # Control challenge
             if self.control_challenge(client, data, b'S35.6') :
                 
                 # Test for S35 command
-                is_cd_S35 = data[170:180] == b"SEARCHDATA"
+                is_cd_S35 = data[170:177] == b"ADDDATA"
                 if not is_cd_S35 : raise Exception('protocol error')
             
-                epattern = data[181:] # Encrypted search pattern
-                pattern = client.ephecc.decrypt(epattern) # Get search pattern
+                bsib = data[178:] # One secret information block in pickle format
                 
-                # Pattern matching
-                tabsibs = client.dbH.search_data(client.keyH, pattern.decode())
+                try:
+                    sib = pickle.loads(bsib) # One secret information block object
+                    sib.control_integrity(client.keyH) # Configure and check integrity
                 
-                # Send number of blocks
-                message = b'OK;' + str(len(tabsibs)).encode()
-                client.loop.call_soon_threadsafe(client.transport.write, message)
-                
-                for i, sib in tabsibs:
-                    si = str(i).encode()
-                    psib = pickle.dumps(sib)
-                    lpsib = str(len(psib)).encode()
-                    # Send sib
-                    message = b';SIB;' + si + b';' + lpsib + b';' + psib
+                except AssertionError:
+                    # Send an error message
+                    message = b'ERROR;' + b'data rejected'
                     client.loop.call_soon_threadsafe(client.transport.write, message)
+                    raise Exception('data rejected')
                 
-                client.state = client.states['3'] # New client state
+                else:
+                    # Add a secret information block
+                    index = client.dbH.add_data(sib)
+                    # Send index value
+                    message = b'OK;' + (str(index)).encode()
+                    client.loop.call_soon_threadsafe(client.transport.write, message)
+                    client.state = client.states['3'] # New client state
             
         except Exception as exc:
             # Schedule a callback to client exception handler

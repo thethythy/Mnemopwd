@@ -26,69 +26,47 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 """
-State S34 : Deletion
+State S34 : search data operation
 """
 
-import logging
 from server.util.funcutils import singleton
 from server.clients.protocol import StateSCC
-from server.clients.DBHandler import DBHandler
+import pickle
 
 @singleton
 class StateS34(StateSCC):
-    """State S34 : Deletion"""
+    """State S34 : search a secret information"""
         
     def do(self, client, data):
-        """Action of the state S34: delete a user account"""
-
+        """Action of the state S34: search a secret information and return matching blocks"""
+        
         try:
             # Control challenge
-            if self.control_challenge(client, data, b'S34.7') :
-            
+            if self.control_challenge(client, data, b'S34.6') :
+                
                 # Test for S34 command
-                is_cd_S34 = data[170:178] == b"DELETION"
+                is_cd_S34 = data[170:180] == b"SEARCHDATA"
                 if not is_cd_S34 : raise Exception('protocol error')
+            
+                epattern = data[181:] # Encrypted search pattern
+                pattern = client.ephecc.decrypt(epattern) # Get search pattern
                 
-                eid = data[179:348] # id encrypted
-                elogin = data[349:] # Login encrypted 
+                # Pattern matching
+                tabsibs = client.dbH.search_data(client.keyH, pattern.decode())
                 
-                # Compute client id
-                login = client.ephecc.decrypt(elogin)
-                id = self.compute_client_id(client.ms, login)
-                 
-                # Get id from client
-                id_from_client = client.ephecc.decrypt(eid)
+                # Send number of blocks
+                message = b'OK;' + str(len(tabsibs)).encode()
+                client.loop.call_soon_threadsafe(client.transport.write, message)
                 
-                # If ids are not equal
-                if id != id_from_client :
-                    message = b'ERROR;' + b'incorrect id'
+                for i, sib in tabsibs:
+                    si = str(i).encode()
+                    psib = pickle.dumps(sib)
+                    lpsib = str(len(psib)).encode()
+                    # Send sib
+                    message = b';SIB;' + si + b';' + lpsib + b';' + psib
                     client.loop.call_soon_threadsafe(client.transport.write, message)
-                    raise Exception('incorrect id')
                 
-                # Test if login exists
-                filename = self.compute_client_filename(id, client.ms, login)
-                exist = DBHandler.exist(client.dbpath, filename)
-                
-                # If login is unknown
-                if not exist :
-                    message = b'ERROR;' + b'user account does not exist'
-                    client.loop.call_soon_threadsafe(client.transport.write, message)
-                    raise Exception('user account does not exist')
-                    
-                # If login is OK try to delete database file
-                result = DBHandler.delete(client.dbpath, filename)
-                    
-                # If database file has been deleted close connection with client
-                if result:
-                    client.loop.call_soon_threadsafe(client.transport.write, b'OK')
-                    client.loop.call_soon_threadsafe(client.transport.close)
-                    logging.warning('User account {} deletion from {}'.format(filename, client.peername))
-                
-                # If deletion has failed for some reason
-                else:
-                    message = b'ERROR;' + b'deletion rejected'
-                    client.loop.call_soon_threadsafe(client.transport.write, message)
-                    raise Exception('deletion rejected')
+                client.state = client.states['3'] # New client state
             
         except Exception as exc:
             # Schedule a callback to client exception handler

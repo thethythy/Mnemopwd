@@ -25,61 +25,70 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-
 """
-State S21 : Login
+State S33 : Deletion
 """
 
+import logging
 from server.util.funcutils import singleton
 from server.clients.protocol import StateSCC
 from server.clients.DBHandler import DBHandler
 
 @singleton
-class StateS21(StateSCC):
-    """State S21 : Login"""
+class StateS33(StateSCC):
+    """State S33 : Deletion"""
         
     def do(self, client, data):
-        """Action of the state S21: control client login and id"""
-        
+        """Action of the state S33: delete a user account"""
+
         try:
             # Control challenge
-            if self.control_challenge(client, data, b'S21.7') :
+            if self.control_challenge(client, data, b'S33.7') :
             
-                # Test for S21 command
-                is_cd_S21 = data[170:175] == b"LOGIN"
-                if not is_cd_S21 : raise Exception('protocol error')
+                # Test for S33 command
+                is_cd_S33 = data[170:178] == b"DELETION"
+                if not is_cd_S33 : raise Exception('protocol error')
                 
-                eid = data[176:345]   # id encrypted
-                elogin = data[346:] # Login encrypted
-
+                eid = data[179:348] # id encrypted
+                elogin = data[349:] # Login encrypted 
+                
                 # Compute client id
                 login = client.ephecc.decrypt(elogin)
                 id = self.compute_client_id(client.ms, login)
-                        
+                 
                 # Get id from client
                 id_from_client = client.ephecc.decrypt(eid)
-            
+                
                 # If ids are not equal
                 if id != id_from_client :
                     message = b'ERROR;' + b'incorrect id'
                     client.loop.call_soon_threadsafe(client.transport.write, message)
                     raise Exception('incorrect id')
-            
+                
                 # Test if login exists
                 filename = self.compute_client_filename(id, client.ms, login)
                 exist = DBHandler.exist(client.dbpath, filename)
-            
-                # If login is OK and ids are equal
-                if id == id_from_client and exist :
-                    client.dbH = DBHandler(client.dbpath, filename)
-                    client.loop.call_soon_threadsafe(client.transport.write, b'OK')
-                    client.state = client.states['31']
                 
                 # If login is unknown
-                elif id == id_from_client and not exist :
+                if not exist :
                     message = b'ERROR;' + b'user account does not exist'
                     client.loop.call_soon_threadsafe(client.transport.write, message)
                     raise Exception('user account does not exist')
+                    
+                # If login is OK try to delete database file
+                result = DBHandler.delete(client.dbpath, filename)
+                    
+                # If database file has been deleted close connection with client
+                if result:
+                    client.loop.call_soon_threadsafe(client.transport.write, b'OK')
+                    client.loop.call_soon_threadsafe(client.transport.close)
+                    logging.warning('User account {} deletion from {}'.format(filename, client.peername))
+                
+                # If deletion has failed for some reason
+                else:
+                    message = b'ERROR;' + b'deletion rejected'
+                    client.loop.call_soon_threadsafe(client.transport.write, message)
+                    raise Exception('deletion rejected')
             
         except Exception as exc:
             # Schedule a callback to client exception handler

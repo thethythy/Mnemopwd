@@ -72,7 +72,7 @@ class StateS22(StateSCC):
                 if result:
                     client.dbH = DBHandler(client.dbpath, filename)
                     client.loop.call_soon_threadsafe(client.transport.write, b'OK')
-                    client.state = client.states['3'] # Next state
+                    client.state = client.states['31'] # Next state
                 else:
                     message = b'ERROR;' + b'user account already used'
                     client.loop.call_soon_threadsafe(client.transport.write, message)

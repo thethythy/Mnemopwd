@@ -34,19 +34,18 @@ from server.util.funcutils import singleton
 
 @singleton
 class StateS3():
-    """State S3 : select substate (S31, S32, S33, S34, S35, S36, S37 or S38) """
+    """State S3 : select substate (S31, S32, S33, S34, S35, S36 or S37) """
         
     def do(self, client, data):
         """Action of the state S3: select a substate"""
         
         is_cd_S31 = data[170:183] == b"CONFIGURATION"   # Test for S31 substate
         is_cd_S32 = data[170:181] == b"EXPORTATION"     # Test for S32 substate
-        is_cd_S33 = data[170:181] == b"IMPORTATION"     # Test for S33 substate
-        is_cd_S34 = data[170:178] == b"DELETION"        # Test for S34 substate
-        is_cd_S35 = data[170:180] == b"SEARCHDATA"      # Test for S35 substate
-        is_cd_S36 = data[170:177] == b"ADDDATA"         # Test for S36 substate
-        is_cd_S37 = data[170:180] == b"DELETEDATA"      # Test for S37 substate
-        is_cd_S38 = data[170:180] == b"UPDATEDATA"      # Test for S38 substate
+        is_cd_S33 = data[170:178] == b"DELETION"        # Test for S33 substate
+        is_cd_S34 = data[170:180] == b"SEARCHDATA"      # Test for S34 substate
+        is_cd_S35 = data[170:177] == b"ADDDATA"         # Test for S35 substate
+        is_cd_S36 = data[170:180] == b"DELETEDATA"      # Test for S36 substate
+        is_cd_S37 = data[170:180] == b"UPDATEDATA"      # Test for S37 substate
         
         if is_cd_S31 :
             client.state = client.states['31'] # S31 is the new state
@@ -57,15 +56,13 @@ class StateS3():
         if is_cd_S34 :
             client.state = client.states['34'] # S34 is the new state
         if is_cd_S35 :
-            client.state = client.states['35'] # S35 is the new state
+            client.state = client.states['35'] # S36 is the new state
         if is_cd_S36 :
             client.state = client.states['36'] # S36 is the new state
         if is_cd_S37 :
-            client.state = client.states['37'] # S37 is the new state
-        if is_cd_S38 :
-            client.state = client.states['38'] # S38 is the new state
+            client.state = client.states['37'] # S38 is the new state
             
-        if is_cd_S31 or is_cd_S32 or is_cd_S33 or is_cd_S34 or is_cd_S35 or is_cd_S36 or is_cd_S37 or is_cd_S38 :
+        if is_cd_S31 or is_cd_S32 or is_cd_S33 or is_cd_S34 or is_cd_S35 or is_cd_S36 or is_cd_S37 :
             # Schedule an execuction of the new state
             client.loop.run_in_executor(None, client.state.do, client, data)
         else:
