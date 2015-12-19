@@ -34,6 +34,7 @@ The priority (from low to high) for loading configuration values is :
 - the command line values
 """
 
+import logging
 import configparser
 import argparse
 import os.path
@@ -64,13 +65,19 @@ class Configuration:
     
     configfile = os.path.expanduser('~') + '/.mnemopwd' # Configuration file
     dbpath = os.path.expanduser('~') + '/mnemopwddata' # Default database path
-    version = '0.1'       # Server version
-    host = '127.0.0.1'    # Default host
-    port = 62230          # Default port
-    port_min = 49152      # Minimum port value
-    port_max = 65535      # Maximum port value
-    poolsize = 10         # Default pool executor size
-    search_mode = 'first' # Search mode
+    pidfile = os.path.expanduser('~') + '/mnemopwddata/mnemopwds.pid' # Default daemon pid file
+    logfile = os.path.expanduser('~') + '/mnemopwddata/mnemopwds.log' # Default log file
+    logmaxmb = 1            # Default logfile volume (1 => 1 MBytes)
+    logbackups = 20         # Default backup logfile
+    loglevel = 'INFO'       # Default logging level
+    version = '1.0'         # Server version
+    host = '127.0.0.1'      # Default host
+    port = 62230            # Default port
+    port_min = 49152        # Minimum port value
+    port_max = 65535        # Maximum port value
+    poolsize = 10           # Default pool executor size
+    search_mode = 'first'   # Default search mode
+    action = 'status'       # Default action if not given
     
     @staticmethod
     def __test_dbpath__(path):
@@ -80,13 +87,13 @@ class Configuration:
         else:
             statinfo = os.stat(path)
             if not os.path.isdir(path) or os.path.islink(path):
-                print("Error: invalid database path {} (it must be a directory)".format(path))
+                logging.critical("Error: invalid database path {} (it must be a directory)".format(path))
                 exit(2)
             elif stat.filemode(statinfo.st_mode) != 'drwx------' :
-                print("Error: invalid database path {} (it must have only read, write and excecution permissions for user)".format(path))
+                logging.critical("Error: invalid database path {} (it must have only read, write and excecution permissions for user)".format(path))
                 exit(2)
             elif statinfo.st_uid != os.getuid() :
-                print("Error: invalid database path {} (the owner must be the user)".format(path))
+                logging.critical("Error: invalid database path {} (the owner must be the user)".format(path))
                 exit(2)
         return True
     
@@ -98,13 +105,13 @@ class Configuration:
         else:
             statinfo = os.stat(path)
             if not os.path.isfile(path) or os.path.islink(path):
-                print("Error: invalid configuration file {} (it must be a regular file)".format(path))
+                logging.critical("Error: invalid configuration file {} (it must be a regular file)".format(path))
                 exit(2)
             elif stat.filemode(statinfo.st_mode) != '-rw-------' :
-                print("Error: invalid configuration file {} (it must have only read and write permissions for user)".format(path))
+                logging.critical("Error: invalid configuration file {} (it must have only read and write permissions for user)".format(path))
                 exit(2)
             elif statinfo.st_uid != os.getuid() :
-                print("Error: invalid configuration file {} (the owner must be the user)".format(path))
+                logging.critical("Error: invalid configuration file {} (the owner must be the user)".format(path))
                 exit(2)
         return True
             
@@ -114,21 +121,37 @@ class Configuration:
         try:
             fileparser.read(Configuration.configfile)
         except:
-            print("Error: parsing error of configuration file {}".format(Configuration.configfile))
+            logging.critical("Error: parsing error of configuration file {}".format(Configuration.configfile))
             exit(2)
         else:
-            Configuration.port = int(fileparser['DEFAULT']['port'])
-            Configuration.dbpath = fileparser['DEFAULT']['dbpath']
-            Configuration.poolsize = int(fileparser['DEFAULT']['poolsize'])
-            Configuration.search_pool = fileparser['DEFAULT']['search_mode']
+            Configuration.port = int(fileparser['server']['port'])
+            Configuration.dbpath = fileparser['server']['dbpath']
+            Configuration.poolsize = int(fileparser['server']['poolsize'])
+            Configuration.search_mode = fileparser['server']['search_mode']
+            Configuration.loglevel = fileparser['server']['loglevel']
+            Configuration.pidfile = fileparser['daemon']['pidfile']
+            Configuration.logfile = fileparser['daemon']['logfile']
+            Configuration.logmaxmb = int(fileparser['daemon']['logmaxmb'])
+            Configuration.logbackups = int(fileparser['daemon']['logbackups'])
     
     @staticmethod
     def __create_config_file__(fileparser):
         """Method to create default configuration file"""
-        fileparser['DEFAULT'] = {'port': str(Configuration.port), \
-                                 'dbpath': Configuration.dbpath, \
-                                 'poolsize': str(Configuration.poolsize), \
-                                 'search_mode': Configuration.search_mode}
+        fileparser['server'] = {'port': str(Configuration.port) \
+                                        + " # Values allowed: " + str(Configuration.port_min) \
+                                        + "..." + str(Configuration.port_max), \
+                                'dbpath': Configuration.dbpath + " # Use an absolute path", \
+                                'poolsize': str(Configuration.poolsize) + " # Number of thread" , \
+                                'search_mode': Configuration.search_mode \
+                                               + " # Values allowed: all first", \
+                                'loglevel': Configuration.loglevel \
+                                            + " # Values allowed: DEBUG INFO WARNING ERROR CRITICAL"}
+        fileparser['daemon'] = {'pidfile': Configuration.pidfile + " # Use an absolute path", \
+                                'logfile': Configuration.logfile + " # Use an absolute path", \
+                                'logmaxmb': str(Configuration.logmaxmb) \
+                                            + " # Maximum size of log file in MBytes",\
+                                'logbackups': str(Configuration.logbackups) \
+                                              +  " # Number of backup log files"}
         with open(Configuration.configfile, 'w') as configfile:
             fileparser.write(configfile)
         os.chmod(Configuration.configfile, stat.S_IRUSR | stat.S_IWUSR | stat.S_IREAD | stat.S_IWRITE)
@@ -138,7 +161,7 @@ class Configuration:
         """Configure the server: load configuration file then parse command line"""
         
         # Create, configure a configuration file parser and parse
-        fileparser = configparser.ConfigParser()
+        fileparser = configparser.ConfigParser(inline_comment_prefixes='#')
         if Configuration.__test_config_file__(Configuration.configfile) :
             # Load values from configuration file
             Configuration.__load_config_file__(fileparser)
@@ -170,10 +193,25 @@ class Configuration:
                                metavar='search_mode', help="the search mode; 'first' for \
                                searching only on first secret information and 'all' for \
                                searching on all informations", action=MyParserAction)
+        
+        # Start action
+        argparser.add_argument('--start', action='store_const', const='start', dest='action', \
+                               default=Configuration.action, help='start the server')
+        
+        # Stop action
+        argparser.add_argument('--stop', action='store_const', const='stop', dest='action', \
+                               default=Configuration.action, help='stop the server')
+        
+        # Status action
+        argparser.add_argument('--status', action='store_const', const='status', dest='action', \
+                               default=Configuration.action, help='get server status')
+        
         # Program version
         argparser.add_argument('-v', '--version', action='version', version='version ' + Configuration.version)
         
-        argparser.parse_args() # Parse the command line
+        options = argparser.parse_args() # Parse the command line
+        
+        Configuration.action = options.action # Action to apply to the server
         
         # Verify dbpath
         Configuration.__test_dbpath__(Configuration.dbpath)

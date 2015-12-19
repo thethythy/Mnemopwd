@@ -48,22 +48,22 @@ class Server:
     
     Method(s):
     - start : start the server
-    - stop : stop the server (can be re-started)
-    - close : close the server
+    - stop : close the server
     """
     
     # Intern methods
     
     def __init__(self):
         """Initialization"""
-        logging.basicConfig(filename=Configuration.dbpath + '/mnemopwds.log', \
-                            level=logging.DEBUG, format='%(asctime)s %(levelname)s %(message)s', \
+        logging.basicConfig(filename=Configuration.logfile, \
+                            level=Configuration.loglevel, \
+                            format='%(asctime)s %(process)d %(levelname)s %(message)s', \
                             datefmt='%m/%d/%Y %I:%M:%S')
         logging.info("-----------------------------------------------------------")
         
         # Create a i/o asynchronous loop
         self.loop = asyncio.get_event_loop()
-        self.loop.set_debug(True)
+        self.loop.set_debug(Configuration.loglevel == 'DEBUG')
         
         # Create and set an executor
         executor = concurrent.futures.ThreadPoolExecutor(Configuration.poolsize)
@@ -80,34 +80,27 @@ class Server:
         
         # Create an asynchronous SSL server
         coro = self.loop.create_server(lambda: ClientHandler(self.loop, Configuration.dbpath), \
-                                        Configuration.host, Configuration.port, \
-                                        family=socket.AF_INET, ssl=context, \
-                                        reuse_address=True)
+                                       Configuration.host, Configuration.port, \
+                                       family=socket.AF_INET, ssl=context, \
+                                       reuse_address=True)
         self.server = self.loop.run_until_complete(coro)
-            
+        
     # Extern methods
     
     def start(self):
         """Start the main loop"""
-        logging.info("Server started (or restarted) at {}".format(self.server.sockets[0].getsockname()))
-        self.loop.run_forever()
+        logging.info("Server started at {}".format(self.server.sockets[0].getsockname()))
+        try:
+            self.loop.run_forever()
+        except (KeyboardInterrupt, SystemExit):
+            self.stop()
+            raise
         
     def stop(self):
-        """Stop temporarily the main loop. After this method, call start method to re-start"""
-        self.loop.stop()
-        logging.info("Server in standby")
-        
-    def close(self):
-        """Close the server and the main loop.
-        For normal closing do not call after the stop method but after the start method."""
+        """Close the server and the main loop"""
         self.server.close()
         if self.loop.is_running():
             self.loop.run_until_complete(self.server.wait_closed())
         self.loop.close()
         logging.info("Server closed")
-
-if __name__ == "__main__":
-    # TODO : daemon
-    Configuration.configure()
-    Server().start()
     

@@ -1287,19 +1287,15 @@ class Test_Server_Client_S37_KO_2(Test_Server_Client_S37_KO_1):
 # -----------------------------------------------------------------------------
 
 class Test_ServerTestCase(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        pass
     
     def setUp(self):
         self.path = 'test/data'
         if not Path(self.path).exists() :
             Path(self.path).mkdir(mode=0o777)
         else:
-            for child in Path(self.path).iterdir(): Path(child).unlink()
-
-    def tearDown(self):
-        pass
+            for child in Path(self.path).iterdir():
+                if Path(child).suffix == '.db':
+                    Path(child).unlink()
 
     def test_Server(self):
         Test_Server_Client_S0(Configuration.host, Configuration.port, self, 1).start()
@@ -1361,12 +1357,10 @@ class Test_ServerTestCase(unittest.TestCase):
         try:
             Configuration.dbpath = self.path
             Configuration.search_mode = 'all'
-            s = Server()
-            s.start()
+            Configuration.loglevel = 'DEBUG'
+            Server().start()
         except KeyboardInterrupt:
             pass
-        finally:
-            s.close()
         
 if __name__ == '__main__':
     unittest.main()
