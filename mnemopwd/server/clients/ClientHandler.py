@@ -29,12 +29,12 @@
 import asyncio
 import logging
 import os
-import threading
 from server.clients.protocol import *
 from pyelliptic import OpenSSL
 from common.KeyHandler import KeyHandler
 from common.SecretInfoBlock import SecretInfoBlock
 from server.clients.DBHandler import DBHandler
+from server.clients.DBAccess import DBAccess
 
 """
 The client connection handler
@@ -42,8 +42,6 @@ The client connection handler
 
 class ClientHandler(asyncio.Protocol):
     """The client connection handler"""
-    
-    lock = threading.Lock()  # Lock object to control execution of some methods
     
     def __init__(self, loop, path):
         """Initialize the handler"""
@@ -87,7 +85,7 @@ class ClientHandler(asyncio.Protocol):
     def configure_crypto(self, config_demand):
         """Configure cryptographic handler"""
         
-        with ClientHandler.lock:
+        with DBAccess.getLock(self.dbH.database):
             # Control curve and cipher names
             try:
                 for i, name in enumerate(config_demand.split(';')) :
@@ -133,7 +131,7 @@ class ClientHandler(asyncio.Protocol):
     def update_crypto(self):
         """Change all secret informations with the new cryptographic configuration"""
         
-        with ClientHandler.lock:
+        with DBAccess.getLock(self.dbH.database):
             try :
                 # Create an empty database
                 if DBHandler.new(self.dbH.path, self.dbH.filename + '_tmp') :

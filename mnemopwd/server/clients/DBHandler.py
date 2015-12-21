@@ -52,16 +52,17 @@ import os.path
 import stat
 import shelve
 import re
-import threading
 from server.util.Configuration import Configuration
+from server.clients.DBAccess import DBAccess
 
 class DBHandler:
-    """Database handler
+    """
+    Database handler
     
     Attribut(s):
-    - lock: a threading.Lock instance to control database access (class attribut)
     - path: a string for the database directory (instance attribut)
-    - filename: a string for the databse file name (instance attribut)
+    - filename: a string for the database file name (instance attribut)
+    - database: a string for the path + database file (instance attribut)
     
     Method(s):
     - new: a static method for database file creation
@@ -74,32 +75,31 @@ class DBHandler:
     - delete_data: a method for deleting a secret information block in database
     """
     
-    lock = threading.Lock()             # Lock object for control database access
-    
     # Intern methods
     
     def __init__(self, path, filename):
         """Set attributs"""
         self.path = path                # Client database path
         self.filename = filename        # Client database filename
+        self.database = self.path + '/' + self.filename # Client database
         
     def __getitem__(self, index):
         """Get an item. Raise KeyError exception if index does not exist"""
-        with DBHandler.lock:
-            with shelve.open(self.path + '/' + self.filename, flag='r') as db:
+        with DBAccess.getLock(self.database):
+            with shelve.open(self.database, flag='r') as db:
                 value = db[index]
         return value
     
     def __setitem__(self, index, value):
         """Set an item"""
-        with DBHandler.lock:
-            with shelve.open(self.path + '/' + self.filename, flag='w') as db:
+        with DBAccess.getLock(self.database):
+            with shelve.open(self.database, flag='w') as db:
                 db[index] = value
                 
     def __delitem__(self, index):
         """Delete an item. Raise KeyError exception if index does not exist"""
-        with DBHandler.lock:
-            with shelve.open(self.path + '/' + self.filename, flag='w') as db:
+        with DBAccess.getLock(self.database):
+            with shelve.open(self.database, flag='w') as db:
                 del db[index]
 
     # Extern methods
@@ -111,10 +111,11 @@ class DBHandler:
             return False
         else:
             # Create a new database file with good permissions
-            with shelve.open(path + '/' + filename, flag='n') as db:
+            dbfile = path + '/' + filename
+            with shelve.open(dbfile, flag='n') as db:
                 db['nbsibs'] = 0  # Number of secret information blocks
                 db['index'] = 0   # Last entry index
-            os.chmod(path + '/' + filename + '.db', \
+            os.chmod(dbfile + '.db', \
                      stat.S_IRUSR | stat.S_IWUSR | stat.S_IREAD | stat.S_IWRITE)
             return True
     
@@ -127,9 +128,11 @@ class DBHandler:
     def delete(path, filename):
         """Try to delete database file"""
         result = False
-        with DBHandler.lock:
-            os.unlink(path + '/' + filename + '.db')
-            result = not os.path.exists(path + '/' + filename + '.db')
+        dbfile = path + '/' + filename
+        with DBAccess.getLock(dbfile):
+            os.unlink(dbfile + '.db')
+            result = not os.path.exists(dbfile + '.db')
+            if result: DBAccess.delLock(dbfile)
         return result
         
     def add_data(self, sib):

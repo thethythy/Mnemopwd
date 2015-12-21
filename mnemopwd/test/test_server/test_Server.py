@@ -1358,6 +1358,7 @@ class Test_ServerTestCase(unittest.TestCase):
             Configuration.dbpath = self.path
             Configuration.search_mode = 'all'
             Configuration.loglevel = 'DEBUG'
+            Configuration.logfile = self.path + '/mnemopwds.log'
             Server().start()
         except KeyboardInterrupt:
             pass
