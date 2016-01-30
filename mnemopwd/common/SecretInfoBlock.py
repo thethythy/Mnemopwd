@@ -35,8 +35,8 @@ Each secret information is stored in a dictionnary. The key of each entry
 is a string with the forme 'infoX' where 'X' is a integer. The 'X' value
 depends on the maximum number of secret informations stored by the object.
 
-Global integrity is controlled by a hmac (512 bits) performed at save time and
-controlled at load time. This treatment is done by server part of the application.
+Global integrity is controlled by a hmac (512 bits) performed before storing and
+controlled after loading. This treatment is done by server part of the application.
 
 """
 
@@ -52,9 +52,10 @@ class SecretInfoBlock(InfoBlock):
     Property(ies): none
     
     Attribut(s):
-    - keyH : a KeyHandler object (never saved)
+    - keyH: a KeyHandler object (never saved)
     
-    Method(s): none
+    Method(s):
+    - control_integrity: a method used to control fingerprint value
     
     """
     

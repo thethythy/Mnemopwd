@@ -1290,12 +1290,9 @@ class Test_ServerTestCase(unittest.TestCase):
     
     def setUp(self):
         self.path = 'test/data'
-        if not Path(self.path).exists() :
-            Path(self.path).mkdir(mode=0o777)
-        else:
-            for child in Path(self.path).iterdir():
-                if Path(child).suffix == '.db':
-                    Path(child).unlink()
+        for child in Path(self.path).iterdir():
+            if Path(child).suffix == '.db':
+                Path(child).unlink()
 
     def test_Server(self):
         Test_Server_Client_S0(Configuration.host, Configuration.port, self, 1).start()

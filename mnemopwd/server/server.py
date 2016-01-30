@@ -61,7 +61,7 @@ class Server:
                             datefmt='%m/%d/%Y %I:%M:%S')
         logging.info("-----------------------------------------------------------")
         
-        # Create a i/o asynchronous loop
+        # Create an i/o asynchronous loop
         self.loop = asyncio.get_event_loop()
         self.loop.set_debug(Configuration.loglevel == 'DEBUG')
         
@@ -70,19 +70,31 @@ class Server:
         self.loop.set_default_executor(executor)
         
         # Create a SSL context
-        context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
+        protocol = getattr(ssl, "PROTOCOL_TLSv1_2", False)
+        if not protocol: protocol = getattr(ssl, "PROTOCOL_TLSv1_1", False)
+        if not protocol: protocol = getattr(ssl, "PROTOCOL_TLSv1", False)
+        if not protocol: protocol = getattr(ssl, "PROTOCOL_SSLv23", False)
+        context = ssl.SSLContext(protocol)
         context.options |= ssl.OP_NO_SSLv2 # SSL v2 not allowed
         context.options |= ssl.OP_NO_SSLv3 # SSL v3 not allowed
-        context.options |= ssl.OP_SINGLE_ECDH_USE # Change ECDH key at every session
-        context.set_ecdh_curve('sect409k1') # Why not ?
-        context.set_ciphers('AECDH-AES256-SHA') # Use only ECDH-anon
-        context.verify_mode = ssl.CERT_NONE # No client certificat
+        context.options |= ssl.OP_SINGLE_DH_USE # Change DH key at every session
+        context.options |= ssl.OP_CIPHER_SERVER_PREFERENCE # Use server's cipher ordering
+        context.verify_mode = ssl.CERT_OPTIONAL # Client certificat is optional
+        context.check_hostname = False # Don't check hostname
+        if ssl.HAS_ECDH: 
+            context.options |= ssl.OP_SINGLE_ECDH_USE # Change ECDH key at every session
+            context.set_ecdh_curve('sect409k1') # Why not ?
+        if Configuration.certfile == 'None' and Configuration.keyfile == 'None' :
+            context.set_ciphers('AECDH-AES256-SHA') # Use only ECDH-anon
+        elif Configuration.certfile != 'None' and Configuration.keyfile != 'None' :
+            context.load_cert_chain(certfile=Configuration.certfile, \
+                                    keyfile=Configuration.keyfile)
         
         # Create an asynchronous SSL server
         coro = self.loop.create_server(lambda: ClientHandler(self.loop, Configuration.dbpath), \
                                        Configuration.host, Configuration.port, \
-                                       family=socket.AF_INET, ssl=context, \
-                                       reuse_address=True)
+                                       family=socket.AF_INET, backlog=100, ssl=context, \
+                                       reuse_address=False)
         self.server = self.loop.run_until_complete(coro)
         
     # Extern methods
