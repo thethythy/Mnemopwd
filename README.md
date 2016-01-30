@@ -1,9 +1,10 @@
 This software is still under development. 
-[x] The server development is almost finished and can been tested.
-[ ] The client development is not started.
 
-## Product presentation:
----------------------
+The server development is almost finished and can been tested.
+
+The client development is not started.
+
+## Product presentation
 
 MnemoPwd is a client-server application to store and retrieve secret informations.
 It is based on OpenSSL cryptographic library and its installation is required both
@@ -21,8 +22,7 @@ Always use the last version for security.
 Copyright (c) 2015-2016, Thierry Lemeunier <thierry at lemeunier dot net> under 
 BSD Licence
 
-## Features:
----------
+## Features
 
 - One central server serves multiple clients
 - Multiple clients can be used on a same node (each with a different user)
@@ -39,10 +39,9 @@ BSD Licence
 - Server running in background (only on POSIX systems)
 - UML model of the secure application protocol
 
-## Usage:
-------
+## Usage
 
-### Start the server:
+### Start the server
 
    `./serverctl -h`          --> get a help screen
 
@@ -56,8 +55,7 @@ BSD Licence
 
    Client not yet developed :disappointed:
 
-### Certificat usage:
------------------
+### Certificat usage
 
 To autenticate server, a X.509 certificat can be used. You can use an existing certificat or use
 a new self-signed certificat created with OpenSSL. In the last case, please follow next steps:
