@@ -33,7 +33,7 @@ import hashlib
 
 class MnemopwdFingerPrint() :
 
-    path_list = ['MnemopwdFingerPrint', 'serverctl', 'common', 'pyelliptic', 'server']
+    path_list = ['serverctl.py', 'clientctl.py', 'common', 'pyelliptic', 'client', 'server']
     module_list = []
 
     def create_module_list(self) :
@@ -45,19 +45,18 @@ class MnemopwdFingerPrint() :
             p = Path(path)
             if p.is_dir() and p.name != '__pycache__' :
                 for child in p.iterdir() :
-                    if child.is_dir():
+                    if child.is_dir() and child.name != '__pycache__':
                         self._create_module_list([str(child)])
                     elif child.suffix == '.py':
-                        self.module_list.append(path.replace('/', '.') + '.' + child.stem)
-            elif Path(path + '.py').exists() :
+                        self.module_list.append(str(child))
+            elif Path(path).exists() :
                 self.module_list.append(path)
 
     def compute_fingerprint(self) :
         """Compute fingerprint"""
         h = hashlib.sha256()
         for name in self.module_list :
-            module = importlib.import_module(name) # Import a module
-            source = inspect.getsource(module) # Get source string of the module
+            with open(name) as file: source = file.read() # Get the source string
             h.update(source.encode()) # Feed hash engine with each source string
         return h.hexdigest() # Get hash in hexadecimal format
 
@@ -66,13 +65,21 @@ class MnemopwdFingerPrint() :
         self.module_list = []
         self.create_module_list()
         fingerprint = self.compute_fingerprint()
-        with open("fingerprint", 'rb') as file :
-            fingerprint_from_file = (file.read()).decode()
-            if fingerprint_from_file != fingerprint :
-                print("it seems source code has been modified, so server can not be launched")
-                exit(1)
+        try:
+            with open("fingerprint", 'rb') as file :
+                fingerprint_from_file = (file.read()).decode()
+                if fingerprint_from_file != fingerprint :
+                    print("it seems source code has been modified, so server can not be launched")
+                    exit(1)
+        except FileNotFoundError :
+            print("it seems source code has been modified, so server can not be launched")
+            exit(1)
 
 if __name__ == "__main__" :
+    # Control the execution path
+    if not Path("serverctl.py").exists() :
+        print("This script must be launched from the Mnemopwd's directory")
+        exit(1)
     # Delete fingerprint file
     p = Path("fingerprint")
     if p.exists() : p.unlink()
@@ -83,4 +90,3 @@ if __name__ == "__main__" :
     # Save fingerprint
     with open("fingerprint", 'w') as file:
         file.write(fingerprint)
-
