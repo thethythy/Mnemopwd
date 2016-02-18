@@ -1,7 +1,6 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2015, Thierry Lemeunier <thierry at lemeunier dot net>
+# Copyright (c) 2015-2016, Thierry Lemeunier <thierry at lemeunier dot net>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -41,6 +40,8 @@ import argparse
 import os.path
 import os
 import stat
+
+from common.util.X509 import X509
 
 class MyParserAction(argparse.Action):
     """Actions for command line parser"""
@@ -255,13 +256,11 @@ class Configuration:
         # Verify private key and certificat files
         if Configuration.keyfile != 'None' and Configuration.certfile != 'None' :
             Configuration.__test_cert_key_files__(argparser, Configuration.certfile, Configuration.keyfile)
+            try:
+                X509(Configuration.certfile).check_validity_period() # Control validity period
+            except Exception as e :
+                print(e)
+                exit(1)
         elif (Configuration.keyfile != 'None' and Configuration.certfile == 'None') or \
              (Configuration.keyfile == 'None' and Configuration.certfile != 'None') :
             argparser.error("indicate two files (certificat file and key file) or nothing")
-        
-if __name__ == '__main__':
-    Configuration.configure()
-    print(Configuration.dbpath)
-    print(Configuration.port)
-    print(Configuration.poolsize)
-    print(Configuration.search_mode)
