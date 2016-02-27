@@ -70,11 +70,7 @@ class Server:
         self.loop.set_default_executor(executor)
         
         # Create a SSL context
-        protocol = getattr(ssl, "PROTOCOL_TLSv1_2", False)
-        if not protocol: protocol = getattr(ssl, "PROTOCOL_TLSv1_1", False)
-        if not protocol: protocol = getattr(ssl, "PROTOCOL_TLSv1", False)
-        if not protocol: protocol = getattr(ssl, "PROTOCOL_SSLv23", False)
-        context = ssl.SSLContext(protocol)
+        context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
         context.options |= ssl.OP_NO_SSLv2 # SSL v2 not allowed
         context.options |= ssl.OP_NO_SSLv3 # SSL v3 not allowed
         context.options |= ssl.OP_SINGLE_DH_USE # Change DH key at every session

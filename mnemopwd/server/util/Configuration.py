@@ -42,6 +42,7 @@ import os
 import stat
 
 from common.util.X509 import X509
+from .funcutils import getIPAddress
 
 class MyParserAction(argparse.Action):
     """Actions for command line parser"""
@@ -59,6 +60,8 @@ class MyParserAction(argparse.Action):
             Configuration.certfile = values
         if option_string in ['-k', '--key'] :
             Configuration.keyfile = values
+        if option_string in ['-i', '--ip'] :
+            Configuration.host = values
         if option_string in ['-p', '--port'] :
             if values in range(Configuration.port_min, Configuration.port_max):
                 Configuration.port = int(values)
@@ -79,7 +82,7 @@ class Configuration:
     logbackups = 20         # Default backup logfile
     loglevel = 'INFO'       # Default logging level
     version = '1.0'         # Server version
-    host = '127.0.0.1'      # Default host
+    host = getIPAddress()   # Default host
     port = 62230            # Default port
     port_min = 49152        # Minimum port value
     port_max = 65535        # Maximum port value
@@ -143,6 +146,7 @@ class Configuration:
             parser.error("parsing error of configuration file {}".format(Configuration.configfile))
         else:
             Configuration.port = int(fileparser['server']['port'])
+            Configuration.host = fileparser['server']['host']
             Configuration.dbpath = fileparser['server']['dbpath']
             Configuration.certfile = fileparser['server']['certfile']
             Configuration.keyfile = fileparser['server']['keyfile']
@@ -160,6 +164,7 @@ class Configuration:
         fileparser['server'] = {'port': str(Configuration.port) \
                                         + " # Values allowed: " + str(Configuration.port_min) \
                                         + "..." + str(Configuration.port_max), \
+                                'host': Configuration.host + " # IP server", \
                                 'dbpath': Configuration.dbpath + " # Use an absolute path", \
                                 'certfile': Configuration.certfile + " # Use an absolute path", \
                                 'keyfile': Configuration.keyfile + " # Use an absolute path", \
@@ -186,6 +191,11 @@ class Configuration:
         argparser = argparse.ArgumentParser(description='MnemoPwd server v' + Configuration.version, \
                                             epilog='More informations can be found at https://github.com/thethythy/Mnemopwd', \
                                             formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+
+        # IP server
+        argparser.add_argument('-i', '--ip', nargs='?', default=Configuration.host, \
+                               metavar='ip', help='the IP address of the server', \
+                               action=MyParserAction)
 
         # Port
         argparser.add_argument('-p', '--port' , type=int, nargs='?', default=Configuration.port, \

@@ -26,7 +26,7 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from MnemopwdFingerPrint import MnemopwdFingerPrint
+from common.util.MnemopwdFingerPrint import MnemopwdFingerPrint
 from server.util.Configuration import Configuration
 from server.util.Daemon import Daemon
 from server.server import Server

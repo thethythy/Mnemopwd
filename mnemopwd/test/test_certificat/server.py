@@ -65,12 +65,7 @@ print("Using port number " + str(options.port))
 print("Taking '" + options.cert + "' for certificat file")
 print("Taking '" + options.key + "' for private key file")
 
-protocol = getattr(ssl, "PROTOCOL_TLSv1_2", False)
-if not protocol: protocol = getattr(ssl, "PROTOCOL_TLSv1_1", False)
-if not protocol: protocol = getattr(ssl, "PROTOCOL_TLSv1", False)
-if not protocol: protocol = getattr(ssl, "PROTOCOL_SSLv23", False)
-
-context = ssl.SSLContext(protocol)
+context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
 context.verify_mode = ssl.CERT_OPTIONAL
 context.check_hostname = False
 context.options |= ssl.OP_NO_SSLv2 # SSL v2 not allowed

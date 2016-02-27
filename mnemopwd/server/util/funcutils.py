@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2015, Thierry Lemeunier <thierry at lemeunier dot net>
+# Copyright (c) 2015-2016, Thierry Lemeunier <thierry at lemeunier dot net>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -36,3 +36,15 @@ def singleton(the_class):
             instances[the_class] = the_class()
         return instances[the_class]
     return get_instance
+
+# ----------------------------------------------------------
+# IP address
+
+import socket
+
+def getIPAddress():
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.connect(('123.123.123.123', 80))
+    ip = s.getsockname()[0]
+    s.close()
+    return ip
