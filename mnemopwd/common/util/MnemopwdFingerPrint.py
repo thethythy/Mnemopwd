@@ -37,7 +37,9 @@ class MnemopwdFingerPrint() :
     module_list = []
 
     def create_module_list(self) :
+        self.module_list = []
         self._create_module_list(self.path_list)
+        self.module_list.sort()
 
     def _create_module_list(self, plist) :
         """Get module names from the path list given"""
@@ -56,8 +58,8 @@ class MnemopwdFingerPrint() :
         """Compute fingerprint"""
         h = hashlib.sha256()
         for name in self.module_list :
-            with open(name) as file: source = file.read() # Get the source string
-            h.update(source.encode()) # Feed hash engine with each source string
+            with open(name, mode='rb') as file: source = file.read() # Get the source code
+            h.update(source) # Feed hash engine with each source string
         return h.hexdigest() # Get hash in hexadecimal format
 
     def control_fingerprint(self) :
@@ -88,5 +90,5 @@ if __name__ == "__main__" :
     mnemofg.create_module_list()
     fingerprint = mnemofg.compute_fingerprint()
     # Save fingerprint
-    with open("fingerprint", 'w') as file:
-        file.write(fingerprint)
+    with open("fingerprint", 'wb') as file:
+        file.write(fingerprint.encode())
