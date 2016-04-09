@@ -26,7 +26,7 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import asyncio
-from client.protocol import *
+from client.corelayer.protocol import *
 
 """
 Handler of the secure protocol connection with the server

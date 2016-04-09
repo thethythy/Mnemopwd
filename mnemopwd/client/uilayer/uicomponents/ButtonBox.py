@@ -1,5 +1,4 @@
-#!/usr/bin/env python3
-# coding: utf-8
+# -*- coding: utf-8 -*-
 
 # Copyright (c) 2016, Thierry Lemeunier <thierry at lemeunier dot net>
 # All rights reserved.
@@ -26,28 +25,31 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#from common.util.MnemopwdFingerPrint import MnemopwdFingerPrint
-from client.util.Configuration import Configuration
-from client.corelayer.ClientCore import ClientCore
-from client.uilayer.ClientUI import ClientUI
-import time
+import curses
+from client.uilayer.uicomponents.Component import Component
 
-if __name__ == "__main__":
-    #MnemopwdFingerPrint().control_fingerprint()
-    Configuration.configure()
-    if Configuration.action == 'status' :
-        ClientCore().stop()
-    elif Configuration.action == 'start' :
-        try:
-            core = ClientCore()  # The domain layer
-            ui = ClientUI(core)  # The UI layer (linked to the domain layer)
-            core.addObserver(ui) # Use design pattern Observer to update UI layer
-            
-            ui.start()   # Always start the UI layer before the domain layer
-            time.sleep(0.1) # Waiting the UI initialization 
-            core.start() # Start domain layer
+class ButtonBox(Component):
+    """A simple button text box"""
+    
+    def __init__(self, wparent, y, x, label):
+        Component.__init__(self, wparent, y, x)
+        self.label = '[' + label + ']'
+        self.button = wparent.derwin(1, len(label), y, x)
+        self.parent.addstr(y, x, self.label, curses.A_REVERSE)
+        self._cur_y = y
+        self._cur_x = x
         
-        finally:
-            ui.stop()    # Stop UI layer (domain layer has been already stopped by UI layer)
-            ui.join()    # Waiting for UI layer
+    def focusOn(self):
+        """See mother class"""
+        self.parent.addstr(self.cursor_y, self.cursor_x, self.label, curses.A_BLINK | curses.A_REVERSE)
+        self.parent.refresh()
+        
+    def focusOff(self):
+        """See mother class"""
+        self.parent.addstr(self.cursor_y, self.cursor_x, self.label, curses.A_REVERSE)
+        self.parent.refresh()
+        
+    def enclose(self, y, x):
+        """See mother class"""
+        return self.button.enclose(y, x)
 

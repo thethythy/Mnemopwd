@@ -32,7 +32,7 @@ import ssl
 import concurrent.futures
 from client.util.Configuration import Configuration
 from client.util.funcutils import Subject
-from client.protocol.ProtocolHandler import ProtocolHandler
+from client.corelayer.protocol.ProtocolHandler import ProtocolHandler
 
 """
 Client part of Mnemopwd application.
@@ -43,8 +43,9 @@ class ClientCore(Subject):
     Client module of the application
     
     Attribut(s):
-    - loop : an i/o asynchronous loop (see the official asyncio module)
-    - transport : a SSL/TLS asynchronous socket (see the official ssl module)
+    - loop: an i/o asynchronous loop (see the official asyncio module)
+    - transport: a SSL/TLS asynchronous socket (see the official ssl module)
+    - protocol: a communication handler (see the official asyncio module)
     
     Method(s):
     - start : start the domain layer
@@ -85,7 +86,7 @@ class ClientCore(Subject):
         
         # Try to open SSL socket
         try:
-            self.transport, protocol = self.loop.run_until_complete(coro)
+            self.transport, self.protocol = self.loop.run_until_complete(coro)
         except ConnectionRefusedError as e:
             print(e)
             print("The server seems not running or verify the port number.")

@@ -1,5 +1,4 @@
-#!/usr/bin/env python3
-# coding: utf-8
+# -*- coding: utf-8 -*-
 
 # Copyright (c) 2016, Thierry Lemeunier <thierry at lemeunier dot net>
 # All rights reserved.
@@ -26,28 +25,44 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#from common.util.MnemopwdFingerPrint import MnemopwdFingerPrint
-from client.util.Configuration import Configuration
-from client.corelayer.ClientCore import ClientCore
-from client.uilayer.ClientUI import ClientUI
+
+"""
+State S1 : Session
+"""
+
 import time
+from client.util.funcutils import singleton
+from pyelliptic import ECC
+from pyelliptic import pbkdf2
 
-if __name__ == "__main__":
-    #MnemopwdFingerPrint().control_fingerprint()
-    Configuration.configure()
-    if Configuration.action == 'status' :
-        ClientCore().stop()
-    elif Configuration.action == 'start' :
-        try:
-            core = ClientCore()  # The domain layer
-            ui = ClientUI(core)  # The UI layer (linked to the domain layer)
-            core.addObserver(ui) # Use design pattern Observer to update UI layer
-            
-            ui.start()   # Always start the UI layer before the domain layer
-            time.sleep(0.1) # Waiting the UI initialization 
-            core.start() # Start domain layer
+@singleton
+class StateS1S():
+    """State S1S : Session"""
         
-        finally:
-            ui.stop()    # Stop UI layer (domain layer has been already stopped by UI layer)
-            ui.join()    # Waiting for UI layer
-
+    def do(self, handler, data):
+        """Action of the state S1S: send the master secret"""
+        
+        try:
+            # Wait for password and login
+            #handler.loop.call_soon_threadsafe(handler.notify, "connection.state", "Waiting for credentials")
+            #while handler.password == 'None' and handler.login == 'None':
+            #    time.sleep(10)
+            
+            # Compute the master secret
+            salt, ms = pbkdf2(handler.password, salt=handler.login)
+            ems = handler.ephecc.encrypt(ms, pubkey=handler.ephecc.get_pubkey())
+        
+            # Send master secret
+            message = b'SESSION;' + ems
+            client.loop.call_soon_threadsafe(client.transport.write, message)
+            
+            # Notify the handler a property has changed
+            handler.loop.call_soon_threadsafe(handler.notify, "connection.state", "Session started")
+        
+        except Exception as exc:
+            # Schedule a call to the exception handler
+            handler.loop.call_soon_threadsafe(handler.exception_handler, exc)
+        
+        else:
+            handler.ms = ms # Store the master secret
+            #handler.state = handler.states['1C'] # Next state

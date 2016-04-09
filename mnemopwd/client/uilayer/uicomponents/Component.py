@@ -25,44 +25,47 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+class Component():
+    """Abstract component"""
+    
+    def __init__(self, wparent, y, x):
+        self.parent = wparent
+        self._cur_y = 0
+        self._cur_x = 0
+    
+    @property
+    def cursor_y(self):
+        return self._cur_y
+    
+    @cursor_y.setter
+    def cursor_y(self, value):
+        self._cur_y = value
+    
+    @property
+    def cursor_x(self):
+        return self._cur_x
+    
+    @cursor_x.setter
+    def cursor_x(self, value):
+        self._cur_x = value
+    
+    def isEditable(self):
+        """Return False by default (not editable)"""
+        return False
+        
+    def isActionnable(self):
+        """Return True by default (actionnable)"""
+        return True
+    
+    def focusOn(self):
+        """This component obtains the focus"""
+        pass
+        
+    def focusOff(self):
+        """This component losts the focus"""
+        pass
+        
+    def enclose(self, y, x):
+        """Does this component enclose the (y,x) coordinate"""
+        return False
 
-"""
-State S1 : Session
-"""
-
-import time
-from client.util.funcutils import singleton
-from pyelliptic import ECC
-from pyelliptic import pbkdf2
-
-@singleton
-class StateS1S():
-    """State S1S : Session"""
-        
-    def do(self, handler, data):
-        """Action of the state S1S: send the master secret"""
-        
-        try:
-            # Wait for password and login
-            handler.loop.call_soon_threadsafe(handler.notify, "connection.state", "Waiting for credentials")
-            while handler.password == 'None' and handler.login == 'None':
-                time.sleep(10)
-            
-            # Compute the master secret
-            salt, ms = pbkdf2(handler.password, salt=handler.login)
-            ems = handler.ephecc.encrypt(ms, pubkey=handler.ephecc.get_pubkey())
-        
-            # Send master secret
-            message = b'SESSION;' + ems
-            client.loop.call_soon_threadsafe(client.transport.write, message)
-            
-            # Notify the handler a property has changed
-            handler.loop.call_soon_threadsafe(handler.notify, "connection.state", "Session started")
-        
-        except Exception as exc:
-            # Schedule a call to the exception handler
-            handler.loop.call_soon_threadsafe(handler.exception_handler, exc)
-        
-        else:
-            handler.ms = ms # Store the master secret
-            #handler.state = handler.states['1C'] # Next state
