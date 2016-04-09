@@ -30,9 +30,15 @@ from curses.textpad import Textbox
 from client.uilayer.uicomponents.Component import Component
 
 class InputBox(Component):
-    """A simple text editor with a border line"""
+    """
+    A simple text editor with a border line
     
-    def __init__(self, wparent, h, w, y, x):
+    Attributs:
+    - shortcuts: list of shortcut keys for ending edition
+    - value: the output text after edition
+    """
+    
+    def __init__(self, wparent, h, w, y, x, shortcuts=None):
         """Create a input text box"""
         Component.__init__(self, wparent, y, x)
         self.panel = wparent.derwin(h, w, y, x)
@@ -40,6 +46,7 @@ class InputBox(Component):
         self.editorbox = self.panel.derwin(1, w - 4, 1, 2)
         self.editor = Textbox(self.editorbox)
         self.value = None
+        self.shortcuts = shortcuts
         
     def isEditable(self):
         """This component is editable"""
@@ -70,21 +77,24 @@ class InputBox(Component):
         self.cursor_x = 0
         self.focusOff()
     
-    @staticmethod
-    def _controller_(ch):
+    def _controller_(self, ch):
         if ch in [curses.KEY_UP, curses.KEY_DOWN, curses.ascii.TAB, curses.ascii.CR, 
                   curses.ascii.ESC, curses.KEY_MOUSE]:
             curses.ungetch(ch)
             return curses.ascii.NL
         elif ch in [curses.ascii.DEL]:
             return curses.ascii.BS
+        elif curses.ascii.isctrl(ch):
+            if chr(ch + 64) in self.shortcuts:
+                curses.ungetch(ch)
+                return curses.ascii.NL
         else:
             return ch
         
     def edit(self):
         try: curses.curs_set(1)
         except curses.error: pass
-        result = self.editor.edit(InputBox._controller_)
+        result = self.editor.edit(self._controller_)
         if result != self.value:
             if result != "":
                 self.value = result

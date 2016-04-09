@@ -31,23 +31,28 @@ from client.uilayer.uicomponents.Component import Component
 class ButtonBox(Component):
     """A simple button text box"""
     
-    def __init__(self, wparent, y, x, label):
+    def __init__(self, wparent, y, x, label, shortcut=None):
         Component.__init__(self, wparent, y, x)
-        self.label = '[' + label + ']'
-        self.button = wparent.derwin(1, len(label), y, x)
-        self.parent.addstr(y, x, self.label, curses.A_REVERSE)
-        self._cur_y = y
-        self._cur_x = x
+        self.label = ' ' + label + ' '
+        self.button = wparent.derwin(1, len(self.label) + 1, y, x)
+        self.shortcut = shortcut
+        self.focusOff()
         
     def focusOn(self):
         """See mother class"""
-        self.parent.addstr(self.cursor_y, self.cursor_x, self.label, curses.A_BLINK | curses.A_REVERSE)
-        self.parent.refresh()
+        self.button.addstr(0, 0, self.label, curses.A_BLINK | curses.A_REVERSE)
+        if self.shortcut:
+            self.button.addstr(0, self.label.upper().find(self.shortcut) , self.shortcut, 
+                               curses.A_UNDERLINE | curses.A_BLINK | curses.A_REVERSE)
+        self.button.refresh()
         
     def focusOff(self):
         """See mother class"""
-        self.parent.addstr(self.cursor_y, self.cursor_x, self.label, curses.A_REVERSE)
-        self.parent.refresh()
+        self.button.addstr(0, 0, self.label, curses.A_REVERSE)
+        if self.shortcut:
+            self.button.addstr(0, self.label.upper().find(self.shortcut) , self.shortcut, 
+                               curses.A_UNDERLINE | curses.A_REVERSE)
+        self.button.refresh()
         
     def enclose(self, y, x):
         """See mother class"""

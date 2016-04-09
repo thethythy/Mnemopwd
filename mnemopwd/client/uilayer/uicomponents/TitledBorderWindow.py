@@ -30,7 +30,17 @@ import curses
 from client.uilayer.uicomponents.Component import Component
 
 class TitledBorderWindow(Component):
-    """A window with a border and a title"""
+    """
+    A window with a border and a title. It can contained other components.
+    
+    Attributs:
+    - h: the window height
+    - w: the window width
+    - window: the curses window
+    - items: the ordered list of inner components
+    - shortcuts: the ordered list of shortcut keys
+    - index: the actual inner component that gets focus
+    """
     
     def __init__(self, h, w, y, x, title):
         """Create base window"""
@@ -42,8 +52,9 @@ class TitledBorderWindow(Component):
         self.window.addstr(1, 2, title)
         self.window.hline(2, 1, curses.ACS_HLINE, w - 2)
         self.items = []
+        self.shortcuts = []
         self.index = 0
-        self.window.keypad(True)
+        self.window.keypad(1)
         
     def start(self):
         """Start interaction loop of the window"""
@@ -96,8 +107,18 @@ class TitledBorderWindow(Component):
             # Cancel
             elif c in [curses.ascii.ESC] :
                 return False
+                
+            # Shortcut keys
+            elif curses.ascii.isctrl(c):
+                c += 64 # Add 64 to get upper key
+                for number, shortcut in enumerate(self.shortcuts):
+                    if shortcut == chr(c) and self.items[number].isActionnable():
+                        self.items[self.index].focusOff()
+                        self.index = number
+                        self.items[self.index].focusOn()
+                        return self.items[self.index]
             
-            # Other case : edit editable component
+            # Other case : start edition of editable component
             else:
                 if self.items[self.index].isEditable():
                     curses.ungetch(c)

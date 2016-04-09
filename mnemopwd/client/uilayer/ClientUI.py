@@ -63,14 +63,17 @@ class LoginWindow(TitledBorderWindow):
         self.window.addstr(5, 2, "Login")
         self.window.addstr(8, 2, "Password")
         
+        # Ordered list of shortcut keys
+        self.shortcuts = ['', '', 'N', 'L', 'A']
+        
         # Editable components
-        self.logineditor = InputBox(self.window, 3, size_x - 15, 5 - 1, 12)
-        self.passeditor = InputBox(self.window, 3, size_x - 15, 8 - 1, 12) 
+        self.logineditor = InputBox(self.window, 3, size_x - 15, 5 - 1, 12, self.shortcuts)
+        self.passeditor = InputBox(self.window, 3, size_x - 15, 8 - 1, 12, self.shortcuts) 
         
         # Actionnable components
-        self.connectButton = ButtonBox(self.window, 11, 7, "Connect")
-        self.clearButton = ButtonBox(self.window, 11, 27, "Clear")
-        self.cancelButton = ButtonBox(self.window, 11, 47, "Cancel")
+        self.connectButton = ButtonBox(self.window, 11, 7, "Connect", 'N')
+        self.clearButton = ButtonBox(self.window, 11, 27, "Clear", 'L')
+        self.cancelButton = ButtonBox(self.window, 11, 47, "Cancel", 'A')
         
         # Ordered list of components
         self.items = [self.logineditor, self.passeditor, self.connectButton, 
@@ -128,7 +131,7 @@ class ClientUI(Thread, Observer):
         
         # Main window
         self.stdscr = curses.initscr()
-        self.stdscr.keypad(True)
+        self.stdscr.keypad(1)
         curses.noecho() 
         try: curses.curs_set(0)
         except: pass
