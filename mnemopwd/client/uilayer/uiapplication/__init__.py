@@ -25,26 +25,6 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import curses
+__author__ = "Thierry Lemeunier <thierry at lemeunier dot net>"
+__date__ = "$10 avril 2016 9:40:44$"
 
-from client.uilayer.uicomponents.BaseWindow import BaseWindow
-
-class TitledBorderWindow(BaseWindow):
-    """
-    A window with a border and a title. It can contain other components.
-    
-    Attributs:
-    - h: the window height
-    - w: the window width
-    - window: the curses window
-    - items: the ordered list of inner components
-    - shortcuts: the ordered list of shortcut keys
-    - index: the actual inner component that gets focus
-    """
-    
-    def __init__(self, wparent, h, w, y, x, title):
-        """Create base window"""
-        BaseWindow.__init__(self, wparent, h, w, y, x)
-        self.window.border()
-        self.window.addstr(1, 2, title)
-        self.window.hline(2, 1, curses.ACS_HLINE, w - 2)

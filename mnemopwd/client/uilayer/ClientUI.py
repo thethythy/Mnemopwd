@@ -32,11 +32,7 @@ import curses
 from client.util.funcutils import Observer
 from client.util.Configuration import Configuration
 
-from client.uilayer.uicomponents.Component import Component
-from client.uilayer.uicomponents.InputBox import InputBox
-from client.uilayer.uicomponents.ButtonBox import ButtonBox
-from client.uilayer.uicomponents.TitledBorderWindow import TitledBorderWindow
-
+from client.uilayer.uiapplication.LoginWindow import LoginWindow
 
 """
 Standard curses user interface.
@@ -44,67 +40,6 @@ Standard curses user interface.
 
 locale.setlocale(locale.LC_ALL, '') # Set locale setting
 encoding = locale.getpreferredencoding() # Get locale encoding
-
-class LoginWindow(TitledBorderWindow):
-    """
-    The login window: get the login/password user credentials
-    """
-    
-    def __init__(self):
-        """Create the window"""
-        size_y = 14
-        size_x = 60
-        
-        TitledBorderWindow.__init__(self, size_y, size_x,
-                                    int(curses.LINES / 2) - int(size_y / 2),
-                                    int(curses.COLS / 2) - int(size_x / 2),
-                                    "Connection window")
-        
-        self.window.addstr(5, 2, "Login")
-        self.window.addstr(8, 2, "Password")
-        
-        # Ordered list of shortcut keys
-        self.shortcuts = ['', '', 'N', 'L', 'A']
-        
-        # Editable components
-        self.logineditor = InputBox(self.window, 3, size_x - 15, 5 - 1, 12, self.shortcuts)
-        self.passeditor = InputBox(self.window, 3, size_x - 15, 8 - 1, 12, self.shortcuts) 
-        
-        # Actionnable components
-        self.connectButton = ButtonBox(self.window, 11, 7, "Connect", 'N')
-        self.clearButton = ButtonBox(self.window, 11, 27, "Clear", 'L')
-        self.cancelButton = ButtonBox(self.window, 11, 47, "Cancel", 'A')
-        
-        # Ordered list of components
-        self.items = [self.logineditor, self.passeditor, self.connectButton, 
-                      self.clearButton, self.cancelButton]
-        
-        self.window.refresh()
-        
-    def start(self):
-        while True:
-            result = TitledBorderWindow.start(self) # Default controller
-            
-            # Cancel login window
-            if result == False or result == self.cancelButton:
-                self.close()
-                return False, False
-            # Clear all input boxes
-            elif result == self.clearButton:
-                self.logineditor.clear()
-                self.passeditor.clear()
-                self.clearButton.focusOff()
-                self.index = 0
-            # Try to return login and password
-            elif result == self.connectButton:
-                self.connectButton.focusOff()
-                if self.logineditor.value is None :
-                    self.index = 0
-                elif self.passeditor.value is None :
-                    self.index = 1
-                else:
-                    self.close()
-                    return self.logineditor.value, self.passeditor.value
 
 class ClientUI(Thread, Observer):
     """
@@ -131,12 +66,12 @@ class ClientUI(Thread, Observer):
         
         # Main window
         self.stdscr = curses.initscr()
-        self.stdscr.keypad(1)
-        curses.noecho() 
-        try: curses.curs_set(0)
+        self.stdscr.keypad(1) # Let special keys be a single key
+        curses.noecho() # No echoing key pressed
+        try: curses.curs_set(0) # No cursor
         except: pass
         curses.mousemask(curses.BUTTON1_CLICKED | curses.BUTTON2_CLICKED | 
-                         curses.BUTTON3_CLICKED | curses.BUTTON4_CLICKED)
+                         curses.BUTTON3_CLICKED | curses.BUTTON4_CLICKED) # Mouse events
         
         # Menu window
         self.menuscr = curses.newwin(2, curses.COLS, 0, 0)
