@@ -27,11 +27,11 @@
 
 import curses
 
-from client.uilayer.uicomponents.Component import Component
+from client.uilayer.uicomponents.BaseWindow import BaseWindow
 
-class TitledBorderWindow(Component):
+class TitledBorderWindow(BaseWindow):
     """
-    A window with a border and a title. It can contained other components.
+    A window with a border and a title. It can contain other components.
     
     Attributs:
     - h: the window height
@@ -42,91 +42,85 @@ class TitledBorderWindow(Component):
     - index: the actual inner component that gets focus
     """
     
-    def __init__(self, h, w, y, x, title):
+    def __init__(self, wparent, h, w, y, x, title):
         """Create base window"""
-        Component.__init__(self, None, y, x)
-        self.h = h
-        self.w = w
-        self.window = curses.newwin(h, w, y, x)
+        BaseWindow.__init__(self, wparent, h, w, y, x)
         self.window.border()
         self.window.addstr(1, 2, title)
         self.window.hline(2, 1, curses.ACS_HLINE, w - 2)
-        self.items = []
-        self.shortcuts = []
-        self.index = 0
-        self.window.keypad(1)
+
         
-    def start(self):
-        """Start interaction loop of the window"""
-        curses.nonl()
-        
-        self.items[self.index].focusOn() # Focus on component at index
-        
-        while True:
-            c = self.window.getch()
-            
-            # Mouse event
-            if c == curses.KEY_MOUSE:
-                id, x, y, z, bstate = curses.getmouse()
-                for number, item in enumerate(self.items):
-                    if item.enclose(y, x):
-                        self.items[self.index].focusOff()
-                        self.index = number
-                        self.items[self.index].focusOn()
-                        if self.items[self.index].isActionnable():
-                            return self.items[self.index]
-                        else: break
-            
-            # Next component
-            elif c in [curses.KEY_DOWN, curses.ascii.TAB] :
-                self.items[self.index].focusOff()
-                self.index = (self.index + 1) % len(self.items)
-                self.items[self.index].focusOn()
-            
-            # Previous component
-            elif c in [curses.KEY_UP]:
-                self.items[self.index].focusOff()
-                self.index = (self.index - 1) % len(self.items)
-                self.items[self.index].focusOn()
-            
-            # Next actionnable component or edit editable component
-            elif c in [curses.KEY_LEFT] and self.items[self.index].isActionnable():
-                curses.ungetch(curses.KEY_UP)
-            
-            # Previous actionnable component or edit editable component
-            elif c in [curses.KEY_RIGHT] and self.items[self.index].isActionnable():
-                curses.ungetch(curses.KEY_DOWN)
-            
-            # Validation
-            elif c in [curses.ascii.CR]:
-                if self.items[self.index].isEditable():
-                    curses.ungetch(curses.KEY_DOWN)
-                elif self.items[self.index].isActionnable():
-                    return self.items[self.index]
-            
-            # Cancel
-            elif c in [curses.ascii.ESC] :
-                return False
-                
-            # Shortcut keys
-            elif curses.ascii.isctrl(c):
-                c += 64 # Add 64 to get upper key
-                for number, shortcut in enumerate(self.shortcuts):
-                    if shortcut == chr(c) and self.items[number].isActionnable():
-                        self.items[self.index].focusOff()
-                        self.index = number
-                        self.items[self.index].focusOn()
-                        return self.items[self.index]
-            
-            # Other case : start edition of editable component
-            else:
-                if self.items[self.index].isEditable():
-                    curses.ungetch(c)
-                    self.items[self.index].edit()
-                    
-    def close(self):
-        """Close the window"""
-        curses.nl()
-        self.window.clear()
-        self.window.refresh()
+#     def start(self):
+#         """Start interaction loop of the window"""
+#         curses.nonl()
+#         
+#         self.items[self.index].focusOn() # Focus on component at index
+#         
+#         while True:
+#             c = self.window.getch()
+#             
+#             # Mouse event
+#             if c == curses.KEY_MOUSE:
+#                 id, x, y, z, bstate = curses.getmouse()
+#                 for number, item in enumerate(self.items):
+#                     if item.enclose(y, x):
+#                         self.items[self.index].focusOff()
+#                         self.index = number
+#                         self.items[self.index].focusOn()
+#                         if self.items[self.index].isActionnable():
+#                             return self.items[self.index]
+#                         else: break
+#             
+#             # Next component
+#             elif c in [curses.KEY_DOWN, curses.ascii.TAB] :
+#                 self.items[self.index].focusOff()
+#                 self.index = (self.index + 1) % len(self.items)
+#                 self.items[self.index].focusOn()
+#             
+#             # Previous component
+#             elif c in [curses.KEY_UP]:
+#                 self.items[self.index].focusOff()
+#                 self.index = (self.index - 1) % len(self.items)
+#                 self.items[self.index].focusOn()
+#             
+#             # Next actionnable component or edit editable component
+#             elif c in [curses.KEY_LEFT] and self.items[self.index].isActionnable():
+#                 curses.ungetch(curses.KEY_UP)
+#             
+#             # Previous actionnable component or edit editable component
+#             elif c in [curses.KEY_RIGHT] and self.items[self.index].isActionnable():
+#                 curses.ungetch(curses.KEY_DOWN)
+#             
+#             # Validation
+#             elif c in [curses.ascii.CR]:
+#                 if self.items[self.index].isEditable():
+#                     curses.ungetch(curses.KEY_DOWN)
+#                 elif self.items[self.index].isActionnable():
+#                     return self.items[self.index]
+#             
+#             # Cancel
+#             elif c in [curses.ascii.ESC] :
+#                 return False
+#                 
+#             # Shortcut keys
+#             elif curses.ascii.isctrl(c):
+#                 c += 64 # Add 64 to get upper key
+#                 for number, shortcut in enumerate(self.shortcuts):
+#                     if shortcut == chr(c) and self.items[number].isActionnable():
+#                         self.items[self.index].focusOff()
+#                         self.index = number
+#                         self.items[self.index].focusOn()
+#                         return self.items[self.index]
+#             
+#             # Other case : start edition of editable component
+#             else:
+#                 if self.items[self.index].isEditable():
+#                     curses.ungetch(c)
+#                     self.items[self.index].edit()
+#                     
+#     def close(self):
+#         """Close the window"""
+#         curses.nl()
+#         self.window.clear()
+#         self.window.refresh()
 
