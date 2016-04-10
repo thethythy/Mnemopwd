@@ -30,16 +30,14 @@ import locale
 import curses
 
 from client.util.funcutils import Observer
-from client.util.Configuration import Configuration
-
-from client.uilayer.uiapplication.LoginWindow import LoginWindow
+from client.uilayer.uiapplication.MainWindow import MainWindow
 
 """
 Standard curses user interface.
 """
 
 locale.setlocale(locale.LC_ALL, '') # Set locale setting
-encoding = locale.getpreferredencoding() # Get locale encoding
+#encoding = locale.getpreferredencoding() # Get locale encoding
 
 class ClientUI(Thread, Observer):
     """
@@ -47,12 +45,10 @@ class ClientUI(Thread, Observer):
     
     Attribut(s):
     - facade: the facade of the domain layer
-    - stdscr: the main window of the UI
-    - menuscr: the menu window at the top line of the UI
-    - statscr: the status window at the bottom line of the UI
+    - wmain: the main window of the UI
     
     Method(s):
-    - stop: stop the interaction loop
+    - stop: stop the interaction loop and close the UI
     - run: start the interaction loop
     - update: update the UI (implementation of the Observer class method)
     """
@@ -64,7 +60,7 @@ class ClientUI(Thread, Observer):
         
         self.facade = facade # Store the facade of the domain layer
         
-        # Main window
+        # curses initialization
         self.stdscr = curses.initscr()
         self.stdscr.keypad(1) # Let special keys be a single key
         curses.noecho() # No echoing key pressed
@@ -73,29 +69,8 @@ class ClientUI(Thread, Observer):
         curses.mousemask(curses.BUTTON1_CLICKED | curses.BUTTON2_CLICKED | 
                          curses.BUTTON3_CLICKED | curses.BUTTON4_CLICKED) # Mouse events
         
-        # Menu window
-        self.menuscr = curses.newwin(2, curses.COLS, 0, 0)
-        self.menuscr.hline(1, 0, curses.ACS_HLINE, curses.COLS)
-        message = "MnemoPwd Client v" + Configuration.version
-        self.menuscr.addstr(0, curses.COLS - len(message) - 1, message.encode(encoding))
-        self.menuscr.addch(0, curses.COLS - len(message) - 3, curses.ACS_VLINE)
-        self.menuscr.addch(1, curses.COLS - len(message) - 3 , curses.ACS_BTEE)
-    
-        self.menuscr.addstr(0, 0, "S".encode(encoding), curses.A_UNDERLINE)
-        self.menuscr.addstr(0, 1, "earch".encode(encoding))
-        self.menuscr.addstr(0, 7, "N".encode(encoding), curses.A_UNDERLINE)
-        self.menuscr.addstr(0, 8, "ew".encode(encoding))
-        self.menuscr.addstr(0, 11, "L".encode(encoding), curses.A_UNDERLINE)
-        self.menuscr.addstr(0, 12, "ogin".encode(encoding))
-        self.menuscr.addstr(0, 17, "Q".encode(encoding), curses.A_UNDERLINE)
-        self.menuscr.addstr(0, 18, "uit".encode(encoding))
-        self.menuscr.refresh()
-        
-        # Status window
-        self.statscr = curses.newwin(2, curses.COLS, curses.LINES - 2, 0)
-        self.statscr.hline(0, 0, curses.ACS_HLINE, curses.COLS)
-        self.statscr.attrset(curses.A_DIM)
-        self.statscr.refresh()
+        # Open the main window
+        self.wmain = MainWindow()
 
     def stop(self):
         """Stop UI and return to normal interaction"""
@@ -107,33 +82,12 @@ class ClientUI(Thread, Observer):
         curses.endwin()
 
     def run(self):
-        """Start the loop interaction"""
-        
-        # Get login/password
-        login, passwd = LoginWindow().start()
-        if (login != False):
-            #self.facade.setCredentials(login, passwd)
-            #login = passwd = "                            "
-            pass
-        
-        # Interaction loop
-        while True:
-            c = self.statscr.getch()
-            if c == ord('q'):
-                self.facade.stop() # Close the domain layer
-                break  # Exit the interaction loop
+        """The loop interaction"""
+        self.wmain.start() # Interaction as long as window is not closed
+        self.facade.stop() # Stop the core layer
 
     def update(self, property, value):
         """Implementation of the method of the class Observer."""
         if property == "connection.state":
-            self._update_status(value)
-            
-    def _update_status(self, value):
-        """Update the status window content"""
-        currenty, currentx = curses.getsyx() # Save current cursor position
-        self.statscr.move(1, 0)
-        self.statscr.clrtoeol()
-        self.statscr.addstr(value.encode(encoding))
-        self.statscr.refresh()
-        curses.setsyx(currenty, currentx)   # Set cursor position to saved position
+            self.wmain.update_status(value)
 
