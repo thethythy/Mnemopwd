@@ -26,7 +26,7 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import curses
-from curses.textpad import Textbox
+from client.uilayer.uicomponents.TextEditor import TextEditor
 from client.uilayer.uicomponents.Component import Component
 
 class InputBox(Component):
@@ -44,7 +44,7 @@ class InputBox(Component):
         self.panel = wparent.derwin(h, w, y, x)
         self.panel.border()
         self.editorbox = self.panel.derwin(1, w - 4, 1, 2)
-        self.editor = Textbox(self.editorbox)
+        self.editor = TextEditor(self.editorbox)
         self.value = None
         self.shortcuts = shortcuts
         

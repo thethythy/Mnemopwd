@@ -118,6 +118,7 @@ class BaseWindow(Component):
             # Other case : start edition of editable component
             else:
                 if self.items[self.index].isEditable():
+                    self.items[self.index].focusOff()
                     curses.ungetch(c)
                     self.items[self.index].edit()
                     

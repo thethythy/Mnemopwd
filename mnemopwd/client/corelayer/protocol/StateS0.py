@@ -52,7 +52,7 @@ class StateS0():
             except AssertionError : raise Exception('bad ephemeral server public key')
             
             # Notify the handler a property has changed
-            handler.loop.call_soon_threadsafe(handler.notify, "connection.state", "Ephemeral key exchanged")
+            handler.loop.call_soon_threadsafe(handler.notify, "connection.state", "Waiting for login/password")
         
         except Exception as exc:
             # Schedule a call to the exception handler

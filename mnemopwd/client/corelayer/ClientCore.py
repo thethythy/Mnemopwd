@@ -50,7 +50,7 @@ class ClientCore(Subject):
     Method(s):
     - start: start the domain layer
     - stop: close the domain loop
-    - setCredentials: set login/password
+    - setCredentials: set login/password then start S1 state
     """
     
     # Intern methods

@@ -51,9 +51,9 @@ class MainWindow(BaseWindow):
         self.window.refresh()
         
         self.searchButton = ButtonBox(self.window, 0, 0, "Search", shortcut='E')
-        self.newButton = ButtonBox(self.window, 0, 8, "New", shortcut='N')
-        self.loginButton = ButtonBox(self.window, 0, 12, "Login", shortcut='L')
-        self.exitButton = ButtonBox(self.window, 0, 18, "Quit", shortcut='U')
+        self.newButton = ButtonBox(self.window, 0, 9, "New", shortcut='N')
+        self.loginButton = ButtonBox(self.window, 0, 15, "Login", shortcut='L')
+        self.exitButton = ButtonBox(self.window, 0, 23, "Quit", shortcut='U')
         
         # Ordered list of shortcut keys
         self.shortcuts = ['E', 'N', 'L', 'U']
