@@ -46,7 +46,7 @@ class StateS35(StateSCC):
                 
                 # Test for S35 command
                 is_cd_S35 = data[170:177] == b"ADDDATA"
-                if not is_cd_S35 : raise Exception('protocol error')
+                if not is_cd_S35 : raise Exception('S35 protocol error')
             
                 bsib = data[178:] # One secret information block in pickle format
                 

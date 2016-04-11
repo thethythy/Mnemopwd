@@ -45,7 +45,7 @@ class StateS31(StateSCC):
                 
                 # Test for S31 command
                 is_cd_S31 = data[170:183] == b"CONFIGURATION"
-                if not is_cd_S31 : raise Exception('protocol error')
+                if not is_cd_S31 : raise Exception('S31 protocol error')
             
                 econfig = data[184:]    # Encrypted configuration string
                 config = client.ephecc.decrypt(econfig) # Decrypt configuration string

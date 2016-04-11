@@ -43,7 +43,7 @@ class StateS1C():
         try:
             # Test for S1C command
             is_cd_S1C = data[:10] == b"CHALLENGEA"
-            if not is_cd_S1C : raise Exception('protocol error')
+            if not is_cd_S1C : raise Exception('S1C protocol error')
               
             echallenge = data[11:] # Encrypted challenge
             challenge = client.ephecc.decrypt(echallenge) # Decrypting challenge

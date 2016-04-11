@@ -46,7 +46,7 @@ class StateS34(StateSCC):
                 
                 # Test for S34 command
                 is_cd_S34 = data[170:180] == b"SEARCHDATA"
-                if not is_cd_S34 : raise Exception('protocol error')
+                if not is_cd_S34 : raise Exception('S34 protocol error')
             
                 epattern = data[181:] # Encrypted search pattern
                 pattern = client.ephecc.decrypt(epattern) # Get search pattern

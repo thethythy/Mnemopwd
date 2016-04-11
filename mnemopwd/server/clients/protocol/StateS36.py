@@ -45,7 +45,7 @@ class StateS36(StateSCC):
                 
                 # Test for S36 command
                 is_cd_S36 = data[170:180] == b"DELETEDATA"
-                if not is_cd_S36 : raise Exception('protocol error')
+                if not is_cd_S36 : raise Exception('S36 protocol error')
                 
                 index = data[181:].decode() # sib index 
                 

@@ -47,7 +47,7 @@ class StateS33(StateSCC):
             
                 # Test for S33 command
                 is_cd_S33 = data[170:178] == b"DELETION"
-                if not is_cd_S33 : raise Exception('protocol error')
+                if not is_cd_S33 : raise Exception('S33 protocol error')
                 
                 eid = data[179:348] # id encrypted
                 elogin = data[349:] # Login encrypted 

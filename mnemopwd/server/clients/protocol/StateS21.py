@@ -47,7 +47,7 @@ class StateS21(StateSCC):
             
                 # Test for S21 command
                 is_cd_S21 = data[170:175] == b"LOGIN"
-                if not is_cd_S21 : raise Exception('protocol error')
+                if not is_cd_S21 : raise Exception('S21 protocol error')
                 
                 eid = data[176:345]   # id encrypted
                 elogin = data[346:] # Login encrypted

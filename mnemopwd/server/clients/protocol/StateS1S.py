@@ -44,7 +44,7 @@ class StateS1S():
         try:
             # Test for S1S command
             is_cd_S1S = data[:7] == b"SESSION"
-            if not is_cd_S1S : raise Exception('protocol error')
+            if not is_cd_S1S : raise Exception('S1S protocol error')
                 
             ems = data[8:209] # Master secret encrypted
             ms = client.ephecc.decrypt(ems) # Decrypt master secret

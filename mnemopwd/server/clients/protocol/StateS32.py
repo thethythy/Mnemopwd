@@ -47,7 +47,7 @@ class StateS32(StateSCC):
                 
                 # Test for S32 command
                 is_cd_S32 = data[170:181] == b"EXPORTATION"
-                if not is_cd_S32 : raise Exception('protocol error')
+                if not is_cd_S32 : raise Exception('S32 protocol error')
                 
                 # Get all sibs
                 tabsibs = client.dbH.get_data(client.keyH)

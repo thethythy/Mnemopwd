@@ -47,7 +47,7 @@ class StateS22(StateSCC):
             
                 # Test for S22 command
                 is_cd_S22 = data[170:178] == b"CREATION"
-                if not is_cd_S22 : raise Exception('protocol error')
+                if not is_cd_S22 : raise Exception('S22 protocol error')
 
                 eid = data[179:348] # id encrypted
                 elogin = data[349:] # Login encrypted 

@@ -46,7 +46,7 @@ class StateS37(StateSCC):
                 
                 # Test for S37 command
                 is_cd_S37 = data[170:180] == b"UPDATEDATA"
-                if not is_cd_S37 : raise Exception('protocol error')
+                if not is_cd_S37 : raise Exception('S37 protocol error')
             
                 protocol_data = data[181:].split(b';', maxsplit=1)
                 
