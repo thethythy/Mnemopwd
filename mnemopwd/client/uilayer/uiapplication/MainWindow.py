@@ -37,9 +37,10 @@ class MainWindow(BaseWindow):
     The main window of the client application
     """
     
-    def __init__(self):
+    def __init__(self, corefacade):
         """Create the window"""
         BaseWindow.__init__(self, None, curses.LINES, curses.COLS, 0, 0)
+        self.facade = corefacade # Reference on core layer facade
         
         # Menu zone
         self.window.hline(1, 0, curses.ACS_HLINE, curses.COLS)
@@ -66,19 +67,32 @@ class MainWindow(BaseWindow):
         self.statscr.attrset(curses.A_DIM)
         self.statscr.refresh()
         
-    def start(self):
-        # Get login/password
+    def _getCredentials(self):
+        """Get login/password"""
+        connected = False
         login, passwd = LoginWindow().start()
         if (login != False):
-            #self.facade.setCredentials(login, passwd)
-            #login = passwd = "                            "
-            pass
-            
+            self.facade.setCredentials(login, passwd)
+            login = passwd = "                            "
+            connected = True
+        return connected
+        
+    def start(self):
+        # Get login/password
+        connected = self._getCredentials()
+        
         while True:
             # Interaction loop
             result = BaseWindow.start(self)
             
-            if result == self.exitButton:
+            # Try a new connection
+            if result == self.loginButton:
+                if not connected:
+                    self.loginButton.focusOff()
+                    connected = self._getCredentials()
+            
+            # Quit application 
+            elif result == False or result == self.exitButton:
                 self.close()
                 break
         

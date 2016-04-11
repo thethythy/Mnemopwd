@@ -70,7 +70,7 @@ class ClientUI(Thread, Observer):
                          curses.BUTTON3_CLICKED | curses.BUTTON4_CLICKED) # Mouse events
         
         # Open the main window
-        self.wmain = MainWindow()
+        self.wmain = MainWindow(self.facade)
 
     def stop(self):
         """Stop UI and return to normal interaction"""

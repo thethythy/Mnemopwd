@@ -43,7 +43,7 @@ class StateS0():
         try:
             # Test for S1C command
             is_cd_S0C = data[:10] == b"KEYSHARING"
-            if not is_cd_S0C : raise Exception('protocol error')
+            if not is_cd_S0C : raise Exception('S0 protocol error')
         
             # Test for ephemeral server public key
             protocol_data = data[11:]
@@ -61,4 +61,3 @@ class StateS0():
         else:
             handler.ephecc = ephecc # Store the ephemeral public key
             handler.state = handler.states['1S'] # Next state
-            #handler.loop.run_in_executor(None, handler.state.do, handler, None) # Future excecution

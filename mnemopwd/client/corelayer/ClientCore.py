@@ -48,9 +48,9 @@ class ClientCore(Subject):
     - protocol: a communication handler (see the official asyncio module)
     
     Method(s):
-    - start : start the domain layer
-    - stop : close the domain loop
-    - stop_demand: demand to stop domain layer
+    - start: start the domain layer
+    - stop: close the domain loop
+    - setCredentials: set login/password
     """
     
     # Intern methods
@@ -118,3 +118,10 @@ class ClientCore(Subject):
         else:
             self.transport.close()
             self.loop.close()
+            
+    def setCredentials(self, login, password):
+        """Store login and password then start state S1"""
+        self.protocol.login = login.encode()
+        self.protocol.password = password.encode()
+        self.protocol.data_received(None)
+

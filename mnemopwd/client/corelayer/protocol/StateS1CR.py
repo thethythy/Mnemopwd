@@ -31,32 +31,49 @@ State S1 : Session
 """
 
 from client.util.funcutils import singleton
-from pyelliptic import ECC
-from pyelliptic import pbkdf2
+from pyelliptic import OpenSSL
+from pyelliptic import Cipher
+from pyelliptic import hmac_sha256
 
 @singleton
-class StateS1S():
-    """State S1S : Session"""
+class StateS1CR():
+    """State S1CR : Session"""
         
     def do(self, handler, data):
-        """Action of the state S1S: send the master secret"""
+        """Action of the state S1CR: answer the challenge request"""
         
         try:
-            # Compute the master secret
-            salt, ms = pbkdf2(handler.password, salt=handler.login)
-            ems = handler.ephecc.encrypt(ms, pubkey=handler.ephecc.get_pubkey())
-        
-            # Send master secret
-            message = b'SESSION;' + ems
+            # Test for S1CR command
+            is_cd_S1CR = data[:10] == b"CHALLENGER"
+            if not is_cd_S1CR : raise Exception('S1CR protocol error')
+            
+            # Get esession number
+            blocksize = OpenSSL.get_cipher('aes-256-cbc').get_blocksize()
+            iv = data[11:11+blocksize]
+            esession = data[12+blocksize:]
+            
+            # Decrypt session number
+            ctx = Cipher(handler.ms, iv, 0, 'aes-256-cbc')
+            session = ctx.ciphering(esession)
+            
+            # Compute challenge answer
+            challenge = hmac_sha256(handler.ms, session + b'S1.12')
+            
+            # Encrypt challenge answer
+            echallenge = handler.ephecc.encrypt(challenge, pubkey=handler.ephecc.get_pubkey())
+            
+            # Send challenge answer
+            message = b'CHALLENGEA;' + echallenge
             handler.loop.call_soon_threadsafe(handler.transport.write, message)
             
             # Notify the handler a property has changed
-            handler.loop.call_soon_threadsafe(handler.notify, "connection.state", "Waiting session number")
+            handler.loop.call_soon_threadsafe(handler.notify, "connection.state", "Sending challenge answer")
         
         except Exception as exc:
             # Schedule a call to the exception handler
             handler.loop.call_soon_threadsafe(handler.exception_handler, exc)
         
         else:
-            handler.ms = ms # Store the master secret
-            handler.state = handler.states['1CR'] # Next state
+            handler.session = session # Store the session number
+            handler.state = handler.states['1CA'] # Next state
+            

@@ -25,12 +25,37 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-__author__ = "Thierry Lemeunier <thierry at lemeunier dot net>"
-__date__ = "$6 février 2016 10:35:44$"
 
-__all__ = ['StateS0', 'StateS1S', 'StateS1CR', 'StateS1CA']
+"""
+State S1 : Session
+"""
 
-from .StateS0 import StateS0
-from .StateS1S import StateS1S
-from .StateS1CR import StateS1CR
-from .StateS1CA import StateS1CA
+from client.util.funcutils import singleton
+
+@singleton
+class StateS1CA():
+    """State S1CA : Session"""
+        
+    def do(self, handler, data):
+        """Action of the state S1CA: wait server response of the client challenge answer"""
+        
+        try:
+            # Test if challenge is rejected
+            is_KO = data[:5] == b"ERROR"
+            if is_KO: 
+                protocol_data = data[6:]
+                raise Exception(protocol_data)
+            
+            # Test if challenge is accepted
+            is_OK = data[:2] == b"OK"
+            if is_OK:
+                # Notify the handler a property has changed
+                handler.loop.call_soon_threadsafe(handler.notify, "connection.state", "Session started")
+        
+        except Exception as exc:
+            # Schedule a call to the exception handler
+            handler.loop.call_soon_threadsafe(handler.exception_handler, exc)
+        
+        else:
+            #handler.state = handler.states['20'] # Next state
+            pass

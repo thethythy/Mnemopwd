@@ -47,12 +47,14 @@ class ProtocolHandler(asyncio.Protocol):
     - login: the client login (set by the UI)
     - ephecc: the ephemeral server public key (set by S0 state)
     - ms: the client master secret (set by S1S state)
+    - session: the client session number (set by S1CR state)
 
     Method(s):
     - connection_made: method called when the connection with the server is made
     - data_received: method called each time a new data is received
     - connection_lost: method called when the connection is lost or closed
     - exception_handler: method called when an exception is raised by a state object
+    - notify: notify ClientCore a property has changed
     """
 
     def __init__(self, core):
@@ -60,12 +62,7 @@ class ProtocolHandler(asyncio.Protocol):
         self.loop = core.loop
         self.password = self.login = 'None'
         # The protocol states
-        self.states = {'0':StateS0(), '1S':StateS1S()}
-        #self.states = {'1C':StateS1C(), \
-        #               '2':StateS2(), '21':StateS21(), '22':StateS22(), \
-        #               '3':StateS3(), '31':StateS31(), '32':StateS32(), \
-        #               '33':StateS33(), '34':StateS34(),'35':StateS35(), \
-        #               '36':StateS36(), '37':StateS37()}
+        self.states = {'0':StateS0(), '1S':StateS1S(), '1CR':StateS1CR(), '1CA':StateS1CA()}
 
     def connection_made(self, transport):
         self.transport = transport
