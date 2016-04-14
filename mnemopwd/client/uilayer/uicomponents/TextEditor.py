@@ -25,7 +25,8 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-"""Simple text editing widget (copy of the official file but with extended ASCII)"""
+"""Simple text editing widget (copy of the official file but with character > 127 
+and without insert mode)"""
 
 import curses
 import curses.ascii
@@ -54,14 +55,12 @@ class TextEditor:
     KEY_LEFT = Ctrl-B, KEY_RIGHT = Ctrl-F, KEY_UP = Ctrl-P, KEY_DOWN = Ctrl-N
     KEY_BACKSPACE = Ctrl-h
     """
-    def __init__(self, win, insert_mode=False):
+    def __init__(self, win):
         self.win = win
-        self.insert_mode = insert_mode
         (self.maxy, self.maxx) = win.getmaxyx()
         self.maxy = self.maxy - 1
         self.maxx = self.maxx - 1
         self.stripspaces = 1
-        self.lastcmd = None
         win.keypad(1)
 
     def _end_of_line(self, y):
@@ -78,8 +77,6 @@ class TextEditor:
         return last
 
     def _insert_printable_char(self, ch):
-        if self.insert_mode:
-            oldch = self.win.inch()
         # The try-catch ignores the error we trigger from some curses
         # versions by trying to write into the lowest-rightmost spot
         # in the window.
@@ -87,15 +84,10 @@ class TextEditor:
             self.win.addch(ch)
         except curses.error:
             pass
-        if self.insert_mode:
-            (backy, backx) = self.win.getyx()
-            self._insert_printable_char(oldch)
-            self.win.move(backy, backx)
 
     def do_command(self, ch):
         "Process a single editing command."
         (y, x) = self.win.getyx()
-        self.lastcmd = ch
         if ch == curses.ascii.SOH:                             # ^a
             self.win.move(y, 0)
         elif ch in (curses.ascii.STX,curses.KEY_LEFT, curses.ascii.BS,curses.KEY_BACKSPACE):
@@ -165,7 +157,7 @@ class TextEditor:
             if stop == 0 and self.stripspaces:
                 continue
             for x in range(self.maxx+1):
-                if self.stripspaces and x > stop:
+                if self.stripspaces and x >= stop: # A bug corrected here
                     break
                 result = result + chr(self.win.inch(y, x))
             if self.maxy > 0:

@@ -27,6 +27,7 @@
 
 import curses
 from client.uilayer.uicomponents.TextEditor import TextEditor
+from client.uilayer.uicomponents.SecretTextEditor import SecretTextEditor
 from client.uilayer.uicomponents.Component import Component
 
 class InputBox(Component):
@@ -34,19 +35,24 @@ class InputBox(Component):
     A simple text editor with a border line
     
     Attributs:
-    - shortcuts: list of shortcut keys for ending edition
     - value: the output text after edition
+    - shortcuts: list of shortcut keys for ending edition
+    - secret: is it a secret text? 
     """
     
-    def __init__(self, wparent, h, w, y, x, shortcuts=None):
+    def __init__(self, wparent, h, w, y, x, shortcuts=None, secret=False):
         """Create a input text box"""
         Component.__init__(self, wparent, y, x)
         self.panel = wparent.derwin(h, w, y, x)
         self.panel.border()
         self.editorbox = self.panel.derwin(1, w - 4, 1, 2)
-        self.editor = TextEditor(self.editorbox)
+        if not secret:
+            self.editor = TextEditor(self.editorbox)
+        else:
+            self.editor = SecretTextEditor(self.editorbox)
         self.value = None
         self.shortcuts = shortcuts
+        self.secret = secret
         
     def isEditable(self):
         """This component is editable"""
@@ -58,7 +64,7 @@ class InputBox(Component):
         
     def focusOn(self):
         """See mother class"""
-        self.editorbox.addstr(self.cursor_y, self.cursor_x, ' ', curses.A_REVERSE)
+        self.editorbox.addstr(self.cursor_y, self.cursor_x, '█', curses.A_BLINK)
         self.editorbox.move(self.cursor_y, self.cursor_x)
         self.editorbox.refresh()
         
@@ -92,13 +98,13 @@ class InputBox(Component):
             return ch
         
     def edit(self):
-        try: curses.curs_set(1)
+        try: curses.curs_set(2)
         except curses.error: pass
         result = self.editor.edit(self._controller_)
         if result != self.value:
             if result != "":
                 self.value = result
-                self.cursor_x = len(result) - 1
+                self.cursor_x = len(result)
             else:
                 self.value = None
                 self.cursor_x = 0
