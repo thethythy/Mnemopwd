@@ -90,14 +90,14 @@ class ClientCore(Subject):
         except ConnectionRefusedError as e:
             print(e)
             print("The server seems not running or verify the port number.")
-            exit(1)
+            raise
         except ssl.SSLError as e:
             print(e)
-            print("There is a problem with this certificat.")
-            exit(1)
+            print("There is a problem with the certificat.")
+            raise
         except Exception as e:
             print(e)
-            exit(1)
+            raise
         
         if Configuration.action == 'status':
             print("server seems running at " + str(self.transport.get_extra_info('peername')))

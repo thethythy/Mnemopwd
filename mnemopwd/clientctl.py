@@ -47,7 +47,10 @@ if __name__ == "__main__":
             time.sleep(0.1) # Waiting the UI initialization 
             core.start() # Start domain layer
         
-        finally:
+        except:
+            exit()
+        
+        else:
             ui.stop()    # Stop UI layer (domain layer has been already stopped by UI layer)
             ui.join()    # Waiting for UI layer
 
