@@ -62,7 +62,10 @@ class ProtocolHandler(asyncio.Protocol):
         self.loop = core.loop
         self.password = self.login = 'None'
         # The protocol states
-        self.states = {'0':StateS0(), '1S':StateS1S(), '1CR':StateS1CR(), '1CA':StateS1CA()}
+        self.states = {'0':StateS0(),
+                       '1S':StateS1S(), '1CR':StateS1CR(), '1CA':StateS1CA(),
+                       '21R':StateS21R(), '21A':StateS21A(),
+                       '22R':StateS22R(), '22A':StateS22A()}
 
     def connection_made(self, transport):
         self.transport = transport
@@ -73,12 +76,11 @@ class ProtocolHandler(asyncio.Protocol):
         self.loop.run_in_executor(None, self.state.do, self, data) # Future excecution
 
     def connection_lost(self, exc):
-        self.notify('connection.state', 'The server closed the connection')
         self.transport.close()
         
     def exception_handler(self, exc):
         """Exception handler for actions executed by the executor"""
-        self.notify('connection.state', 'Closing connection because client detects an error')
+        self.notify('connection.state', str(exc).capitalize())
         self.transport.close()
         
     def notify(self, property, value):

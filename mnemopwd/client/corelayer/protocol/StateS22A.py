@@ -25,42 +25,39 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-
 """
-State S1 : Session
+State S22 : Creation
 """
 
-from client.util.Configuration import Configuration
 from client.util.funcutils import singleton
+from client.corelayer.protocol.StateSCC import StateSCC
 
 @singleton
-class StateS1CA():
-    """State S1CA : Session"""
+class StateS22A(StateSCC):
+    """State S22 : Creation"""
         
     def do(self, handler, data):
-        """Action of the state S1CA: wait server response of the client challenge answer"""
-        
+        """Action of the state S22A: treat response of user account creation request"""
         try:
-            # Test if challenge is rejected
-            is_KO = data[:5] == b"ERROR"
-            if is_KO: 
-                protocol_data = data[6:]
-                raise Exception(protocol_data)
+            # Test challenge response
+            if self.control_challenge(handler, data):
             
-            # Test if challenge is accepted
-            is_OK = data[:2] == b"OK"
-            if is_OK:
-                # Notify the handler a property has changed
-                handler.loop.call_soon_threadsafe(handler.notify, "connection.state", "Session started")
+                # Test if user account creation request is rejected
+                is_KO = data[:5] == b"ERROR"
+                if is_KO:
+                    message = (data[6:]).decode()
+                    raise Exception(message)
+            
+                # Test if user account creation request is accepted
+                is_OK = data[:2] == b"OK"
+                if is_OK:
+                    # Notify the handler a property has changed
+                    handler.loop.call_soon_threadsafe(handler.notify, "connection.state.login", "Connected to server")
         
         except Exception as exc:
             # Schedule a call to the exception handler
             handler.loop.call_soon_threadsafe(handler.exception_handler, exc)
         
         else:
-            if Configuration.first_execution:
-                handler.state = handler.states['22R'] # Next state is S22
-            else:
-                handler.state = handler.states['21R'] # Next state is S21
-            handler.loop.run_in_executor(None, handler.state.do, handler, None) # Future execution
-
+            #handler.state = handler.states['31R'] # Next state
+            pass

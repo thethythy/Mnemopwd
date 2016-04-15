@@ -179,9 +179,11 @@ class Configuration:
         if Configuration.__test_config_file__(argparser, Configuration.configfile) :
             # Load values from configuration file
             Configuration.__load_config_file__(argparser, fileparser)
+            Configuration.first_execution = False
         else:
             # Create default configuration file
             Configuration.__create_config_file__(fileparser)
+            Configuration.first_execution = True
         
         # Parse the command line to get options
         options = argparser.parse_args()

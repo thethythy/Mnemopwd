@@ -25,42 +25,51 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-
 """
-State S1 : Session
+State SCC : Challenge Creation
 """
 
-from client.util.Configuration import Configuration
-from client.util.funcutils import singleton
+import hashlib
+from pyelliptic import hmac_sha256
+from pyelliptic import hmac_sha512
 
-@singleton
-class StateS1CA():
-    """State S1CA : Session"""
-        
-    def do(self, handler, data):
-        """Action of the state S1CA: wait server response of the client challenge answer"""
-        
+class StateSCC():
+    """Challenge creation and others useful methods"""
+    
+    def compute_challenge(self, handler, var):
+        """Create the challenge answer"""
         try:
-            # Test if challenge is rejected
-            is_KO = data[:5] == b"ERROR"
-            if is_KO: 
-                protocol_data = data[6:]
-                raise Exception(protocol_data)
+            # Compute challenge then encrypt it
+            challenge = hmac_sha256(handler.ms, handler.session + var)
+            echallenge = handler.ephecc.encrypt(challenge, pubkey=handler.ephecc.get_pubkey())
             
-            # Test if challenge is accepted
-            is_OK = data[:2] == b"OK"
-            if is_OK:
-                # Notify the handler a property has changed
-                handler.loop.call_soon_threadsafe(handler.notify, "connection.state", "Session started")
-        
         except Exception as exc:
-            # Schedule a call to the exception handler
-            handler.loop.call_soon_threadsafe(handler.exception_handler, exc)
+            # Schedule a callback to client exception handler
+            hnadler.loop.call_soon_threadsafe(handler.exception_handler, exc)
+            return False
         
         else:
-            if Configuration.first_execution:
-                handler.state = handler.states['22R'] # Next state is S22
-            else:
-                handler.state = handler.states['21R'] # Next state is S21
-            handler.loop.run_in_executor(None, handler.state.do, handler, None) # Future execution
+            return echallenge
+            
+    def control_challenge(self, handler, data):
+        """Control the challenge response"""
+        try:
+            is_KO = data[:5] == b"ERROR"
+            protocol_data = data[6:]
+            if is_KO and protocol_data == b'challenge rejected':
+                raise Exception(protocol_data.decode())
+                
+        except Exception as exc:
+            # Schedule a callback to client exception handler
+            hnadler.loop.call_soon_threadsafe(handler.exception_handler, exc)
+            return False
+        
+        else:
+            return True
+
+    def compute_client_id(self, ms, login):
+        """Compute a client id"""
+        ho = hashlib.sha256()
+        ho.update(hmac_sha512(ms, ms + login))
+        return ho.digest()
 

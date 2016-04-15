@@ -25,42 +25,42 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-
 """
-State S1 : Session
+State S22 : Creation
 """
 
-from client.util.Configuration import Configuration
 from client.util.funcutils import singleton
+from client.corelayer.protocol.StateSCC import StateSCC
 
 @singleton
-class StateS1CA():
-    """State S1CA : Session"""
+class StateS22R(StateSCC):
+    """State S22 : Creation"""
         
     def do(self, handler, data):
-        """Action of the state S1CA: wait server response of the client challenge answer"""
+        """Action of the state S22R: creation request"""
         
         try:
-            # Test if challenge is rejected
-            is_KO = data[:5] == b"ERROR"
-            if is_KO: 
-                protocol_data = data[6:]
-                raise Exception(protocol_data)
+            # Challenge creation
+            echallenge = self.compute_challenge(handler, b"S22.7")
+            if echallenge:
             
-            # Test if challenge is accepted
-            is_OK = data[:2] == b"OK"
-            if is_OK:
+                # Encrypt login
+                elogin = handler.ephecc.encrypt(handler.login, pubkey=handler.ephecc.get_pubkey())
+            
+                # Compute then encrypt id
+                id = self.compute_client_id(handler.ms, handler.login)
+                eid = handler.ephecc.encrypt(id, pubkey=handler.ephecc.get_pubkey())
+            
+                # Send login request
+                message = echallenge + b';CREATION;' + eid + b';' + elogin
+                handler.loop.call_soon_threadsafe(handler.transport.write, message)
+            
                 # Notify the handler a property has changed
-                handler.loop.call_soon_threadsafe(handler.notify, "connection.state", "Session started")
+                handler.loop.call_soon_threadsafe(handler.notify, "connection.state", "User account creation request")
         
         except Exception as exc:
             # Schedule a call to the exception handler
             handler.loop.call_soon_threadsafe(handler.exception_handler, exc)
         
         else:
-            if Configuration.first_execution:
-                handler.state = handler.states['22R'] # Next state is S22
-            else:
-                handler.state = handler.states['21R'] # Next state is S21
-            handler.loop.run_in_executor(None, handler.state.do, handler, None) # Future execution
-
+            handler.state = handler.states['22A'] # Next state
