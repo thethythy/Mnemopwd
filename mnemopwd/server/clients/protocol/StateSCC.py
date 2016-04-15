@@ -51,7 +51,7 @@ class StateSCC():
                 # Send challenge rejected
                 message = b'ERROR;' + b"challenge rejected"
                 client.loop.call_soon_threadsafe(client.transport.write, message)
-                raise Exception("challenge rejected")
+                raise Exception(var.decode() + " challenge rejected")
             
         except Exception as exc:
             # Schedule a callback to client exception handler

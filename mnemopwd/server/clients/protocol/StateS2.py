@@ -52,4 +52,4 @@ class StateS2():
             client.loop.run_in_executor(None, client.state.do, client, data)
         else:
             # Schedule a callback to client exception handler
-            client.loop.call_soon_threadsafe(client.exception_handler, Exception('protocol error'))
+            client.loop.call_soon_threadsafe(client.exception_handler, Exception('S2 protocol error'))
