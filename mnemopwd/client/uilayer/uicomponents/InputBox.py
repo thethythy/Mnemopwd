@@ -84,7 +84,7 @@ class InputBox(Component):
         self.focusOff()
     
     def _controller_(self, ch):
-        if ch in [curses.KEY_UP, curses.KEY_DOWN, curses.ascii.TAB, curses.ascii.CR, 
+        if ch in [curses.KEY_UP, curses.KEY_DOWN, curses.ascii.TAB, curses.ascii.CR,
                   curses.ascii.ESC, curses.KEY_MOUSE]:
             curses.ungetch(ch)
             return curses.ascii.NL

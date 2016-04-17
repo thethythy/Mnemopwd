@@ -30,6 +30,8 @@ class Component():
     
     def __init__(self, wparent, y, x):
         self.parent = wparent
+        self.y = y
+        self.x = x
         self._cur_y = 0
         self._cur_x = 0
     
@@ -68,4 +70,8 @@ class Component():
     def enclose(self, y, x):
         """Does this component enclose the (y,x) coordinate"""
         return False
+        
+    def move(self, y, x, focus=False):
+        """Move the component to a new location"""
+        pass
 

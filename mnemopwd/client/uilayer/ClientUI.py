@@ -37,7 +37,6 @@ Standard curses user interface.
 """
 
 locale.setlocale(locale.LC_ALL, '') # Set locale setting
-#encoding = locale.getpreferredencoding() # Get locale encoding
 
 class ClientUI(Thread, Observer):
     """
@@ -53,12 +52,14 @@ class ClientUI(Thread, Observer):
     - update: update the UI (implementation of the Observer class method)
     """
 
+    encoding = locale.getpreferredencoding() # Get locale encoding
+
     def __init__(self, facade):
         """Create an initialize UI"""
         Thread.__init__(self)
         Observer.__init__(self)
         
-        self.facade = facade # Store the facade of the domain layer
+        self.corefacade = facade # Store the facade of the domain layer
         
         # curses initialization
         self.stdscr = curses.initscr()
@@ -70,7 +71,7 @@ class ClientUI(Thread, Observer):
                          curses.BUTTON3_CLICKED | curses.BUTTON4_CLICKED) # Mouse events
         
         # Open the main window
-        self.wmain = MainWindow(self.facade)
+        self.wmain = MainWindow(self)
 
     def stop(self):
         """Stop UI and return to normal interaction"""
@@ -84,10 +85,14 @@ class ClientUI(Thread, Observer):
     def run(self):
         """The loop interaction"""
         self.wmain.start() # Interaction as long as window is not closed
-        self.facade.stop() # Stop the core layer
+        self.corefacade.stop() # Stop the core layer
 
     def update(self, property, value):
         """Implementation of the method of the class Observer."""
         if property == "connection.state":
             self.wmain.update_status(value)
+        if property == "connection.state.login":
+            self.wmain.update_window(property, value)
+        if property == "connection.state.logout":
+            self.wmain.update_window(property, value)
 

@@ -76,6 +76,10 @@ class ProtocolHandler(asyncio.Protocol):
         self.loop.run_in_executor(None, self.state.do, self, data) # Future excecution
 
     def connection_lost(self, exc):
+        if exc is None:
+            self.notify("connection.state.logout", "Connection closed")
+        else:
+            self.notify('connection.state', str(exc).capitalize())
         self.transport.close()
         
     def exception_handler(self, exc):

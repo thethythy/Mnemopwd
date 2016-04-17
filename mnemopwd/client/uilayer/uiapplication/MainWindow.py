@@ -37,10 +37,11 @@ class MainWindow(BaseWindow):
     The main window of the client application
     """
     
-    def __init__(self, corefacade):
+    def __init__(self, facade):
         """Create the window"""
-        BaseWindow.__init__(self, None, curses.LINES, curses.COLS, 0, 0)
-        self.facade = corefacade # Reference on core layer facade
+        BaseWindow.__init__(self, None, curses.LINES - 2, curses.COLS, 0, 0)
+        self.uifacade = facade # Reference on ui layer facade
+        self.connected = False # Login state
         
         # Menu zone
         self.window.hline(1, 0, curses.ACS_HLINE, curses.COLS)
@@ -69,33 +70,48 @@ class MainWindow(BaseWindow):
         
     def _getCredentials(self):
         """Get login/password"""
-        connected = False
         login, passwd = LoginWindow().start()
         if (login != False):
-            self.facade.setCredentials(login, passwd)
+            self.uifacade.corefacade.open()
+            self.uifacade.corefacade.setCredentials(login, passwd)
+            self.window.addstr(login+passwd)
             login = passwd = "                            "
-            connected = True
-        return connected
         
     def start(self):
         # Get login/password
-        connected = self._getCredentials()
+        self._getCredentials()
         
         while True:
             # Interaction loop
             result = BaseWindow.start(self)
             
-            # Try a new connection
+            # Try a new connection or close connection
             if result == self.loginButton:
-                if not connected:
+                if not self.connected:
                     self.loginButton.focusOff()
-                    connected = self._getCredentials()
+                    self._getCredentials()
+                else:
+                    self.uifacade.corefacade.close()
             
             # Quit application 
             elif result == False or result == self.exitButton:
+                if self.connected: self.uifacade.corefacade.close()
                 self.close()
                 break
-        
+    
+    def update_window(self, property, value):
+        """Update the main window content"""
+        if property == "connection.state.login":
+            self.connected = True
+            self.loginButton.setLabel("Logout", self.loginButton == self.items[self.index])
+            self.exitButton.move(0, 24, self.exitButton == self.items[self.index])
+            self.update_status(value)
+        if property == "connection.state.logout":
+            self.connected = False
+            self.loginButton.setLabel("Login", self.loginButton == self.items[self.index])
+            self.exitButton.move(0, 23, self.exitButton == self.items[self.index])
+            self.update_status(value)
+    
     def update_status(self, value):
         """Update the status window content"""
         currenty, currentx = curses.getsyx() # Save current cursor position

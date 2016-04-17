@@ -54,7 +54,7 @@ class LoginWindow(TitledBorderWindow):
         
         # Editable components
         self.logineditor = InputBox(self.window, 3, size_x - 15, 5 - 1, 12, self.shortcuts)
-        self.passeditor = InputBox(self.window, 3, size_x - 15, 8 - 1, 12, self.shortcuts) 
+        self.passeditor = InputBox(self.window, 3, size_x - 15, 8 - 1, 12, self.shortcuts, secret=True) 
         
         # Actionnable components
         self.connectButton = ButtonBox(self.window, 11, 7, "Connect", 'N')
@@ -75,12 +75,14 @@ class LoginWindow(TitledBorderWindow):
             if result == False or result == self.cancelButton:
                 self.close()
                 return False, False
+                
             # Clear all input boxes
             elif result == self.clearButton:
                 self.logineditor.clear()
                 self.passeditor.clear()
                 self.clearButton.focusOff()
                 self.index = 0
+                
             # Try to return login and password
             elif result == self.connectButton:
                 self.connectButton.focusOff()

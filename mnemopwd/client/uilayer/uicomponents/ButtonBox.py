@@ -34,9 +34,8 @@ class ButtonBox(Component):
     def __init__(self, wparent, y, x, label, shortcut=None):
         Component.__init__(self, wparent, y, x)
         self.label = ' ' + label + ' '
-        self.button = wparent.derwin(1, len(self.label) + 1, y, x)
         self.shortcut = shortcut
-        self.focusOff()
+        self._create(False)
         
     def focusOn(self):
         """See mother class"""
@@ -57,4 +56,24 @@ class ButtonBox(Component):
     def enclose(self, y, x):
         """See mother class"""
         return self.button.enclose(y, x)
+        
+    def move(self, y, x, focus=False):
+        """See mother class"""
+        self.y = y
+        self.x = x
+        self.button.erase()
+        self.button.refresh()
+        self._create(focus)
+        
+    def setLabel(self, label, focus=False):
+        """Set the label of the button"""
+        self.button.erase()
+        self.label = ' ' + label + ' '
+        self._create(focus)
 
+    def _create(self, focus):
+        self.button = self.parent.derwin(1, len(self.label) + 1, self.y, self.x)
+        if focus:
+            self.focusOn()
+        else:
+            self.focusOff()

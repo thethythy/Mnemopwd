@@ -58,6 +58,7 @@ class BaseWindow(Component):
         curses.nonl()
         
         self.items[self.index].focusOn() # Focus on component at index
+        nbitems = len(self.items)
         
         while True:
             c = self.window.getch()
@@ -77,13 +78,13 @@ class BaseWindow(Component):
             # Next component
             elif c in [curses.KEY_DOWN, curses.ascii.TAB] :
                 self.items[self.index].focusOff()
-                self.index = (self.index + 1) % len(self.items)
+                self.index = (self.index + 1) % nbitems
                 self.items[self.index].focusOn()
             
             # Previous component
             elif c in [curses.KEY_UP]:
                 self.items[self.index].focusOff()
-                self.index = (self.index - 1) % len(self.items)
+                self.index = (self.index - 1) % nbitems
                 self.items[self.index].focusOn()
             
             # Next actionnable component or edit editable component

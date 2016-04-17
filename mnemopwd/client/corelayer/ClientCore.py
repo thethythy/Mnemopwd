@@ -29,7 +29,9 @@ import logging
 import asyncio
 import socket
 import ssl
+import time
 import concurrent.futures
+import functools
 from client.util.Configuration import Configuration
 from client.util.funcutils import Subject
 from client.corelayer.protocol.ProtocolHandler import ProtocolHandler
@@ -48,6 +50,8 @@ class ClientCore(Subject):
     - protocol: a communication handler (see the official asyncio module)
     
     Method(s):
+    - open: open a new connection to the server
+    - close: close the connection
     - start: start the domain layer
     - stop: close the domain loop
     - setCredentials: set login/password then start S1 state
@@ -69,27 +73,40 @@ class ClientCore(Subject):
         self.loop.set_default_executor(executor)
         
         # Create a SSL context
-        context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
-        context.options |= ssl.OP_NO_SSLv2 # SSL v2 not allowed
-        context.options |= ssl.OP_NO_SSLv3 # SSL v3 not allowed
-        context.verify_mode = ssl.CERT_OPTIONAL # Server certificat is optional
-        context.check_hostname = False # Don't check hostname because of shared certificat
+        self.context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
+        self.context.options |= ssl.OP_NO_SSLv2 # SSL v2 not allowed
+        self.context.options |= ssl.OP_NO_SSLv3 # SSL v3 not allowed
+        self.context.verify_mode = ssl.CERT_OPTIONAL # Server certificat is optional
+        self.context.check_hostname = False # Don't check hostname because of shared certificat
         if Configuration.certfile != 'None' :
-            context.load_verify_locations(cafile=Configuration.certfile) # Load certificat
+            self.context.load_verify_locations(cafile=Configuration.certfile) # Load certificat
         else:
-            context.set_ciphers("AECDH-AES256-SHA") # Cipher suite to use
+            self.context.set_ciphers("AECDH-AES256-SHA") # Cipher suite to use
         
+        if Configuration.action == 'status':
+            self.open() # Try to open a connection to server
+            print("the server seems running at " + str(self.transport.get_extra_info('peername')))
+        
+    # Extern methods
+    
+    def open(self):
+        """Open a new connection to the server"""
         # Create an asynchronous SSL socket
         coro = self.loop.create_connection(lambda: ProtocolHandler(self), \
                                            Configuration.server, Configuration.port, \
-                                           family=socket.AF_INET, ssl=context)
-        
+                                           family=socket.AF_INET, ssl=self.context)
         # Try to open SSL socket
         try:
-            self.transport, self.protocol = self.loop.run_until_complete(coro)
+            if not self.loop.is_running():
+                self.transport, self.protocol = self.loop.run_until_complete(coro)
+            else:
+                future = asyncio.run_coroutine_threadsafe(coro, self.loop)
+                self.transport, self.protocol = future.result(1)
+                time.sleep(0.5)
+                
         except ConnectionRefusedError as e:
             print(e)
-            print("The server seems not running or verify the port number.")
+            print("The server seems not running. Verify ip and port number.")
             raise
         except ssl.SSLError as e:
             print(e)
@@ -98,23 +115,21 @@ class ClientCore(Subject):
         except Exception as e:
             print(e)
             raise
-        
-        if Configuration.action == 'status':
-            print("server seems running at " + str(self.transport.get_extra_info('peername')))
-        
-    # Extern methods
+    
+    def close(self):
+        """Close the connection with the server"""
+        self.loop.call_soon_threadsafe(self.transport.close) # Ask to close connection
     
     def start(self):
         """Start the main loop"""
-        self.update('connection.state', 'Connection established')
+        self.update('connection.state', 'Please start a connection')
         self.loop.run_forever() # Run until the end of the loop
         self.loop.close()       # Close the main loop
         
     def stop(self):
-        """Close the connection to the server then close the main loop"""
+        """Close the connection to the server then stop the main loop"""
         if self.loop.is_running():
-            self.loop.call_soon_threadsafe(self.transport.close) # Ask to close connection
-            self.loop.call_soon_threadsafe(self.loop.stop)       # Ask to stop the main loop
+            self.loop.call_soon_threadsafe(self.loop.stop) # Ask to stop the main loop
         else:
             self.transport.close()
             self.loop.close()

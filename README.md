@@ -15,7 +15,7 @@ that is a high level wrapper of OpenSSL (see https://github.com/yann2192/pyellip
 
 See [OpenSSL] (https://www.openssl.org "OpenSSL Homepage") web site for more information.
 
-Require Python3.4 or newer, OpenSSL, GNU/Linux or Mac OS X
+Require Python 3.4.4 or newer, OpenSSL, GNU/Linux or Mac OS X
 
 Always use the last version for security.
 

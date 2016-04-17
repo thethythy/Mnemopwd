@@ -56,7 +56,7 @@ class StateSCC():
         try:
             is_KO = data[:5] == b"ERROR"
             protocol_data = data[6:]
-            if is_KO and protocol_data == b'challenge rejected':
+            if is_KO and b'challenge rejected' in protocol_data:
                 raise Exception(protocol_data.decode())
                 
         except Exception as exc:
