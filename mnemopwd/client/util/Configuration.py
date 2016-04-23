@@ -79,6 +79,7 @@ class Configuration:
     curve3 = 'None'         # Curve name for the third stage
     cipher3 = 'None'        # Cipher name for the third stage
     action = 'start'        # Default action if not given
+    timeout = 5             # Timeout on connection request
     
     @staticmethod
     def __test_cert_file__(parser, certfile):
@@ -113,6 +114,7 @@ class Configuration:
             Configuration.server = fileparser['server']['server']
             Configuration.port = int(fileparser['server']['port'])
             Configuration.certfile = fileparser['server']['certfile']
+            Configuration.timeout = int(fileparser['server']['timeout'])
             Configuration.curve1 = fileparser['client']['curve1']
             Configuration.cipher1 = fileparser['client']['cipher1']
             Configuration.curve2 = fileparser['client']['curve2']
@@ -127,7 +129,8 @@ class Configuration:
                                 'port': str(Configuration.port) \
                                         + " # Values allowed: " + str(Configuration.port_min) \
                                         + ".." + str(Configuration.port_max), \
-                                'certfile': Configuration.certfile + " # Use an absolute path"}
+                                'certfile': Configuration.certfile + " # Use an absolute path", \
+                                'timeout': str(Configuration.timeout) + " # Timeout on connection request"}
         fileparser['client'] = {'curve1': Configuration.curve1 + " # Values allowed: ...", \
                                 'cipher1': Configuration.cipher1 + " # Values allowed: ...", \
                                 'curve2': Configuration.curve2 + " # Values allowed: None ...", \

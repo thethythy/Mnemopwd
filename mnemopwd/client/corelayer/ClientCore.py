@@ -50,11 +50,12 @@ class ClientCore(Subject):
     - protocol: a communication handler (see the official asyncio module)
     
     Method(s):
-    - open: open a new connection to the server
-    - close: close the connection
     - start: start the domain layer
     - stop: close the domain loop
-    - setCredentials: set login/password then start S1 state
+    - command: execute a command coming from UI layer
+    - _open: open a new connection to the server
+    - _close: close the connection
+    - _setCredentials: set login/password then start S1 state
     """
     
     # Intern methods
@@ -84,12 +85,10 @@ class ClientCore(Subject):
             self.context.set_ciphers("AECDH-AES256-SHA") # Cipher suite to use
         
         if Configuration.action == 'status':
-            self.open() # Try to open a connection to server
+            self._open() # Try to open a connection to server
             print("the server seems running at " + str(self.transport.get_extra_info('peername')))
-        
-    # Extern methods
     
-    def open(self):
+    def _open(self):
         """Open a new connection to the server"""
         # Create an asynchronous SSL socket
         coro = self.loop.create_connection(lambda: ProtocolHandler(self), \
@@ -101,23 +100,46 @@ class ClientCore(Subject):
                 self.transport, self.protocol = self.loop.run_until_complete(coro)
             else:
                 future = asyncio.run_coroutine_threadsafe(coro, self.loop)
-                self.transport, self.protocol = future.result(1)
+                self.transport, self.protocol = future.result(Configuration.timeout)
                 
+        except asyncio.TimeoutError:
+            future.cancel()
+            self.update('connection.state', 'Enable to connect to server. Retry or verify your configuration')
+            raise
         except ConnectionRefusedError as e:
-            print(e)
-            print("The server seems not running. Verify ip and port number.")
+            if not self.loop.is_running():
+                print(e)
+                print("Enable to connect to server. Retry or verify your configuration")
+            else:
+                self.update('connection.state', 'Enable to connect to server. Retry or verify your configuration')
             raise
         except ssl.SSLError as e:
-            print(e)
-            print("There is a problem with the certificat.")
+            if not self.loop.is_running():
+                print(e)
+                print("There is a problem with the certificat.")
+            else:
+                self.update('connection.state', 'There is a problem with the certificat.')
             raise
         except Exception as e:
-            print(e)
+            if not self.loop.is_running():
+                print(e)
+            else:
+                self.update('connection.state', 'An unexpected exception occurred')
             raise
     
-    def close(self):
+    def _close(self):
         """Close the connection with the server"""
         self.loop.call_soon_threadsafe(self.transport.close) # Ask to close connection
+
+    def _setCredentials(self, login, password):
+        """Store login and password then start state S1"""
+        self.protocol.login = login.encode()
+        self.protocol.password = password.encode()
+        # Wait for being in state number one
+        while self.protocol.state != self.protocol.states['1S']: time.sleep(0.1)
+        self.protocol.data_received(None) # Schedule execution of actual protocol state
+
+    # Extern methods
     
     def start(self):
         """Start the main loop"""
@@ -136,16 +158,12 @@ class ClientCore(Subject):
     def command(self, property, value):
         """Execute a command coming from UI layer"""
         if property == "connection.close":
-            self.close()
+            self._close()
+            self.update('connection.state.logout', 'Connection closed')
         if property == "connection.open.credentials":
-            self.open()
-            self.setCredentials(*value)
+            try:
+                self._open()
+                self._setCredentials(*value)
+            except:
+                pass
     
-    def setCredentials(self, login, password):
-        """Store login and password then start state S1"""
-        self.protocol.login = login.encode()
-        self.protocol.password = password.encode()
-        # Wait for being in state number one
-        while self.protocol.state != self.protocol.states['1S']: time.sleep(0.1)
-        self.protocol.data_received(None) # Schedule execution of actual protocol state
-
