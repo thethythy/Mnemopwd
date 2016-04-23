@@ -72,8 +72,7 @@ class MainWindow(BaseWindow):
         """Get login/password"""
         login, passwd = LoginWindow().start()
         if (login != False):
-            self.uifacade.corefacade.open()
-            self.uifacade.corefacade.setCredentials(login, passwd)
+            self.uifacade.inform("connection.open.credentials", (login, passwd))
             self.window.addstr(login+passwd)
             login = passwd = "                            "
         
@@ -91,11 +90,11 @@ class MainWindow(BaseWindow):
                     self.loginButton.focusOff()
                     self._getCredentials()
                 else:
-                    self.uifacade.corefacade.close()
+                    self.uifacade.inform("connection.close", None)
             
             # Quit application 
             elif result == False or result == self.exitButton:
-                if self.connected: self.uifacade.corefacade.close()
+                if self.connected: self.uifacade.inform("connection.close", None)
                 self.close()
                 break
     

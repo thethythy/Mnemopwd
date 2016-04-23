@@ -102,7 +102,6 @@ class ClientCore(Subject):
             else:
                 future = asyncio.run_coroutine_threadsafe(coro, self.loop)
                 self.transport, self.protocol = future.result(1)
-                time.sleep(0.5)
                 
         except ConnectionRefusedError as e:
             print(e)
@@ -133,10 +132,20 @@ class ClientCore(Subject):
         else:
             self.transport.close()
             self.loop.close()
-            
+    
+    def command(self, property, value):
+        """Execute a command coming from UI layer"""
+        if property == "connection.close":
+            self.close()
+        if property == "connection.open.credentials":
+            self.open()
+            self.setCredentials(*value)
+    
     def setCredentials(self, login, password):
         """Store login and password then start state S1"""
         self.protocol.login = login.encode()
         self.protocol.password = password.encode()
-        self.protocol.data_received(None)
+        # Wait for being in state number one
+        while self.protocol.state != self.protocol.states['1S']: time.sleep(0.1)
+        self.protocol.data_received(None) # Schedule execution of actual protocol state
 
