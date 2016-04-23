@@ -70,6 +70,7 @@ class MainWindow(BaseWindow):
         
     def _getCredentials(self):
         """Get login/password"""
+        self.update_status('Please start a connection')
         login, passwd = LoginWindow().start()
         if (login != False):
             self.uifacade.inform("connection.open.credentials", (login, passwd))
@@ -114,8 +115,14 @@ class MainWindow(BaseWindow):
     def update_status(self, value):
         """Update the status window content"""
         currenty, currentx = curses.getsyx() # Save current cursor position
-        self.statscr.move(1, 0)
+        self.statscr.move(1, 1)
         self.statscr.clrtoeol()
-        self.statscr.addstr(value)
+        if self.connected:
+            self.statscr.addstr("-O-")
+        else:
+            self.statscr.addstr("-||-")
+        self.statscr.addch(0, 6, curses.ACS_TTEE)
+        self.statscr.addch(1, 6, curses.ACS_VLINE)
+        self.statscr.addstr(1, 8, value)
         self.statscr.refresh()
         curses.setsyx(currenty, currentx)   # Set cursor position to saved position
