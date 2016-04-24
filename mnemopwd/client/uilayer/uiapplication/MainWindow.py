@@ -111,6 +111,11 @@ class MainWindow(BaseWindow):
             self.loginButton.setLabel("Login", self.loginButton == self.items[self.index])
             self.exitButton.move(0, 23, self.exitButton == self.items[self.index])
             self.update_status(value)
+        if property == "connection.state.error":
+            self.connected = False
+            self.loginButton.setLabel("Login", self.loginButton == self.items[self.index])
+            self.exitButton.move(0, 23, self.exitButton == self.items[self.index])
+            self.update_status(value)
     
     def update_status(self, value):
         """Update the status window content"""

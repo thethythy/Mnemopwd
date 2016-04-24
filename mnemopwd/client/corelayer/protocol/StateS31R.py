@@ -25,24 +25,38 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-__author__ = "Thierry Lemeunier <thierry at lemeunier dot net>"
-__date__ = "$6 février 2016 10:35:44$"
+"""
+State S31 : Configuration
+"""
 
-__all__ = ['StateS0', 'StateS1S', 'StateS1CR', 'StateS1CA', 'StateS21R', 'StateS21A',
-           'StateS22R', 'StateS22A', 'StateS31R', 'StateS31A']
+from client.util.funcutils import singleton
+from client.corelayer.protocol.StateSCC import StateSCC
 
-from .StateS0 import StateS0
-
-from .StateS1S import StateS1S
-from .StateS1CR import StateS1CR
-from .StateS1CA import StateS1CA
-
-from .StateS21R import StateS21R
-from .StateS21A import StateS21A
-
-from .StateS22R import StateS22R
-from .StateS22A import StateS22A
-
-from .StateS31R import StateS31R
-from .StateS31A import StateS31A
-
+@singleton
+class StateS31R(StateSCC):
+    """State S31 : Configuration"""
+    
+    def do(self, handler, data):
+        """Action of the state S31R: send client configuration"""
+        
+        try:
+            # Challenge creation
+            echallenge = self.compute_challenge(handler, b"S31.6")
+            if echallenge:
+                
+                # Encrypt config
+                econfig = handler.ephecc.encrypt(handler.config, pubkey=handler.ephecc.get_pubkey())
+        
+                # Send configuration request
+                message = echallenge + b';CONFIGURATION;' + econfig
+                handler.loop.call_soon_threadsafe(handler.transport.write, message)
+            
+                # Notify the handler a property has changed
+                handler.loop.call_soon_threadsafe(handler.notify, "connection.state", "Configuration request")
+        
+        except Exception as exc:
+            # Schedule a call to the exception handler
+            handler.loop.call_soon_threadsafe(handler.exception_handler, exc)
+        
+        else:
+            handler.state = handler.states['31A'] # Next state

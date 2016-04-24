@@ -60,5 +60,5 @@ class StateS21A(StateSCC):
             handler.loop.call_soon_threadsafe(handler.exception_handler, exc)
         
         else:
-            #handler.state = handler.states['31R'] # Next state
-            pass
+            handler.state = handler.states['31R'] # Next state
+            handler.loop.run_in_executor(None, handler.state.do, handler, None) # Future execution

@@ -26,38 +26,40 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 """
-State S22 : Creation
+State S31 : Configuration
 """
 
 from client.util.funcutils import singleton
 from client.corelayer.protocol.StateSCC import StateSCC
 
 @singleton
-class StateS22A(StateSCC):
-    """State S22 : Creation"""
-        
+class StateS31A(StateSCC):
+    """State S31 : Configuration"""
+    
     def do(self, handler, data):
-        """Action of the state S22A: treat response of user account creation request"""
+        """Action of the state S31A: treat response of configuration request"""
         try:
+        
             # Test challenge response
             if self.control_challenge(handler, data):
             
-                # Test if user account creation request is rejected
+                # Test if configuration request is rejected
                 is_KO = data[:5] == b"ERROR"
                 if is_KO:
-                    message = (data[6:]).decode()
-                    raise Exception(message)
-            
-                # Test if user account creation request is accepted
+                    raise Exception((data[6:]).decode())
+                
+                # Test if configuration is accepted
                 is_OK = data[:2] == b"OK"
                 if is_OK:
+                    if data[3:] == b"1":
+                        message = "Configuration accepted"
+                    elif data[3:] == b"2":
+                        message = "New configuration accpeted"
+                    else:
+                        raise Exception("S31 protocol error")
                     # Notify the handler a property has changed
-                    handler.loop.call_soon_threadsafe(handler.notify, "connection.state.login", "Connected to server")
+                    handler.loop.call_soon_threadsafe(handler.notify, "connection.state", message)
         
         except Exception as exc:
             # Schedule a call to the exception handler
             handler.loop.call_soon_threadsafe(handler.exception_handler, exc)
-        
-        else:
-            handler.state = handler.states['31R'] # Next state
-            handler.loop.run_in_executor(None, handler.state.do, handler, None) # Future execution

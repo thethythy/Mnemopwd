@@ -27,6 +27,7 @@
 
 import asyncio
 from client.corelayer.protocol import *
+from client.util.Configuration import Configuration
 
 """
 Handler of the secure protocol connection with the server
@@ -42,6 +43,7 @@ class ProtocolHandler(asyncio.Protocol):
     - loop: the asyncio loop
     - states: sequence of state objects
     - state: the actual state (set in connection_made and changed by state objects)
+    - config: the client configuration as a list of curve names and ciphers names
     - transport: the SSL socket
     - password: the client password (set by the UI)
     - login: the client login (set by the UI)
@@ -65,7 +67,12 @@ class ProtocolHandler(asyncio.Protocol):
         self.states = {'0':StateS0(),
                        '1S':StateS1S(), '1CR':StateS1CR(), '1CA':StateS1CA(),
                        '21R':StateS21R(), '21A':StateS21A(),
-                       '22R':StateS22R(), '22A':StateS22A()}
+                       '22R':StateS22R(), '22A':StateS22A(),
+                       '31R':StateS31R(), '31A':StateS31A()}
+        # The client configuration
+        self.config = Configuration.curve1 + ";" + Configuration.cipher1 + ";" + \
+                      Configuration.curve2 + ";" + Configuration.cipher2 + ";" + \
+                      Configuration.curve3 + ";" + Configuration.cipher3
 
     def connection_made(self, transport):
         self.transport = transport
@@ -77,12 +84,12 @@ class ProtocolHandler(asyncio.Protocol):
 
     def connection_lost(self, exc):
         if exc:
-            self.notify('connection.state', str(exc).capitalize())
+            self.notify('connection.state.error', str(exc).capitalize())
         self.transport.close()
         
     def exception_handler(self, exc):
         """Exception handler for actions executed by the executor"""
-        self.notify('connection.state', str(exc).capitalize())
+        self.notify('connection.state.error', str(exc).capitalize())
         self.transport.close()
         
     def notify(self, property, value):

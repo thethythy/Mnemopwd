@@ -115,12 +115,16 @@ class Configuration:
             Configuration.port = int(fileparser['server']['port'])
             Configuration.certfile = fileparser['server']['certfile']
             Configuration.timeout = int(fileparser['server']['timeout'])
-            Configuration.curve1 = fileparser['client']['curve1']
-            Configuration.cipher1 = fileparser['client']['cipher1']
-            Configuration.curve2 = fileparser['client']['curve2']
-            Configuration.cipher2 = fileparser['client']['cipher2']
-            Configuration.curve3 = fileparser['client']['curve3']
-            Configuration.cipher3 = fileparser['client']['cipher3']
+            
+            def testNone(name):
+                if name == 'None': return ""
+                else: return name
+            Configuration.curve1 = testNone(fileparser['client']['curve1'])
+            Configuration.cipher1 = testNone(fileparser['client']['cipher1'])
+            Configuration.curve2 = testNone(fileparser['client']['curve2'])
+            Configuration.cipher2 = testNone(fileparser['client']['cipher2'])
+            Configuration.curve3 = testNone(fileparser['client']['curve3'])
+            Configuration.cipher3 = testNone(fileparser['client']['cipher3'])
     
     @staticmethod
     def __create_config_file__(fileparser):

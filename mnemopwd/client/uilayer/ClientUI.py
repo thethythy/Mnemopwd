@@ -95,6 +95,8 @@ class ClientUI(Thread, Observer):
             self.wmain.update_window(property, value)
         if property == "connection.state.logout":
             self.wmain.update_window(property, value)
+        if property == "connection.state.error":
+            self.wmain.update_window(property, value)
             
     def inform(self, property, value):
         """Indicate to core layer one user demand"""
