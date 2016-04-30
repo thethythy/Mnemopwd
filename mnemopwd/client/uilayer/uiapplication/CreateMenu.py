@@ -25,60 +25,43 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-class Component():
-    """Abstract component"""
-    
-    def __init__(self, wparent, y, x):
-        """
-        Create a component at (y, x) position of parent window 
-        with wparent window as parent component
-        """
-        self.parent = wparent
-        self.y = y
-        self.x = x
-        self._cur_y = 0
-        self._cur_x = 0
-    
-    @property
-    def cursor_y(self):
-        return self._cur_y
-    
-    @cursor_y.setter
-    def cursor_y(self, value):
-        self._cur_y = value
-    
-    @property
-    def cursor_x(self):
-        return self._cur_x
-    
-    @cursor_x.setter
-    def cursor_x(self, value):
-        self._cur_x = value
-    
-    def isEditable(self):
-        """Return False by default (not editable)"""
-        return False
-        
-    def isActionnable(self):
-        """Return True by default (actionnable)"""
-        return True
-    
-    def focusOn(self):
-        """This component obtains the focus"""
-        pass
-        
-    def focusOff(self):
-        """This component losts the focus"""
-        pass
-        
-    def enclose(self, y, x):
-        """Does this component enclose the (y,x) coordinate"""
-        return False
-        
-    def move(self, y, x, focus=False):
-        """Move the component to a new location"""
-        pass
+import curses
+from client.uilayer.uicomponents.BaseWindow import BaseWindow
+from client.uilayer.uicomponents.ButtonBox import ButtonBox
+from client.util.funcutils import sfill
 
-    def close(self):
-        """Close the component"""
-        if self.parent != None: self.parent.refresh()
+class CreateMenu(BaseWindow):
+    """
+    The menu for creating a new entry in the database
+    """
+    
+    def __init__(self, wparent, btypes, y, x):
+        """Create the menu"""
+        # Create the window
+        max_len = 0
+        for type in btypes.values(): max_len = max(max_len, len(type["name"]))
+        BaseWindow.__init__(self, wparent, len(btypes) + 2, max_len + 2 + 3, y, x, menu=True)
+        self.window.border()
+        self.window.refresh()
+        
+        # Add buttons (preserving the order indicated in the json file)
+        posy = 1
+        for i in range(len(btypes)):
+            name = (btypes[str(i+1)])["name"]
+            self.items.append(ButtonBox(self.window, posy, 1, name + sfill(max_len - len(name))))
+            posy += 1
+            
+    def start(self):
+        while True:
+            # Interaction loop
+            result = BaseWindow.start(self)
+            
+            # Escape
+            if result == False:
+                self.close()
+                return False
+            
+            # Return the number of block type selected
+            else:
+                self.close()
+                return self.index + 1

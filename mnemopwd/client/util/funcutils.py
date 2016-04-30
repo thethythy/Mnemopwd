@@ -71,3 +71,12 @@ class Observer():
     def update(self, property, value):
         """Update the observer"""
         pass
+
+# ---------------------------------------------------------
+# sfill(n) : fill a string of n space character
+
+def sfill(n):
+    string = ''
+    for i in range(n): string += ' '
+    return string
+

@@ -36,12 +36,12 @@ class LoginWindow(TitledBorderWindow):
     The login window: get the login/password user credentials
     """
     
-    def __init__(self):
+    def __init__(self, wparent):
         """Create the window"""
         size_y = 14
         size_x = 60
         
-        TitledBorderWindow.__init__(self, None, size_y, size_x,
+        TitledBorderWindow.__init__(self, wparent, size_y, size_x,
                                     int(curses.LINES / 2) - int(size_y / 2),
                                     int(curses.COLS / 2) - int(size_x / 2),
                                     "Connection window")

@@ -31,6 +31,7 @@ from client.util.Configuration import Configuration
 from client.uilayer.uicomponents.BaseWindow import BaseWindow
 from client.uilayer.uicomponents.ButtonBox import ButtonBox
 from client.uilayer.uiapplication.LoginWindow import LoginWindow
+from client.uilayer.uiapplication.CreateMenu import CreateMenu
 
 class MainWindow(BaseWindow):
     """
@@ -71,12 +72,12 @@ class MainWindow(BaseWindow):
     def _getCredentials(self):
         """Get login/password"""
         self.update_status('Please start a connection')
-        login, passwd = LoginWindow().start()
+        login, passwd = LoginWindow(self.window).start()
         if (login != False):
             self.uifacade.inform("connection.open.credentials", (login, passwd))
             self.window.addstr(login+passwd)
             login = passwd = "                            "
-        
+            
     def start(self):
         # Get login/password
         self._getCredentials()
@@ -92,6 +93,16 @@ class MainWindow(BaseWindow):
                     self._getCredentials()
                 else:
                     self.uifacade.inform("connection.close", None)
+                    
+            # Create a new entry
+            elif result == self.newButton:
+                if self.connected:
+                    self.newButton.focusOff()
+                    result = CreateMenu(self.window, Configuration.btypes, 1, 9).start()
+                    if result:
+                        self.update_status((Configuration.btypes[str(result)])["name"])
+                else:
+                    self.update_status('Please start a connection')
             
             # Quit application 
             elif result == False or result == self.exitButton:

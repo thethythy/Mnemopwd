@@ -40,9 +40,10 @@ class BaseWindow(Component):
     - items: the ordered list of inner components
     - shortcuts: the ordered list of shortcut keys
     - index: the actual inner component that gets focus
+    - menu: the window works like a menu
     """
     
-    def __init__(self, wparent, h, w, y, x):
+    def __init__(self, wparent, h, w, y, x, menu=False):
         """Create base window"""
         Component.__init__(self, wparent, y, x)
         self.h = h
@@ -52,6 +53,7 @@ class BaseWindow(Component):
         self.shortcuts = []
         self.index = 0
         self.window.keypad(1)
+        self.menu = menu
         
     def start(self):
         """Start interaction loop of the window"""
@@ -89,11 +91,19 @@ class BaseWindow(Component):
             
             # Next actionnable component or edit editable component
             elif c in [curses.KEY_LEFT] and self.items[self.index].isActionnable():
-                curses.ungetch(curses.KEY_UP)
+                if self.menu:
+                    curses.ungetch(curses.KEY_LEFT)
+                    return False
+                else:
+                    curses.ungetch(curses.KEY_UP)
             
             # Previous actionnable component or edit editable component
             elif c in [curses.KEY_RIGHT] and self.items[self.index].isActionnable():
-                curses.ungetch(curses.KEY_DOWN)
+                if self.menu:
+                    curses.ungetch(curses.KEY_RIGHT)
+                    return False
+                else:
+                    curses.ungetch(curses.KEY_DOWN)
             
             # Validation
             elif c in [curses.ascii.CR]:
@@ -128,4 +138,5 @@ class BaseWindow(Component):
         curses.nl()
         self.window.clear()
         self.window.refresh()
+        Component.close(self)
 

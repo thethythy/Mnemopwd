@@ -1,0 +1,19 @@
+{
+    "1" : { "name" : "Email account",
+            "field1" : "Provider",
+            "field2" : "Address",
+            "field3" : "Password",
+            "option1" : "Note"
+            },
+    "2" : { "name" : "User account",
+            "field1" : "Application",
+            "field2" : "Login",
+            "field3" : "Password",
+            "option1" : "Note"
+            },
+    "3" : { "name" : "PIN code",
+            "field1" : "Device",
+            "field2" : "Code",
+            "option1" : "Note"
+            }
+}

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+
 # Copyright (c) 2016, Thierry Lemeunier <thierry at lemeunier dot net>
 # All rights reserved.
 #
@@ -40,6 +41,7 @@ import argparse
 import os.path
 import os
 import stat
+import json
 
 from common.util.X509 import X509
 
@@ -204,3 +206,7 @@ class Configuration:
             except Exception as e :
                 print(e)
                 exit(1)
+                
+        # Load SIB types
+        with open('client/util/blocktypes.json', 'rt') as jsonfile:
+            Configuration.btypes = json.load(jsonfile)
