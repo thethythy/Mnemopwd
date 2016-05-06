@@ -31,48 +31,52 @@ from client.uilayer.uicomponents.Component import Component
 class ButtonBox(Component):
     """A simple button text box"""
     
-    def __init__(self, wparent, y, x, label, shortcut=None):
-        Component.__init__(self, wparent, y, x)
+    def __init__(self, parent, y, x, label, shortcut=None):
         self.label = ' ' + label + ' '
+        Component.__init__(self, parent, 1, len(self.label) + 1, y, x)
         self.shortcut = shortcut
-        self._create(False)
+        self.focusOff()
         
     def focusOn(self):
         """See mother class"""
-        self.button.addstr(0, 0, self.label, curses.A_BLINK | curses.A_REVERSE)
+        self.window.addstr(0, 0, self.label, curses.A_BLINK | curses.A_REVERSE)
         if self.shortcut:
-            self.button.addstr(0, self.label.upper().find(self.shortcut) , self.shortcut, 
+            self.window.addstr(0, self.label.upper().find(self.shortcut) , self.shortcut, 
                                curses.A_UNDERLINE | curses.A_BLINK | curses.A_REVERSE)
-        self.button.refresh()
+        self.window.refresh()
         
     def focusOff(self):
         """See mother class"""
-        self.button.addstr(0, 0, self.label, curses.A_REVERSE)
+        self.window.addstr(0, 0, self.label, curses.A_REVERSE)
         if self.shortcut:
-            self.button.addstr(0, self.label.upper().find(self.shortcut) , self.shortcut, 
+            self.window.addstr(0, self.label.upper().find(self.shortcut) , self.shortcut, 
                                curses.A_UNDERLINE | curses.A_REVERSE)
-        self.button.refresh()
+        self.window.refresh()
         
     def enclose(self, y, x):
         """See mother class"""
-        return self.button.enclose(y, x)
+        return self.window.enclose(y, x)
         
     def move(self, y, x, focus=False):
         """See mother class"""
         self.y = y
         self.x = x
-        self.button.erase()
-        self.button.refresh()
+        self.window.erase()
+        self.window.refresh()
         self._create(focus)
+        
+    def redraw(self):
+        """See mother class"""
+        self.focusOff()
         
     def setLabel(self, label, focus=False):
         """Set the label of the button"""
-        self.button.erase()
+        self.window.erase()
         self.label = ' ' + label + ' '
         self._create(focus)
 
     def _create(self, focus):
-        self.button = self.parent.derwin(1, len(self.label) + 1, self.y, self.x)
+        self.window = self.parent.window.derwin(1, len(self.label) + 1, self.y, self.x)
         if focus:
             self.focusOn()
         else:

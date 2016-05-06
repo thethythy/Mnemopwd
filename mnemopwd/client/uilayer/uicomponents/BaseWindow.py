@@ -33,6 +33,13 @@ class BaseWindow(Component):
     """
     A window without border and without title. It can contain other components.
     
+    KEY_TAB, KEY_LEFT, KEY_RIGHT, KEY_UP and KEY_DOWN: navigate between components
+    KEY_MOUSE: select an editable component or execute an actionnable component
+    ENTER: exit an editable component or execute an actionnable component
+    shortcuts (Ctrl + key): execute an actionnable component
+    ESC: close the window
+    other keys: start edition of an editable component
+    
     Attributs:
     - h: the window height
     - w: the window width
@@ -40,15 +47,12 @@ class BaseWindow(Component):
     - items: the ordered list of inner components
     - shortcuts: the ordered list of shortcut keys
     - index: the actual inner component that gets focus
-    - menu: the window works like a menu
+    - menu: the window works like a menu (KEY_LEFT and KEY_RIGHT close the menu)
     """
     
-    def __init__(self, wparent, h, w, y, x, menu=False):
+    def __init__(self, parent, h, w, y, x, menu=False, save=False):
         """Create base window"""
-        Component.__init__(self, wparent, y, x)
-        self.h = h
-        self.w = w
-        self.window = curses.newwin(h, w, y, x)
+        Component.__init__(self, parent, h, w, y, x, save=save)
         self.items = []
         self.shortcuts = []
         self.index = 0
@@ -58,9 +62,9 @@ class BaseWindow(Component):
     def start(self):
         """Start interaction loop of the window"""
         curses.nonl()
-        
-        self.items[self.index].focusOn() # Focus on component at index
+
         nbitems = len(self.items)
+        if nbitems > 0: self.items[self.index].focusOn() # Focus on component at index
         
         while True:
             c = self.window.getch()
@@ -136,7 +140,10 @@ class BaseWindow(Component):
     def close(self):
         """Close the window"""
         curses.nl()
-        self.window.clear()
-        self.window.refresh()
         Component.close(self)
+        
+    def redraw(self):
+        """See the mothe class"""
+        for item in self.items:
+            item.redraw()
 

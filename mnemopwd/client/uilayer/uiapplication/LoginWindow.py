@@ -36,15 +36,15 @@ class LoginWindow(TitledBorderWindow):
     The login window: get the login/password user credentials
     """
     
-    def __init__(self, wparent):
+    def __init__(self, parent):
         """Create the window"""
         size_y = 14
         size_x = 60
         
-        TitledBorderWindow.__init__(self, wparent, size_y, size_x,
+        TitledBorderWindow.__init__(self, parent, size_y, size_x,
                                     int(curses.LINES / 2) - int(size_y / 2),
                                     int(curses.COLS / 2) - int(size_x / 2),
-                                    "Connection window")
+                                    "Connection window", save=True)
         
         self.window.addstr(5, 2, "Login")
         self.window.addstr(8, 2, "Password")
@@ -53,13 +53,13 @@ class LoginWindow(TitledBorderWindow):
         self.shortcuts = ['', '', 'N', 'L', 'A']
         
         # Editable components
-        self.logineditor = InputBox(self.window, 3, size_x - 15, 5 - 1, 12, self.shortcuts)
-        self.passeditor = InputBox(self.window, 3, size_x - 15, 8 - 1, 12, self.shortcuts, secret=True) 
+        self.logineditor = InputBox(self, 3, size_x - 15, 5 - 1, 12, self.shortcuts)
+        self.passeditor = InputBox(self, 3, size_x - 15, 8 - 1, 12, self.shortcuts, secret=True) 
         
         # Actionnable components
-        self.connectButton = ButtonBox(self.window, 11, 7, "Connect", 'N')
-        self.clearButton = ButtonBox(self.window, 11, 27, "Clear", 'L')
-        self.cancelButton = ButtonBox(self.window, 11, 47, "Cancel", 'A')
+        self.connectButton = ButtonBox(self, 11, 7, "Connect", 'N')
+        self.clearButton = ButtonBox(self, 11, 27, "Clear", 'L')
+        self.cancelButton = ButtonBox(self, 11, 47, "Cancel", 'A')
         
         # Ordered list of components
         self.items = [self.logineditor, self.passeditor, self.connectButton, 
@@ -93,3 +93,4 @@ class LoginWindow(TitledBorderWindow):
                 else:
                     self.close()
                     return self.logineditor.value, self.passeditor.value
+

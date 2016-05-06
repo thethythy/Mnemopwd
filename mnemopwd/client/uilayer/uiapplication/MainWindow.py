@@ -31,6 +31,8 @@ from client.util.Configuration import Configuration
 from client.uilayer.uicomponents.BaseWindow import BaseWindow
 from client.uilayer.uicomponents.ButtonBox import ButtonBox
 from client.uilayer.uiapplication.LoginWindow import LoginWindow
+from client.uilayer.uiapplication.EditionWindow import EditionWindow
+from client.uilayer.uiapplication.SearchWindow import SearchWindow
 from client.uilayer.uiapplication.CreateMenu import CreateMenu
 
 class MainWindow(BaseWindow):
@@ -52,16 +54,22 @@ class MainWindow(BaseWindow):
         self.window.addch(1, curses.COLS - len(message) - 3 , curses.ACS_BTEE)
         self.window.refresh()
         
-        self.searchButton = ButtonBox(self.window, 0, 0, "Search", shortcut='E')
-        self.newButton = ButtonBox(self.window, 0, 9, "New", shortcut='N')
-        self.loginButton = ButtonBox(self.window, 0, 15, "Login", shortcut='L')
-        self.exitButton = ButtonBox(self.window, 0, 23, "Quit", shortcut='U')
+        self.searchButton = ButtonBox(self, 0, 0, "Search", shortcut='E')
+        self.newButton = ButtonBox(self, 0, 9, "New", shortcut='N')
+        self.loginButton = ButtonBox(self, 0, 15, "Login", shortcut='L')
+        self.exitButton = ButtonBox(self, 0, 23, "Quit", shortcut='U')
         
         # Ordered list of shortcut keys
         self.shortcuts = ['E', 'N', 'L', 'U']
         
         # Ordered list of components
         self.items = [self.searchButton, self.newButton, self.loginButton, self.exitButton]
+        
+        # Edition window
+        self.editscr = EditionWindow(self, curses.LINES - 4, int(curses.COLS * 2/3), 2, int(curses.COLS * 1/3), "Edition")
+        
+        # Search window
+        self.searchscr = SearchWindow(self, curses.LINES - 4, int(curses.COLS * 1/3), 2, 0, "Search")
         
         # Status window
         self.statscr = curses.newwin(2, curses.COLS, curses.LINES - 2, 0)
@@ -72,10 +80,10 @@ class MainWindow(BaseWindow):
     def _getCredentials(self):
         """Get login/password"""
         self.update_status('Please start a connection')
-        login, passwd = LoginWindow(self.window).start()
+        login, passwd = LoginWindow(self).start()
         if (login != False):
             self.uifacade.inform("connection.open.credentials", (login, passwd))
-            self.window.addstr(login+passwd)
+            self.window.addstr(1, 0, login+passwd)
             login = passwd = "                            "
             
     def start(self):
@@ -98,7 +106,7 @@ class MainWindow(BaseWindow):
             elif result == self.newButton:
                 if self.connected:
                     self.newButton.focusOff()
-                    result = CreateMenu(self.window, Configuration.btypes, 1, 9).start()
+                    result = CreateMenu(self, Configuration.btypes, 2, 9).start()
                     if result:
                         self.update_status((Configuration.btypes[str(result)])["name"])
                 else:
@@ -127,6 +135,7 @@ class MainWindow(BaseWindow):
             self.loginButton.setLabel("Login", self.loginButton == self.items[self.index])
             self.exitButton.move(0, 23, self.exitButton == self.items[self.index])
             self.update_status(value)
+            curses.flash()
     
     def update_status(self, value):
         """Update the status window content"""
@@ -142,3 +151,10 @@ class MainWindow(BaseWindow):
         self.statscr.addstr(1, 8, value)
         self.statscr.refresh()
         curses.setsyx(currenty, currentx)   # Set cursor position to saved position
+        
+    def redraw(self):
+        """See mother class"""
+        self.editscr.redraw()
+        self.searchscr.redraw()
+        BaseWindow.redraw(self)
+        

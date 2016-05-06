@@ -35,20 +35,19 @@ class CreateMenu(BaseWindow):
     The menu for creating a new entry in the database
     """
     
-    def __init__(self, wparent, btypes, y, x):
+    def __init__(self, parent, btypes, y, x):
         """Create the menu"""
         # Create the window
         max_len = 0
         for type in btypes.values(): max_len = max(max_len, len(type["name"]))
-        BaseWindow.__init__(self, wparent, len(btypes) + 2, max_len + 2 + 3, y, x, menu=True)
-        self.window.border()
+        BaseWindow.__init__(self, parent, len(btypes), max_len + 3, y, x, menu=True, save=True)
         self.window.refresh()
         
         # Add buttons (preserving the order indicated in the json file)
-        posy = 1
+        posy = 0
         for i in range(len(btypes)):
             name = (btypes[str(i+1)])["name"]
-            self.items.append(ButtonBox(self.window, posy, 1, name + sfill(max_len - len(name))))
+            self.items.append(ButtonBox(self, posy, 0, name + sfill(max_len - len(name))))
             posy += 1
             
     def start(self):

@@ -62,8 +62,8 @@ class ClientUI(Thread, Observer):
         self.corefacade = facade # Store the facade of the domain layer
         
         # curses initialization
-        self.stdscr = curses.initscr()
-        self.stdscr.keypad(1) # Let special keys be a single key
+        self.window = curses.initscr()
+        self.window.keypad(1) # Let special keys be a single key
         curses.noecho() # No echoing key pressed
         try: curses.curs_set(0) # No cursor
         except: pass
@@ -76,7 +76,7 @@ class ClientUI(Thread, Observer):
     def stop(self):
         """Stop UI and return to normal interaction"""
         curses.nocbreak()
-        self.stdscr.keypad(False)
+        self.window.keypad(False)
         try: curses.curs_set(2)
         except: pass
         curses.echo()

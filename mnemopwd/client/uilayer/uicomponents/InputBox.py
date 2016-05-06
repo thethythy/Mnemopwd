@@ -40,12 +40,12 @@ class InputBox(Component):
     - secret: is it a secret text? 
     """
     
-    def __init__(self, wparent, h, w, y, x, shortcuts=None, secret=False):
+    def __init__(self, parent, h, w, y, x, shortcuts=None, secret=False):
         """Create a input text box"""
-        Component.__init__(self, wparent, y, x)
-        self.panel = wparent.derwin(h, w, y, x)
-        self.panel.border()
-        self.editorbox = self.panel.derwin(1, w - 4, 1, 2)
+        Component.__init__(self, parent, h, w, y, x)
+        self.window.border()
+        self.window.refresh()
+        self.editorbox = self.window.derwin(1, w - 4, 1, 2)
         if not secret:
             self.editor = TextEditor(self.editorbox)
         else:
@@ -53,6 +53,10 @@ class InputBox(Component):
         self.value = None
         self.shortcuts = shortcuts
         self.secret = secret
+        
+        # Cursor position
+        self.cursor_y = 0
+        self.cursor_x = 0
         
     def isEditable(self):
         """This component is editable"""

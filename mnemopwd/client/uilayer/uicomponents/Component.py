@@ -25,36 +25,33 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import curses
+
 class Component():
     """Abstract component"""
     
-    def __init__(self, wparent, y, x):
+    def __init__(self, parent, h, w, y, x, save=False):
         """
-        Create a component at (y, x) position of parent window 
-        with wparent window as parent component
+        Create a component at (y, x) position of parent window
+        with size (h,w) and with parent as parent component
         """
-        self.parent = wparent
+        self.parent = parent
         self.y = y
         self.x = x
-        self._cur_y = 0
-        self._cur_x = 0
-    
-    @property
-    def cursor_y(self):
-        return self._cur_y
-    
-    @cursor_y.setter
-    def cursor_y(self, value):
-        self._cur_y = value
-    
-    @property
-    def cursor_x(self):
-        return self._cur_x
-    
-    @cursor_x.setter
-    def cursor_x(self, value):
-        self._cur_x = value
-    
+        self.h = h
+        self.w = w
+        self.save = save
+        
+        # Create a new window
+        if isinstance(self.parent, Component):
+            self.window = self.parent.window.derwin(h, w, y, x)
+        else: 
+            self.window = curses.newwin(h, w, y, x)
+
+        # Clear the content to have an empty window
+        self.window.clear()
+        self.window.refresh()
+
     def isEditable(self):
         """Return False by default (not editable)"""
         return False
@@ -79,6 +76,17 @@ class Component():
         """Move the component to a new location"""
         pass
 
+    def redraw(self):
+        """Redraw the component's content"""
+        pass
+
     def close(self):
         """Close the component"""
-        if self.parent != None: self.parent.refresh()
+        # Clear the content
+        self.window.erase()
+        self.window.refresh()
+
+        # Restore the old screen if needed
+        if self.save and isinstance(self.parent, Component):
+            self.parent.redraw()
+

@@ -32,19 +32,21 @@ from client.uilayer.uicomponents.BaseWindow import BaseWindow
 class TitledBorderWindow(BaseWindow):
     """
     A window with a border and a title. It can contain other components.
-    
-    Attributs:
-    - h: the window height
-    - w: the window width
-    - window: the curses window
-    - items: the ordered list of inner components
-    - shortcuts: the ordered list of shortcut keys
-    - index: the actual inner component that gets focus
     """
     
-    def __init__(self, wparent, h, w, y, x, title):
+    def __init__(self, parent, h, w, y, x, title, save=False):
         """Create base window"""
-        BaseWindow.__init__(self, wparent, h, w, y, x)
+        BaseWindow.__init__(self, parent, h, w, y, x, save=save)
+        self.title = title
+        self._create()
+        
+    def redraw(self):
+        """See mother class"""
+        self._create()
+        BaseWindow.redraw(self)
+        
+    def _create(self):
         self.window.border()
-        self.window.addstr(1, 2, title)
-        self.window.hline(2, 1, curses.ACS_HLINE, w - 2)
+        self.window.addstr(1, 2, self.title)
+        self.window.hline(2, 1, curses.ACS_HLINE, self.w - 2)
+        self.window.refresh()

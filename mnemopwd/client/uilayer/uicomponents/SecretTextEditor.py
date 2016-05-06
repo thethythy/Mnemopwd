@@ -54,7 +54,7 @@ class SecretTextEditor(TextEditor):
             if ch in (curses.ascii.BS, curses.KEY_BACKSPACE, curses.ascii.EOT):
                 self.stext = self.stext[:x] + self.stext[x+1:]
             else:
-                time.sleep(0.25) # Wait 1/4 second before mask key
+                time.sleep(0.125) # Wait 1/5 second before mask key
                 if ch < 128:
                     self.stext = self.stext + (self.win.instr(0, x-1, 1)).decode()
                 elif ch < 256:
