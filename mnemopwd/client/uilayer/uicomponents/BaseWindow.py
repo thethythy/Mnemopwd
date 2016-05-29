@@ -48,11 +48,12 @@ class BaseWindow(Component):
     - shortcuts: the ordered list of shortcut keys
     - index: the actual inner component that gets focus
     - menu: the window works like a menu (KEY_LEFT and KEY_RIGHT close the menu)
+    - modal: the window is modal window or not
     """
     
-    def __init__(self, parent, h, w, y, x, menu=False, save=False):
+    def __init__(self, parent, h, w, y, x, menu=False, modal=False):
         """Create base window"""
-        Component.__init__(self, parent, h, w, y, x, save=save)
+        Component.__init__(self, parent, h, w, y, x, modal=modal)
         self.items = []
         self.shortcuts = []
         self.index = 0
@@ -117,7 +118,7 @@ class BaseWindow(Component):
                     return self.items[self.index]
             
             # Cancel
-            elif c in [curses.ascii.ESC] :
+            elif c in [curses.ascii.ESC] and self.modal:
                 return False
                 
             # Shortcut keys

@@ -27,26 +27,15 @@
 
 import curses
 
-from client.uilayer.uicomponents.BaseWindow import BaseWindow
+from client.uilayer.uicomponents.TitledOnBorderWindow import TitledOnBorderWindow
 
-class TitledBorderWindow(BaseWindow):
+class SearchWindow(TitledOnBorderWindow):
     """
-    A window with a border and a title. It can contain other components.
+    The search window: a window for block searching
     """
     
-    def __init__(self, parent, h, w, y, x, title, modal=False):
-        """Create base window"""
-        BaseWindow.__init__(self, parent, h, w, y, x, modal=modal)
-        self.title = title
-        self._create()
-        
-    def redraw(self):
-        """See mother class"""
-        self._create()
-        BaseWindow.redraw(self)
-        
-    def _create(self):
-        self.window.border()
-        self.window.addstr(1, 2, self.title)
-        self.window.hline(2, 1, curses.ACS_HLINE, self.w - 2)
+    def __init__(self, parent, h, w, y, x, title):
+        """Create the window"""
+        TitledOnBorderWindow.__init__(self, parent, h, w, y, x, title)
         self.window.refresh()
+        

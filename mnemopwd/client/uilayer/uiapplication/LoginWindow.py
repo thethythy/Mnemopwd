@@ -40,11 +40,11 @@ class LoginWindow(TitledBorderWindow):
         """Create the window"""
         size_y = 14
         size_x = 60
-        
+
         TitledBorderWindow.__init__(self, parent, size_y, size_x,
                                     int(curses.LINES / 2) - int(size_y / 2),
                                     int(curses.COLS / 2) - int(size_x / 2),
-                                    "Connection window", save=True)
+                                    "Connection window", modal=True)
         
         self.window.addstr(5, 2, "Login")
         self.window.addstr(8, 2, "Password")
@@ -57,9 +57,12 @@ class LoginWindow(TitledBorderWindow):
         self.passeditor = InputBox(self, 3, size_x - 15, 8 - 1, 12, self.shortcuts, secret=True) 
         
         # Actionnable components
-        self.connectButton = ButtonBox(self, 11, 7, "Connect", 'N')
-        self.clearButton = ButtonBox(self, 11, 27, "Clear", 'L')
-        self.cancelButton = ButtonBox(self, 11, 47, "Cancel", 'A')
+        posx = gap = int(((size_x - 2) - (9 + 7 + 8)) / 4) + 1
+        self.connectButton = ButtonBox(self, 11, posx, "Connect", 'N')
+        posx = posx + 9 + gap
+        self.clearButton = ButtonBox(self, 11, posx, "Clear", 'L')
+        posx = posx + 7 + gap
+        self.cancelButton = ButtonBox(self, 11, posx, "Cancel", 'A')
         
         # Ordered list of components
         self.items = [self.logineditor, self.passeditor, self.connectButton, 

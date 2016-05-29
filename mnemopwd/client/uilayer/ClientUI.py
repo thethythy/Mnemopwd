@@ -6,14 +6,14 @@
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
-# 1. Redistributions of source code must retain the above copyright notice, this 
+# 1. Redistributions of source code must retain the above copyright notice, this
 # list of conditions and the following disclaimer.
 #
 # 2. Redistributions in binary form must reproduce the above copyright notice,
 # this list of conditions and the following disclaimer in the documentation
 # and/or other materials provided with the distribution.
 #
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 # AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
 # THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
 # PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
@@ -41,11 +41,11 @@ locale.setlocale(locale.LC_ALL, '') # Set locale setting
 class ClientUI(Thread, Observer):
     """
     The default client user interface (UI).
-    
+
     Attribut(s):
     - facade: the facade of the domain layer
     - wmain: the main window of the UI
-    
+
     Method(s):
     - stop: stop the interaction loop and close the UI
     - run: start the interaction loop
@@ -58,18 +58,18 @@ class ClientUI(Thread, Observer):
         """Create an initialize UI"""
         Thread.__init__(self)
         Observer.__init__(self)
-        
+
         self.corefacade = facade # Store the facade of the domain layer
-        
+
         # curses initialization
         self.window = curses.initscr()
         self.window.keypad(1) # Let special keys be a single key
         curses.noecho() # No echoing key pressed
         try: curses.curs_set(0) # No cursor
         except: pass
-        curses.mousemask(curses.BUTTON1_CLICKED | curses.BUTTON2_CLICKED | 
+        curses.mousemask(curses.BUTTON1_CLICKED | curses.BUTTON2_CLICKED |
                          curses.BUTTON3_CLICKED | curses.BUTTON4_CLICKED) # Mouse events
-        
+
         # Open the main window
         self.wmain = MainWindow(self)
 
@@ -97,7 +97,9 @@ class ClientUI(Thread, Observer):
             self.wmain.update_window(property, value)
         if property == "connection.state.error":
             self.wmain.update_window(property, value)
-            
+        if property == "application.state":
+            self.wmain.update_status(value)
+
     def inform(self, property, value):
         """Indicate to core layer one user demand"""
         self.corefacade.command(property, value)

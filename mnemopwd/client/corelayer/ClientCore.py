@@ -6,14 +6,14 @@
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
-# 1. Redistributions of source code must retain the above copyright notice, this 
+# 1. Redistributions of source code must retain the above copyright notice, this
 # list of conditions and the following disclaimer.
 #
 # 2. Redistributions in binary form must reproduce the above copyright notice,
 # this list of conditions and the following disclaimer in the documentation
 # and/or other materials provided with the distribution.
 #
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 # AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
 # THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
 # PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
@@ -43,12 +43,12 @@ Client part of Mnemopwd application.
 class ClientCore(Subject):
     """
     Client module of the application
-    
+
     Attribut(s):
     - loop: an i/o asynchronous loop (see the official asyncio module)
     - transport: a SSL/TLS asynchronous socket (see the official ssl module)
     - protocol: a communication handler (see the official asyncio module)
-    
+
     Method(s):
     - start: start the domain layer
     - stop: close the domain loop
@@ -57,22 +57,22 @@ class ClientCore(Subject):
     - _close: close the connection
     - _setCredentials: set login/password then start S1 state
     """
-    
+
     # Intern methods
-    
+
     def __init__(self):
         """Initialization"""
         Subject.__init__(self)
-        
+
         # Create an i/o asynchronous loop
         self.loop = asyncio.get_event_loop()
         self.loop.set_debug(Configuration.loglevel == 'DEBUG')
         logging.basicConfig(level=Configuration.loglevel)
-        
+
         # Create and set an executor
         executor = concurrent.futures.ThreadPoolExecutor(Configuration.poolsize)
         self.loop.set_default_executor(executor)
-        
+
         # Create a SSL context
         self.context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
         self.context.options |= ssl.OP_NO_SSLv2 # SSL v2 not allowed
@@ -83,11 +83,11 @@ class ClientCore(Subject):
             self.context.load_verify_locations(cafile=Configuration.certfile) # Load certificat
         else:
             self.context.set_ciphers("AECDH-AES256-SHA") # Cipher suite to use
-        
+
         if Configuration.action == 'status':
             self._open() # Try to open a connection to server
             print("the server seems running at " + str(self.transport.get_extra_info('peername')))
-    
+
     def _open(self):
         """Open a new connection to the server"""
         # Create an asynchronous SSL socket
@@ -101,7 +101,7 @@ class ClientCore(Subject):
             else:
                 future = asyncio.run_coroutine_threadsafe(coro, self.loop)
                 self.transport, self.protocol = future.result(Configuration.timeout)
-                
+
         except asyncio.TimeoutError:
             future.cancel()
             self.update('connection.state', 'Enable to connect to server. Retry or verify your configuration')
@@ -126,7 +126,7 @@ class ClientCore(Subject):
             else:
                 self.update('connection.state', 'An unexpected exception occurred')
             raise
-    
+
     def _close(self):
         """Close the connection with the server"""
         self.loop.call_soon_threadsafe(self.transport.close) # Ask to close connection
@@ -139,14 +139,21 @@ class ClientCore(Subject):
         while self.protocol.state != self.protocol.states['1S']: time.sleep(0.1)
         self.protocol.data_received(None) # Schedule execution of actual protocol state
 
+    def _addDataOrUpdateData(self, idBlock, values):
+        """Add a new block or update an existing block"""
+        if idBlock > 0:
+            self.update('application.state', 'Block updated')
+        else:
+            self.update('application.state', 'New block saved')
+
     # Extern methods
-    
+
     def start(self):
         """Start the main loop"""
         self.update('connection.state', 'Please start a connection')
         self.loop.run_forever() # Run until the end of the loop
         self.loop.close()       # Close the main loop
-        
+
     def stop(self):
         """Close the connection to the server then stop the main loop"""
         if self.loop.is_running():
@@ -154,7 +161,7 @@ class ClientCore(Subject):
         else:
             self.transport.close()
             self.loop.close()
-    
+
     def command(self, property, value):
         """Execute a command coming from UI layer"""
         if property == "connection.close":
@@ -166,4 +173,9 @@ class ClientCore(Subject):
                 self._setCredentials(*value)
             except:
                 pass
-    
+        if property == "application.editblock":
+            try:
+                self._addDataOrUpdateData(*value)
+            except:
+                pass
+

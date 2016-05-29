@@ -29,9 +29,9 @@ import curses
 
 from client.uilayer.uicomponents.BaseWindow import BaseWindow
 
-class TitledBorderWindow(BaseWindow):
+class TitledOnBorderWindow(BaseWindow):
     """
-    A window with a border and a title. It can contain other components.
+    A window with a border and a title on border. It can contain other components.
     """
     
     def __init__(self, parent, h, w, y, x, title, modal=False):
@@ -44,9 +44,8 @@ class TitledBorderWindow(BaseWindow):
         """See mother class"""
         self._create()
         BaseWindow.redraw(self)
-        
+
     def _create(self):
         self.window.border()
-        self.window.addstr(1, 2, self.title)
-        self.window.hline(2, 1, curses.ACS_HLINE, self.w - 2)
+        self.window.addstr(0, 2, '[ ' + self.title + ' ]')
         self.window.refresh()

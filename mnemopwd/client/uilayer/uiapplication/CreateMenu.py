@@ -25,7 +25,6 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import curses
 from client.uilayer.uicomponents.BaseWindow import BaseWindow
 from client.uilayer.uicomponents.ButtonBox import ButtonBox
 from client.util.funcutils import sfill
@@ -39,14 +38,14 @@ class CreateMenu(BaseWindow):
         """Create the menu"""
         # Create the window
         max_len = 0
-        for type in btypes.values(): max_len = max(max_len, len(type["name"]))
-        BaseWindow.__init__(self, parent, len(btypes), max_len + 3, y, x, menu=True, save=True)
+        for type in btypes.values(): max_len = max(max_len, len((type["1"])["name"]))
+        BaseWindow.__init__(self, parent, len(btypes), max_len + 3, y, x, menu=True, modal=True)
         self.window.refresh()
         
         # Add buttons (preserving the order indicated in the json file)
         posy = 0
-        for i in range(len(btypes)):
-            name = (btypes[str(i+1)])["name"]
+        for i in range(1, len(btypes) + 1):
+            name = ((btypes[str(i)])["1"])["name"]
             self.items.append(ButtonBox(self, posy, 0, name + sfill(max_len - len(name))))
             posy += 1
             

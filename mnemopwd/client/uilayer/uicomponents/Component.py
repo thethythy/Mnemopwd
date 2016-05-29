@@ -30,7 +30,7 @@ import curses
 class Component():
     """Abstract component"""
     
-    def __init__(self, parent, h, w, y, x, save=False):
+    def __init__(self, parent, h, w, y, x, modal=False):
         """
         Create a component at (y, x) position of parent window
         with size (h,w) and with parent as parent component
@@ -40,7 +40,7 @@ class Component():
         self.x = x
         self.h = h
         self.w = w
-        self.save = save
+        self.modal = modal
         
         # Create a new window
         if isinstance(self.parent, Component):
@@ -87,6 +87,6 @@ class Component():
         self.window.refresh()
 
         # Restore the old screen if needed
-        if self.save and isinstance(self.parent, Component):
+        if self.modal and isinstance(self.parent, Component):
             self.parent.redraw()
 
