@@ -26,49 +26,36 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 """
-State S31 : Configuration
+State S35 : AddData
 """
 
 from client.util.funcutils import singleton
 from client.corelayer.protocol.StateSCC import StateSCC
-from common.KeyHandler import KeyHandler
-from client.util.Configuration import Configuration
+import pickle
 
 @singleton
-class StateS31A(StateSCC):
-    """State S31 : Configuration"""
+class StateS35R(StateSCC):
+    """State S35 : AddData"""
 
     def do(self, handler, data):
-        """Action of the state S31A: treat response of configuration request"""
+        """Action of the state S35R: send a new secret info block"""
+
         try:
+            # Challenge creation
+            echallenge = self.compute_challenge(handler, b"S35.6")
+            if echallenge:
 
-            # Test challenge response
-            if self.control_challenge(handler, data):
+                # Send AddData request
+                message = echallenge + b';ADDDATA;' + pickle.dumps(data)
+                handler.loop.call_soon_threadsafe(handler.transport.write, message)
 
-                # Test if configuration request is rejected
-                is_KO = data[:5] == b"ERROR"
-                if is_KO:
-                    raise Exception((data[6:]).decode())
-
-                # Test if configuration is accepted
-                is_OK = data[:2] == b"OK"
-                if is_OK:
-                    if data[3:] == b"1":
-                        message = "Configuration accepted"
-                    elif data[3:] == b"2":
-                        message = "New configuration accpeted"
-                    else:
-                        raise Exception("S31 protocol error")
-
-                    # Create the client KeyHandler
-                    handler.keyH = KeyHandler(handler.ms,
-                                    cur1=Configuration.curve1, cip1=Configuration.cipher1,
-                                    cur2=Configuration.curve2, cip2=Configuration.cipher2,
-                                    cur3=Configuration.curve3, cip3=Configuration.cipher3)
-
-                    # Notify the handler a property has changed
-                    handler.loop.call_soon_threadsafe(handler.notify, "connection.state", message)
+                # Notify the handler a property has changed
+                handler.loop.call_soon_threadsafe(handler.notify,
+                    "application.state", "New block sended to server")
 
         except Exception as exc:
             # Schedule a call to the exception handler
             handler.loop.call_soon_threadsafe(handler.exception_handler, exc)
+
+        else:
+            handler.state = handler.states['35A'] # Next state

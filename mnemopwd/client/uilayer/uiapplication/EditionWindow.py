@@ -158,14 +158,17 @@ class EditionWindow(TitledOnBorderWindow):
                 self.saveButton.focusOff()
                 complete = True
                 values = []
+                values.append(str(self.number_type)) # Add number_type for restoring purpose
                 for index, item in enumerate(self.items):
                     if item.isEditable() :
-                        values.append(item.value)
                         if not item.option and item.value is None :
                             self.index = index
                             complete = False
                             break
+                        if item.value is not None:
+                            values.append(item.value) # Add expected and optional values
                 if complete:
+                    self.clear_content()
                     return True, values
 
             # Clear all input boxes

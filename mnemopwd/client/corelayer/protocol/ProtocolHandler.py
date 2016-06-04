@@ -6,14 +6,14 @@
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
-# 1. Redistributions of source code must retain the above copyright notice, this 
+# 1. Redistributions of source code must retain the above copyright notice, this
 # list of conditions and the following disclaimer.
 #
 # 2. Redistributions in binary form must reproduce the above copyright notice,
 # this list of conditions and the following disclaimer in the documentation
 # and/or other materials provided with the distribution.
 #
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 # AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
 # THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
 # PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
@@ -36,8 +36,8 @@ Handler of the secure protocol connection with the server
 class ProtocolHandler(asyncio.Protocol):
     """
     The secure protocol handler in communication with the server.
-    The first state is S0. The state objects are responsible of choosing the next state. 
-    
+    The first state is S0. The state objects are responsible of choosing the next state.
+
     Attribut(s):
     - core: the ClientCore instance
     - loop: the asyncio loop
@@ -50,6 +50,7 @@ class ProtocolHandler(asyncio.Protocol):
     - ephecc: the ephemeral server public key (set by S0 state)
     - ms: the client master secret (set by S1S state)
     - session: the client session number (set by S1CR state)
+    - keyH: the client key handler (set by S31A state)
 
     Method(s):
     - connection_made: method called when the connection with the server is made
@@ -68,7 +69,8 @@ class ProtocolHandler(asyncio.Protocol):
                        '1S':StateS1S(), '1CR':StateS1CR(), '1CA':StateS1CA(),
                        '21R':StateS21R(), '21A':StateS21A(),
                        '22R':StateS22R(), '22A':StateS22A(),
-                       '31R':StateS31R(), '31A':StateS31A()}
+                       '31R':StateS31R(), '31A':StateS31A(),
+                       '35R':StateS35R(), '35A':StateS35A()}
         # The client configuration
         self.config = Configuration.curve1 + ";" + Configuration.cipher1 + ";" + \
                       Configuration.curve2 + ";" + Configuration.cipher2 + ";" + \
@@ -86,12 +88,12 @@ class ProtocolHandler(asyncio.Protocol):
         if exc:
             self.notify('connection.state.error', str(exc).capitalize())
         self.transport.close()
-        
+
     def exception_handler(self, exc):
         """Exception handler for actions executed by the executor"""
         self.notify('connection.state.error', str(exc).capitalize())
         self.transport.close()
-        
+
     def notify(self, property, value):
         """Notify ClientCore a property has changed"""
         self.core.update(property, value)

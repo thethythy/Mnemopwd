@@ -26,48 +26,41 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 """
-State S31 : Configuration
+State S35 : AddData
 """
 
 from client.util.funcutils import singleton
 from client.corelayer.protocol.StateSCC import StateSCC
-from common.KeyHandler import KeyHandler
-from client.util.Configuration import Configuration
 
 @singleton
-class StateS31A(StateSCC):
-    """State S31 : Configuration"""
+class StateS35A(StateSCC):
+    """State S35 : AddData"""
 
     def do(self, handler, data):
-        """Action of the state S31A: treat response of configuration request"""
+        """Action of the state S35A: treat response of AddData request"""
         try:
 
             # Test challenge response
             if self.control_challenge(handler, data):
 
-                # Test if configuration request is rejected
+                # Test if request is rejected
                 is_KO = data[:5] == b"ERROR"
                 if is_KO:
                     raise Exception((data[6:]).decode())
 
-                # Test if configuration is accepted
+                # Test if request is accepted
                 is_OK = data[:2] == b"OK"
                 if is_OK:
-                    if data[3:] == b"1":
-                        message = "Configuration accepted"
-                    elif data[3:] == b"2":
-                        message = "New configuration accpeted"
-                    else:
-                        raise Exception("S31 protocol error")
-
-                    # Create the client KeyHandler
-                    handler.keyH = KeyHandler(handler.ms,
-                                    cur1=Configuration.curve1, cip1=Configuration.cipher1,
-                                    cur2=Configuration.curve2, cip2=Configuration.cipher2,
-                                    cur3=Configuration.curve3, cip3=Configuration.cipher3)
+                    index = data[3:]
+                    try:
+                        index = int(index.decode())
+                        handler.core.assignLastSIB(index)
+                    except:
+                        raise Exception("S35 protocol error")
 
                     # Notify the handler a property has changed
-                    handler.loop.call_soon_threadsafe(handler.notify, "connection.state", message)
+                    handler.loop.call_soon_threadsafe(handler.notify,
+                        "application.state", "New block saved by server")
 
         except Exception as exc:
             # Schedule a call to the exception handler

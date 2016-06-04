@@ -35,6 +35,7 @@ import functools
 from client.util.Configuration import Configuration
 from client.util.funcutils import Subject
 from client.corelayer.protocol.ProtocolHandler import ProtocolHandler
+from common.SecretInfoBlock import SecretInfoBlock
 
 """
 Client part of Mnemopwd application.
@@ -48,6 +49,7 @@ class ClientCore(Subject):
     - loop: an i/o asynchronous loop (see the official asyncio module)
     - transport: a SSL/TLS asynchronous socket (see the official ssl module)
     - protocol: a communication handler (see the official asyncio module)
+    - table: block table (a dictionary)
 
     Method(s):
     - start: start the domain layer
@@ -90,6 +92,9 @@ class ClientCore(Subject):
 
     def _open(self):
         """Open a new connection to the server"""
+        # New block table
+        self.table = {}
+
         # Create an asynchronous SSL socket
         coro = self.loop.create_connection(lambda: ProtocolHandler(self), \
                                            Configuration.server, Configuration.port, \
@@ -130,6 +135,7 @@ class ClientCore(Subject):
     def _close(self):
         """Close the connection with the server"""
         self.loop.call_soon_threadsafe(self.transport.close) # Ask to close connection
+        self.update('connection.state.logout', 'Connection closed')
 
     def _setCredentials(self, login, password):
         """Store login and password then start state S1"""
@@ -141,10 +147,20 @@ class ClientCore(Subject):
 
     def _addDataOrUpdateData(self, idBlock, values):
         """Add a new block or update an existing block"""
-        if idBlock > 0:
-            self.update('application.state', 'Block updated')
+        if idBlock == 0:
+            self.protocol.state = self.protocol.states['35R']
         else:
-            self.update('application.state', 'New block saved')
+            self.protocol.state = self.protocol.states['37R']
+
+        self.lastblock = SecretInfoBlock(self.protocol.keyH)
+        self.lastblock.nbInfo = len(values)
+
+        i = 1
+        for value in values:
+            self.lastblock['info' + str(i)] = value
+            i += 1
+
+        self.protocol.data_received(self.lastblock) # Schedule execution of actual protocol state
 
     # Extern methods
 
@@ -166,7 +182,6 @@ class ClientCore(Subject):
         """Execute a command coming from UI layer"""
         if property == "connection.close":
             self._close()
-            self.update('connection.state.logout', 'Connection closed')
         if property == "connection.open.credentials":
             try:
                 self._open()
@@ -178,4 +193,9 @@ class ClientCore(Subject):
                 self._addDataOrUpdateData(*value)
             except:
                 pass
+
+    def assignLastSIB(self, index):
+        """Callback method for assigning last block used"""
+        if self.lastblock: self.table[index] = self.lastblock
+        self.lastblock = None
 
