@@ -6,14 +6,14 @@
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
-# 1. Redistributions of source code must retain the above copyright notice, this 
+# 1. Redistributions of source code must retain the above copyright notice, this
 # list of conditions and the following disclaimer.
 #
 # 2. Redistributions in binary form must reproduce the above copyright notice,
 # this list of conditions and the following disclaimer in the documentation
 # and/or other materials provided with the distribution.
 #
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 # AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
 # THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
 # PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
@@ -32,26 +32,28 @@ State S36 : delete data operation
 from server.util.funcutils import singleton
 from server.clients.protocol import StateSCC
 
+import logging
+
 @singleton
 class StateS36(StateSCC):
     """State S36 : delete a secret information block"""
-        
+
     def do(self, client, data):
         """Action of the state S36: delete a secret information block"""
-        
+
         try:
             # Control challenge
             if self.control_challenge(client, data, b'S36.4') :
-                
+
                 # Test for S36 command
                 is_cd_S36 = data[170:180] == b"DELETEDATA"
                 if not is_cd_S36 : raise Exception('S36 protocol error')
-                
-                index = data[181:].decode() # sib index 
-                
+
+                index = data[181:].decode() # sib index
+
                 # Delete a secret information block
                 result = client.dbH.delete_data(index)
-                    
+
                 if result:
                     # Send 'OK' message
                     client.loop.call_soon_threadsafe(client.transport.write, b'OK')
@@ -60,7 +62,9 @@ class StateS36(StateSCC):
                     message = b'ERROR;' + b'index rejected'
                     client.loop.call_soon_threadsafe(client.transport.write, message)
                     raise Exception('index rejected')
-            
+
+                logging.info('Delete block from {}'.format(client.peername))
+
         except Exception as exc:
             # Schedule a callback to client exception handler
             client.loop.call_soon_threadsafe(client.exception_handler, exc)

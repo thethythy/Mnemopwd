@@ -6,14 +6,14 @@
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
-# 1. Redistributions of source code must retain the above copyright notice, this 
+# 1. Redistributions of source code must retain the above copyright notice, this
 # list of conditions and the following disclaimer.
 #
 # 2. Redistributions in binary form must reproduce the above copyright notice,
 # this list of conditions and the following disclaimer in the documentation
 # and/or other materials provided with the distribution.
 #
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 # AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
 # THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
 # PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
@@ -34,31 +34,33 @@ from server.util.funcutils import singleton
 from server.clients.protocol import StateSCC
 from server.clients.DBHandler import DBHandler
 
+import logging
+
 @singleton
 class StateS22(StateSCC):
     """State S22 : Creation"""
-        
+
     def do(self, client, data):
         """Action of the state S22: create a new user account"""
 
         try:
             # Control challenge
             if self.control_challenge(client, data, b'S22.7') :
-            
+
                 # Test for S22 command
                 is_cd_S22 = data[170:178] == b"CREATION"
                 if not is_cd_S22 : raise Exception('S22 protocol error')
 
                 eid = data[179:348] # id encrypted
-                elogin = data[349:] # Login encrypted 
+                elogin = data[349:] # Login encrypted
 
                 # Compute client id
                 login = client.ephecc.decrypt(elogin)
                 id = self.compute_client_id(client.ms, login)
-                        
+
                 # Get id from client
                 id_from_client = client.ephecc.decrypt(eid)
-            
+
                 # If ids are not equal
                 if id != id_from_client :
                     message = b'ERROR;' + b'incorrect id'
@@ -68,7 +70,7 @@ class StateS22(StateSCC):
                 # Try to create a new database
                 filename = self.compute_client_filename(id, client.ms, login)
                 result = DBHandler.new(client.dbpath, filename)
-                
+
                 if result:
                     client.dbH = DBHandler(client.dbpath, filename)
                     client.loop.call_soon_threadsafe(client.transport.write, b'OK')
@@ -77,7 +79,9 @@ class StateS22(StateSCC):
                     message = b'ERROR;' + b'user account already used'
                     client.loop.call_soon_threadsafe(client.transport.write, message)
                     raise Exception('user account already used')
-            
+
+                logging.info('User account creation from {}'.format(client.peername))
+
         except Exception as exc:
             # Schedule a callback to client exception handler
             client.loop.call_soon_threadsafe(client.exception_handler, exc)

@@ -6,14 +6,14 @@
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
-# 1. Redistributions of source code must retain the above copyright notice, this 
+# 1. Redistributions of source code must retain the above copyright notice, this
 # list of conditions and the following disclaimer.
 #
 # 2. Redistributions in binary form must reproduce the above copyright notice,
 # this list of conditions and the following disclaimer in the documentation
 # and/or other materials provided with the distribution.
 #
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 # AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
 # THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
 # PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
@@ -32,32 +32,33 @@ State S34 : search data operation
 from server.util.funcutils import singleton
 from server.clients.protocol import StateSCC
 import pickle
+import logging
 
 @singleton
 class StateS34(StateSCC):
     """State S34 : search a secret information"""
-        
+
     def do(self, client, data):
         """Action of the state S34: search a secret information and return matching blocks"""
-        
+
         try:
             # Control challenge
             if self.control_challenge(client, data, b'S34.6') :
-                
+
                 # Test for S34 command
                 is_cd_S34 = data[170:180] == b"SEARCHDATA"
                 if not is_cd_S34 : raise Exception('S34 protocol error')
-            
+
                 epattern = data[181:] # Encrypted search pattern
                 pattern = client.ephecc.decrypt(epattern) # Get search pattern
-                
+
                 # Pattern matching
                 tabsibs = client.dbH.search_data(client.keyH, pattern.decode())
-                
+
                 # Send number of blocks
                 message = b'OK;' + str(len(tabsibs)).encode()
                 client.loop.call_soon_threadsafe(client.transport.write, message)
-                
+
                 for i, sib in tabsibs:
                     si = str(i).encode()
                     psib = pickle.dumps(sib)
@@ -65,9 +66,11 @@ class StateS34(StateSCC):
                     # Send sib
                     message = b';SIB;' + si + b';' + lpsib + b';' + psib
                     client.loop.call_soon_threadsafe(client.transport.write, message)
-                
+
                 client.state = client.states['3'] # New client state
-            
+
+                logging.info('Searching blocks [{} found] from {}'.format(len(tabsibs), client.peername))
+
         except Exception as exc:
             # Schedule a callback to client exception handler
             client.loop.call_soon_threadsafe(client.exception_handler, exc)

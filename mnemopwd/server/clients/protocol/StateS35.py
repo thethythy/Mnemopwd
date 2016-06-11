@@ -6,14 +6,14 @@
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
-# 1. Redistributions of source code must retain the above copyright notice, this 
+# 1. Redistributions of source code must retain the above copyright notice, this
 # list of conditions and the following disclaimer.
 #
 # 2. Redistributions in binary form must reproduce the above copyright notice,
 # this list of conditions and the following disclaimer in the documentation
 # and/or other materials provided with the distribution.
 #
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 # AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
 # THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
 # PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
@@ -32,34 +32,35 @@ State S35 : add data operation
 from server.util.funcutils import singleton
 from server.clients.protocol import StateSCC
 import pickle
+import logging
 
 @singleton
 class StateS35(StateSCC):
     """State S35 : add a secret information block"""
-        
+
     def do(self, client, data):
         """Action of the state S35: add a secret information block"""
-        
+
         try:
             # Control challenge
             if self.control_challenge(client, data, b'S35.6') :
-                
+
                 # Test for S35 command
                 is_cd_S35 = data[170:177] == b"ADDDATA"
                 if not is_cd_S35 : raise Exception('S35 protocol error')
-            
+
                 bsib = data[178:] # One secret information block in pickle format
-                
+
                 try:
                     sib = pickle.loads(bsib) # One secret information block object
                     sib.control_integrity(client.keyH) # Configure and check integrity
-                
+
                 except AssertionError:
                     # Send an error message
                     message = b'ERROR;' + b'data rejected'
                     client.loop.call_soon_threadsafe(client.transport.write, message)
                     raise Exception('data rejected')
-                
+
                 else:
                     # Add a secret information block
                     index = client.dbH.add_data(sib)
@@ -67,7 +68,9 @@ class StateS35(StateSCC):
                     message = b'OK;' + (str(index)).encode()
                     client.loop.call_soon_threadsafe(client.transport.write, message)
                     client.state = client.states['3'] # New client state
-            
+
+                    logging.info('New block from {}'.format(client.peername))
+
         except Exception as exc:
             # Schedule a callback to client exception handler
             client.loop.call_soon_threadsafe(client.exception_handler, exc)

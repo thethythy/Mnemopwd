@@ -6,14 +6,14 @@
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
-# 1. Redistributions of source code must retain the above copyright notice, this 
+# 1. Redistributions of source code must retain the above copyright notice, this
 # list of conditions and the following disclaimer.
 #
 # 2. Redistributions in binary form must reproduce the above copyright notice,
 # this list of conditions and the following disclaimer in the documentation
 # and/or other materials provided with the distribution.
 #
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 # AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
 # THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
 # PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
@@ -34,53 +34,57 @@ from server.util.funcutils import singleton
 from server.clients.protocol import StateSCC
 from server.clients.DBHandler import DBHandler
 
+import logging
+
 @singleton
 class StateS21(StateSCC):
     """State S21 : Login"""
-        
+
     def do(self, client, data):
         """Action of the state S21: control client login and id"""
-        
+
         try:
             # Control challenge
             if self.control_challenge(client, data, b'S21.7') :
-            
+
                 # Test for S21 command
                 is_cd_S21 = data[170:175] == b"LOGIN"
                 if not is_cd_S21 : raise Exception('S21 protocol error')
-                
+
                 eid = data[176:345]   # id encrypted
                 elogin = data[346:] # Login encrypted
 
                 # Compute client id
                 login = client.ephecc.decrypt(elogin)
                 id = self.compute_client_id(client.ms, login)
-                        
+
                 # Get id from client
                 id_from_client = client.ephecc.decrypt(eid)
-            
+
                 # If ids are not equal
                 if id != id_from_client :
                     message = b'ERROR;' + b'incorrect id'
                     client.loop.call_soon_threadsafe(client.transport.write, message)
                     raise Exception('incorrect id')
-            
+
                 # Test if login exists
                 filename = self.compute_client_filename(id, client.ms, login)
                 exist = DBHandler.exist(client.dbpath, filename)
-            
+
                 # If login is OK and ids are equal
                 if id == id_from_client and exist :
                     client.dbH = DBHandler(client.dbpath, filename)
                     client.loop.call_soon_threadsafe(client.transport.write, b'OK')
                     client.state = client.states['31']
-                
+
                 # If login is unknown
                 elif id == id_from_client and not exist :
                     message = b'ERROR;' + b'user account does not exist'
                     client.loop.call_soon_threadsafe(client.transport.write, message)
                     raise Exception('user account does not exist')
-            
+
+                logging.info('Login from {}'.format(client.peername))
+
         except Exception as exc:
             # Schedule a callback to client exception handler
             client.loop.call_soon_threadsafe(client.exception_handler, exc)

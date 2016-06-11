@@ -6,14 +6,14 @@
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
-# 1. Redistributions of source code must retain the above copyright notice, this 
+# 1. Redistributions of source code must retain the above copyright notice, this
 # list of conditions and the following disclaimer.
 #
 # 2. Redistributions in binary form must reproduce the above copyright notice,
 # this list of conditions and the following disclaimer in the documentation
 # and/or other materials provided with the distribution.
 #
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 # AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
 # THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
 # PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
@@ -32,39 +32,41 @@ State S31 : configuration operation
 from server.util.funcutils import singleton
 from server.clients.protocol import StateSCC
 
+import logging
+
 @singleton
 class StateS31(StateSCC):
     """State S31 : configuration of the cryptographic handler"""
-        
+
     def do(self, client, data):
         """Action of the state S31: obtain (and eventually change) cryptographic configuration"""
-        
+
         try:
             # Control challenge
             if self.control_challenge(client, data, b'S31.6') :
-                
+
                 # Test for S31 command
                 is_cd_S31 = data[170:183] == b"CONFIGURATION"
                 if not is_cd_S31 : raise Exception('S31 protocol error')
-            
+
                 econfig = data[184:]    # Encrypted configuration string
                 config = client.ephecc.decrypt(econfig) # Decrypt configuration string
-                
+
                 # Try to configure client cryptographic handler
                 result = client.configure_crypto(config.decode())
-                
+
                 if result == False:
                     message = b'ERROR;' + b'wrong configuration'
                     client.loop.call_soon_threadsafe(client.transport.write, message)
                     raise Exception('wrong configuration {}'.format(config.decode()))
-                
+
                 else:
-                    
+
                     if result == 1:
                         # Send result value
                         message = b'OK;' + b'1'
                         client.loop.call_soon_threadsafe(client.transport.write, message)
-                    
+
                     if result == 2:
                         if client.update_crypto() : # Re-do all secret information encryption
                             # Send result value
@@ -74,9 +76,11 @@ class StateS31(StateSCC):
                             message = b'ERROR;' + b'S31 operation aborted'
                             client.loop.call_soon_threadsafe(client.transport.write, message)
                             raise Exception('S31 operation aborted')
-                    
+
                     client.state = client.states['3'] # New client state
-            
+
+                    logging.info('Configuration done from {}'.format(client.peername))
+
         except Exception as exc:
             # Schedule a callback to client exception handler
             client.loop.call_soon_threadsafe(client.exception_handler, exc)

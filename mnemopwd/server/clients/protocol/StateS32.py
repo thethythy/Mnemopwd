@@ -6,14 +6,14 @@
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
-# 1. Redistributions of source code must retain the above copyright notice, this 
+# 1. Redistributions of source code must retain the above copyright notice, this
 # list of conditions and the following disclaimer.
 #
 # 2. Redistributions in binary form must reproduce the above copyright notice,
 # this list of conditions and the following disclaimer in the documentation
 # and/or other materials provided with the distribution.
 #
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 # AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
 # THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
 # PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
@@ -34,28 +34,30 @@ from server.util.funcutils import singleton
 from server.clients.protocol import StateSCC
 from server.util.Configuration import Configuration
 
+import logging
+
 @singleton
 class StateS32(StateSCC):
     """State S32 : export all secret information blocks"""
-        
+
     def do(self, client, data):
         """Action of the state S32: return a sequence of all secret information blocks"""
-        
+
         try:
             # Control challenge
             if self.control_challenge(client, data, b'S32.4') :
-                
+
                 # Test for S32 command
                 is_cd_S32 = data[170:181] == b"EXPORTATION"
                 if not is_cd_S32 : raise Exception('S32 protocol error')
-                
+
                 # Get all sibs
                 tabsibs = client.dbH.get_data(client.keyH)
-                
+
                 # Send number of blocks
                 message = b'OK;' + str(len(tabsibs)).encode()
                 client.loop.call_soon_threadsafe(client.transport.write, message)
-                
+
                 # Send sib one by one
                 for i, sib in tabsibs:
                     si = str(i).encode()
@@ -64,9 +66,11 @@ class StateS32(StateSCC):
                     # Send message
                     message = b';SIB;' + si + b';' + lpsib + b';' + psib
                     client.loop.call_soon_threadsafe(client.transport.write, message)
-                
+
                 client.state = client.states['3'] # New client state
-            
+
+                logging.info('Exporting [{} blocks] to {}'.format(len(tabsibs), client.peername))
+
         except Exception as exc:
             # Schedule a callback to client exception handler
             client.loop.call_soon_threadsafe(client.exception_handler, exc)
