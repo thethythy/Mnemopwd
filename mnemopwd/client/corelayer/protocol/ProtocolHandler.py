@@ -70,9 +70,9 @@ class ProtocolHandler(asyncio.Protocol):
                        '21R':StateS21R(), '21A':StateS21A(),
                        '22R':StateS22R(), '22A':StateS22A(),
                        '31R':StateS31R(), '31A':StateS31A(),
+                       '34R':StateS34R(), '34A':StateS34A(), '34Ab':StateS34Ab(),
                        '35R':StateS35R(), '35A':StateS35A(),
                        '36R':StateS36R(), '36A':StateS36A()}
-
         # The client configuration
         self.config = Configuration.curve1 + ";" + Configuration.cipher1 + ";" + \
                       Configuration.curve2 + ";" + Configuration.cipher2 + ";" + \
@@ -84,11 +84,14 @@ class ProtocolHandler(asyncio.Protocol):
         self.state = self.states['0'] # State 0 at the beginning
 
     def data_received(self, data):
+        #with self.lock:
         self.loop.run_in_executor(None, self.state.do, self, data) # Future excecution
 
     def connection_lost(self, exc):
         if exc:
             self.notify('connection.state.error', str(exc).capitalize())
+        #else:
+        #    self.notify('connection.state.error', "Server has closed connection")
         self.transport.close()
 
     def exception_handler(self, exc):

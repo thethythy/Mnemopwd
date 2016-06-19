@@ -25,35 +25,39 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-__author__ = "Thierry Lemeunier <thierry at lemeunier dot net>"
-__date__ = "$6 février 2016 10:35:44$"
+"""
+State S34 : SearchData
+"""
 
-__all__ = ['StateS0', 'StateS1S', 'StateS1CR', 'StateS1CA', 'StateS21R', 'StateS21A',
-           'StateS22R', 'StateS22A', 'StateS31R', 'StateS31A', 'StateS34R', 'StateS34A',
-           'StateS34Ab', 'StateS35R', 'StateS35A', 'StateS36R', 'StateS36A']
+from client.util.funcutils import singleton
+from client.corelayer.protocol.StateSCC import StateSCC
 
-from .StateS0 import StateS0
+@singleton
+class StateS34R(StateSCC):
+    """State S34 : SearchData"""
 
-from .StateS1S import StateS1S
-from .StateS1CR import StateS1CR
-from .StateS1CA import StateS1CA
+    def do(self, handler, data):
+        """Action of the state S34R: send a pattern"""
 
-from .StateS21R import StateS21R
-from .StateS21A import StateS21A
+        try:
+            # Challenge creation
+            echallenge = self.compute_challenge(handler, b"S34.6")
+            if echallenge:
 
-from .StateS22R import StateS22R
-from .StateS22A import StateS22A
+                # Encrypt pattern
+                epattern = handler.ephecc.encrypt(data.encode(), pubkey=handler.ephecc.get_pubkey())
 
-from .StateS31R import StateS31R
-from .StateS31A import StateS31A
+                # Send SearchData request
+                message = echallenge + b';SEARCHDATA;' + epattern
+                handler.loop.call_soon_threadsafe(handler.transport.write, message)
 
-from .StateS34R import StateS34R
-from .StateS34A import StateS34A
-from .StateS34Ab import StateS34Ab
+                # Notify the handler a property has changed
+                handler.loop.call_soon_threadsafe(handler.notify,
+                    "application.state", "The server is searching...")
 
-from .StateS35R import StateS35R
-from .StateS35A import StateS35A
+        except Exception as exc:
+            # Schedule a call to the exception handler
+            handler.loop.call_soon_threadsafe(handler.exception_handler, exc)
 
-from .StateS36R import StateS36R
-from .StateS36A import StateS36A
-
+        else:
+            handler.state = handler.states['34A'] # Next state
