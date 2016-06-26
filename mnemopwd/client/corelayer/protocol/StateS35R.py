@@ -39,23 +39,23 @@ class StateS35R(StateSCC):
 
     def do(self, handler, data):
         """Action of the state S35R: send a new secret info block"""
+        with handler.lock:
+            try:
+                # Challenge creation
+                echallenge = self.compute_challenge(handler, b"S35.6")
+                if echallenge:
 
-        try:
-            # Challenge creation
-            echallenge = self.compute_challenge(handler, b"S35.6")
-            if echallenge:
+                    # Send AddData request
+                    message = echallenge + b';ADDDATA;' + pickle.dumps(data)
+                    handler.loop.call_soon_threadsafe(handler.transport.write, message)
 
-                # Send AddData request
-                message = echallenge + b';ADDDATA;' + pickle.dumps(data)
-                handler.loop.call_soon_threadsafe(handler.transport.write, message)
+                    # Notify the handler a property has changed
+                    handler.loop.call_soon_threadsafe(handler.notify,
+                        "application.state", "New informations sended to server")
 
-                # Notify the handler a property has changed
-                handler.loop.call_soon_threadsafe(handler.notify,
-                    "application.state", "New block sended to server")
+            except Exception as exc:
+                # Schedule a call to the exception handler
+                handler.loop.call_soon_threadsafe(handler.exception_handler, exc)
 
-        except Exception as exc:
-            # Schedule a call to the exception handler
-            handler.loop.call_soon_threadsafe(handler.exception_handler, exc)
-
-        else:
-            handler.state = handler.states['35A'] # Next state
+            else:
+                handler.state = handler.states['35A'] # Next state

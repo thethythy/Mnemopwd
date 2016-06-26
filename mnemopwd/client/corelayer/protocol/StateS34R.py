@@ -38,26 +38,26 @@ class StateS34R(StateSCC):
 
     def do(self, handler, data):
         """Action of the state S34R: send a pattern"""
+        with handler.lock:
+            try:
+                # Challenge creation
+                echallenge = self.compute_challenge(handler, b"S34.6")
+                if echallenge:
 
-        try:
-            # Challenge creation
-            echallenge = self.compute_challenge(handler, b"S34.6")
-            if echallenge:
+                    # Encrypt pattern
+                    epattern = handler.ephecc.encrypt(data.encode(), pubkey=handler.ephecc.get_pubkey())
 
-                # Encrypt pattern
-                epattern = handler.ephecc.encrypt(data.encode(), pubkey=handler.ephecc.get_pubkey())
+                    # Send SearchData request
+                    message = echallenge + b';SEARCHDATA;' + epattern
+                    handler.loop.call_soon_threadsafe(handler.transport.write, message)
 
-                # Send SearchData request
-                message = echallenge + b';SEARCHDATA;' + epattern
-                handler.loop.call_soon_threadsafe(handler.transport.write, message)
+                    # Notify the handler a property has changed
+                    handler.loop.call_soon_threadsafe(handler.notify,
+                        "application.state", "The server is searching...")
 
-                # Notify the handler a property has changed
-                handler.loop.call_soon_threadsafe(handler.notify,
-                    "application.state", "The server is searching...")
+            except Exception as exc:
+                # Schedule a call to the exception handler
+                handler.loop.call_soon_threadsafe(handler.exception_handler, exc)
 
-        except Exception as exc:
-            # Schedule a call to the exception handler
-            handler.loop.call_soon_threadsafe(handler.exception_handler, exc)
-
-        else:
-            handler.state = handler.states['34A'] # Next state
+            else:
+                handler.state = handler.states['34A'] # Next state

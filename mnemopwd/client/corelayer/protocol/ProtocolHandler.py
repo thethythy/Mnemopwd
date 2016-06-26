@@ -26,6 +26,7 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import asyncio
+import threading
 from client.corelayer.protocol import *
 from client.util.Configuration import Configuration
 
@@ -43,6 +44,7 @@ class ProtocolHandler(asyncio.Protocol):
     - loop: the asyncio loop
     - states: sequence of state objects
     - state: the actual state (set in connection_made and changed by state objects)
+    - lock: reentrant lock for serializing thread execution
     - config: the client configuration as a list of curve names and ciphers names
     - transport: the SSL socket
     - password: the client password (set by the UI)
@@ -77,6 +79,8 @@ class ProtocolHandler(asyncio.Protocol):
         self.config = Configuration.curve1 + ";" + Configuration.cipher1 + ";" + \
                       Configuration.curve2 + ";" + Configuration.cipher2 + ";" + \
                       Configuration.curve3 + ";" + Configuration.cipher3
+        # Reentrant lock for serializing thread execution
+        self.lock = threading.RLock()
 
     def connection_made(self, transport):
         self.transport = transport
@@ -84,20 +88,19 @@ class ProtocolHandler(asyncio.Protocol):
         self.state = self.states['0'] # State 0 at the beginning
 
     def data_received(self, data):
-        #with self.lock:
-        self.loop.run_in_executor(None, self.state.do, self, data) # Future excecution
+        # Wait for actual execution before scheduling a new execution
+        with self.lock:
+            self.loop.run_in_executor(None, self.state.do, self, data) # Future execution
 
     def connection_lost(self, exc):
         if exc:
             self.notify('connection.state.error', str(exc).capitalize())
-        #else:
-        #    self.notify('connection.state.error', "Server has closed connection")
-        self.transport.close()
+        yield from self.core._close()
 
     def exception_handler(self, exc):
         """Exception handler for actions executed by the executor"""
         self.notify('connection.state.error', str(exc).capitalize())
-        self.transport.close()
+        yield from self.core._close()
 
     def notify(self, property, value):
         """Notify ClientCore a property has changed"""

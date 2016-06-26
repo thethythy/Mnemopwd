@@ -38,30 +38,36 @@ class StateS35A(StateSCC):
 
     def do(self, handler, data):
         """Action of the state S35A: treat response of AddData request"""
-        try:
+        with handler.lock:
+            try:
+                # Test challenge response
+                if self.control_challenge(handler, data):
 
-            # Test challenge response
-            if self.control_challenge(handler, data):
+                    # Test if request is rejected
+                    is_KO = data[:5] == b"ERROR"
+                    if is_KO:
+                        raise Exception((data[6:]).decode())
 
-                # Test if request is rejected
-                is_KO = data[:5] == b"ERROR"
-                if is_KO:
-                    raise Exception((data[6:]).decode())
+                    # Test if request is accepted
+                    is_OK = data[:2] == b"OK"
+                    if is_OK:
+                        index = data[3:]
+                        try:
+                            index = int(index.decode())
+                            handler.core.assignLastSIB(index)
+                        except:
+                            raise Exception("S35 protocol error")
 
-                # Test if request is accepted
-                is_OK = data[:2] == b"OK"
-                if is_OK:
-                    index = data[3:]
-                    try:
-                        index = int(index.decode())
-                        handler.core.assignLastSIB(index)
-                    except:
+                        # Notify the handler a property has changed
+                        handler.loop.call_soon_threadsafe(handler.notify,
+                            "application.state", "New informations saved by server")
+
+                        # Indicate the actual task is done
+                        handler.core.taskInProgress = False
+
+                    else:
                         raise Exception("S35 protocol error")
 
-                    # Notify the handler a property has changed
-                    handler.loop.call_soon_threadsafe(handler.notify,
-                        "application.state", "New block saved by server")
-
-        except Exception as exc:
-            # Schedule a call to the exception handler
-            handler.loop.call_soon_threadsafe(handler.exception_handler, exc)
+            except Exception as exc:
+                # Schedule a call to the exception handler
+                handler.loop.call_soon_threadsafe(handler.exception_handler, exc)

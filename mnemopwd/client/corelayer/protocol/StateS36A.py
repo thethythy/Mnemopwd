@@ -51,9 +51,13 @@ class StateS36A(StateSCC):
                 # Test if request is accepted
                 is_OK = data[:2] == b"OK"
                 if is_OK:
+                    # Update core table
+                    handler.core.removeLastSIB()
                     # Notify the handler a property has changed
                     handler.loop.call_soon_threadsafe(handler.notify,
-                        "application.state", "Block deleted by server")
+                        "application.state", "Information block deleted by server")
+                else:
+                    raise Exception("S36 protocol error")
 
         except Exception as exc:
             # Schedule a call to the exception handler

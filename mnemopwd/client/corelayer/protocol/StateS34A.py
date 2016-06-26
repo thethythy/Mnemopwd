@@ -32,44 +32,50 @@ State S34 : SearchData
 from client.util.funcutils import singleton
 from client.corelayer.protocol.StateSCC import StateSCC
 
+import logging
+
 @singleton
 class StateS34A(StateSCC):
     """State S34 : SearchData"""
 
     def do(self, handler, data):
         """Action of the state S34A: treat response of SearchData request"""
-        try:
+        with handler.lock:
+            try:
+                # Test challenge response
+                if self.control_challenge(handler, data):
 
-            # Test challenge response
-            if self.control_challenge(handler, data):
+                    # Test if request is accepted
+                    is_OK = data[:2] == b"OK"
+                    if is_OK:
+                        try:
+                            tab_data = data[3:].split(b';', maxsplit=1)
+                            nbSIB = int(tab_data[0].decode())
 
-                # Test if request is accepted
-                is_OK = data[:2] == b"OK"
-                if is_OK:
-                    tab_data = data[3:].split(b';', maxsplit=1)
-                    try:
-                        nbSIB = int(tab_data[0].decode())
+                            # Are there SIB to treat ?
+                            if nbSIB > 0:
+                                handler.nbSIB = nbSIB # Number of SIB to treat
+                                handler.nbSIBDone = 0 # Number of SIB already treated
+                                handler.state = handler.states['34Ab'] # Next state
 
-                        # Are there SIB to treat ?
-                        if nbSIB > 0:
-                            handler.nbSIB = nbSIB # Number of SIB to treat
-                            handler.nbSIBDone = 0 # Number of SIB already treated
-                            handler.state = handler.states['34Ab'] # Next state
+                                # Check if the first SIB is already received
+                                try:
+                                    if len(tab_data[1]) > 0:
+                                        handler.data_received(b';'+ tab_data[1])
+                                except IndexError:
+                                    pass
 
-                            # Check if the first SIB is already received
-                            if len(tab_data[1]) > 0:
-                                handler.data_received(b';'+ tab_data[1])
+                            else:
+                                handler.loop.call_soon_threadsafe(handler.notify,
+                                    "application.state", "No information found")
 
-                        else:
-                            handler.loop.call_soon_threadsafe(handler.notify,
-                                "application.state", "No information found")
+                        except:
+                            raise Exception("S34A protocol error")
 
-                    except:
+                    else:
                         raise Exception("S34A protocol error")
 
-                else:
-                    raise Exception("S34A protocol error")
-
-        except Exception as exc:
-            # Schedule a call to the exception handler
-            handler.loop.call_soon_threadsafe(handler.exception_handler, exc)
+            except Exception as exc:
+                logging.debug(str(data))
+                # Schedule a call to the exception handler
+                handler.loop.call_soon_threadsafe(handler.exception_handler, exc)

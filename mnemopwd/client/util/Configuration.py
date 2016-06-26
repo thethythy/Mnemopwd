@@ -7,14 +7,14 @@
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
-# 1. Redistributions of source code must retain the above copyright notice, this 
+# 1. Redistributions of source code must retain the above copyright notice, this
 # list of conditions and the following disclaimer.
 #
 # 2. Redistributions in binary form must reproduce the above copyright notice,
 # this list of conditions and the following disclaimer in the documentation
 # and/or other materials provided with the distribution.
 #
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 # AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
 # THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
 # PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
@@ -49,7 +49,7 @@ class MyParserAction(argparse.Action):
     """Actions for command line parser"""
     def __init__(self, option_strings, dest, nargs=None, **kwargs):
         super(MyParserAction, self).__init__(option_strings, dest, **kwargs)
-        
+
     def __call__(self, parser, namespace, values, option_string=None):
         if option_string in ['-c', '--cert'] :
             Configuration.certfile = values
@@ -64,7 +64,7 @@ class MyParserAction(argparse.Action):
 
 class Configuration:
     """Configuration of the server"""
-    
+
     configfile = os.path.expanduser('~') + '/.mnemopwdc' # Configuration file
     certfile = 'None'       # Default certificat X509 file
     version = '1.0'         # Client version
@@ -72,8 +72,9 @@ class Configuration:
     port = 62230            # Default server port
     port_min = 49152        # Minimum port value
     port_max = 65535        # Maximum port value
-    loglevel = 'INFO'       # Default logging level
-    poolsize = 10           # Default pool executor size
+    loglevel = 'DEBUG'      # Default logging level
+    poolsize = 1            # Pool executor size: 1 for serializing protocol states
+    queuesize = 500         # Queue size: up to 500 commands can be scheduled
     curve1 = 'sect571r1'    # Curve name for the first stage
     cipher1 = 'aes-256-cbc' # Cipher name for the first stage
     curve2 = 'None'         # Curve name for the second stage
@@ -82,14 +83,14 @@ class Configuration:
     cipher3 = 'None'        # Cipher name for the third stage
     action = 'start'        # Default action if not given
     timeout = 5             # Timeout on connection request
-    
+
     @staticmethod
     def __test_cert_file__(parser, certfile):
         """Test existence and permissions of certificat file"""
         if not os.path.exists(certfile) :
             parser.error("invalid certificat file {} (it not exists)".format(certfile))
         return True
-    
+
     @staticmethod
     def __test_config_file__(parser, path):
         """Test existence and permissions of configuration file"""
@@ -104,7 +105,7 @@ class Configuration:
             elif statinfo.st_uid != os.getuid() :
                 parser.error("invalid configuration file {} (the owner must be the user)".format(path))
         return True
-            
+
     @staticmethod
     def __load_config_file__(parser, fileparser):
         """Load configuration file"""
@@ -117,7 +118,7 @@ class Configuration:
             Configuration.port = int(fileparser['server']['port'])
             Configuration.certfile = fileparser['server']['certfile']
             Configuration.timeout = int(fileparser['server']['timeout'])
-            
+
             def testNone(name):
                 if name == 'None': return ""
                 else: return name
@@ -127,7 +128,7 @@ class Configuration:
             Configuration.cipher2 = testNone(fileparser['client']['cipher2'])
             Configuration.curve3 = testNone(fileparser['client']['curve3'])
             Configuration.cipher3 = testNone(fileparser['client']['cipher3'])
-    
+
     @staticmethod
     def __create_config_file__(fileparser):
         """Method to create default configuration file"""
@@ -146,11 +147,11 @@ class Configuration:
         with open(Configuration.configfile, 'w') as configfile:
             fileparser.write(configfile)
         os.chmod(Configuration.configfile, stat.S_IRUSR | stat.S_IWUSR | stat.S_IREAD | stat.S_IWRITE)
-    
+
     @staticmethod
     def configure():
         """Configure the server: load configuration file then parse command line"""
-        
+
         # Create and configure a command line parser
         argparser = argparse.ArgumentParser(description='MnemoPwd client v' + Configuration.version, \
                                             epilog='More informations can be found at https://github.com/thethythy/Mnemopwd', \
@@ -193,11 +194,11 @@ class Configuration:
             # Create default configuration file
             Configuration.__create_config_file__(fileparser)
             Configuration.first_execution = True
-        
+
         # Parse the command line to get options
         options = argparser.parse_args()
         Configuration.action = options.action # Action to apply to the server
-        
+
         # Verify certificat file
         if Configuration.certfile != 'None' :
             Configuration.__test_cert_file__(argparser, Configuration.certfile)
@@ -206,7 +207,7 @@ class Configuration:
             except Exception as e :
                 print(e)
                 exit(1)
-                
+
         # Load SIB types
         with open('client/util/blocktypes.json', 'rt') as jsonfile:
             Configuration.btypes = json.load(jsonfile)

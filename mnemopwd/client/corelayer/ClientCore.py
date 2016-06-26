@@ -47,6 +47,7 @@ class ClientCore(Subject):
 
     Attribut(s):
     - loop: an i/o asynchronous loop (see the official asyncio module)
+    - queue: a FIFO task queue for handling commands coming from the UI layer
     - transport: a SSL/TLS asynchronous socket (see the official ssl module)
     - protocol: a communication handler (see the official asyncio module)
     - table: block table (a dictionary)
@@ -68,8 +69,15 @@ class ClientCore(Subject):
 
         # Create an i/o asynchronous loop
         self.loop = asyncio.get_event_loop()
-        self.loop.set_debug(Configuration.loglevel == 'DEBUG')
-        logging.basicConfig(level=Configuration.loglevel)
+        if Configuration.loglevel is not None:
+            self.loop.set_debug(Configuration.loglevel == 'DEBUG')
+            logging.basicConfig(filename="client.log", \
+                                level=Configuration.loglevel, \
+                                format='%(asctime)s %(process)d %(levelname)s %(message)s', \
+                                datefmt='%m/%d/%Y %I:%M:%S')
+
+        # Create a task queue
+        self.queue = asyncio.Queue(maxsize=Configuration.queuesize, loop=self.loop)
 
         # Create and set an executor
         executor = concurrent.futures.ThreadPoolExecutor(Configuration.poolsize)
@@ -92,7 +100,7 @@ class ClientCore(Subject):
 
     def _open(self):
         """Open a new connection to the server"""
-        # New block table
+        # Block table
         self.table = {}
 
         # Create an asynchronous SSL socket
@@ -132,70 +140,132 @@ class ClientCore(Subject):
                 self.update('connection.state', 'An unexpected exception occurred')
             raise
 
-    def _close(self):
-        """Close the connection with the server"""
-        self.loop.call_soon_threadsafe(self.transport.close) # Ask to close connection
-        self.update('connection.state.logout', 'Connection closed')
-
     def _setCredentials(self, login, password):
         """Store login and password then start state S1"""
         self.protocol.login = login.encode()
         self.protocol.password = password.encode()
         # Wait for being in state number one
-        while self.protocol.state != self.protocol.states['1S']: time.sleep(0.1)
-        self.protocol.data_received(None) # Schedule execution of actual protocol state
+        while self.protocol.state != self.protocol.states['1S']: time.sleep(0.01)
+        # Schedule execution of actual protocol state
+        self.loop.run_in_executor(None, self.protocol.state.do, self.protocol, None)
 
-    def _addDataOrUpdateData(self, idBlock, values):
+    @asyncio.coroutine
+    def _commandHandler(self):
+        """Task execution loop"""
+        while True:
+            task = yield from self.queue.get()
+            yield from asyncio.wait_for(task, None)
+            self.update('connection.state', 'Task Done')
+
+    @asyncio.coroutine
+    def _close(self):
+        """Close the connection and empty queue"""
+        self.taskInProgress = False
+        yield from self.transport.close()
+        self.queue = asyncio.Queue(maxsize=Configuration.queuesize, loop=self.loop)
+
+    @asyncio.coroutine
+    def _task_close(self):
+        """Close the connection with the server"""
+        self._close()
+        self.update('connection.state.logout', 'Connection closed')
+
+    @asyncio.coroutine
+    def _task_addDataOrUpdateData(self, idBlock, values):
         """Add a new block or update an existing block"""
         if idBlock == 0:
-            self.protocol.state = self.protocol.states['35R']
+            self.protocol.state = self.protocol.states['35R'] # Add a new block
         else:
-            self.protocol.state = self.protocol.states['37R']
+            self.protocol.state = self.protocol.states['37R'] # Update an existing block
 
+        # Create a block
         self.lastblock = SecretInfoBlock(self.protocol.keyH)
         self.lastblock.nbInfo = len(values)
-
         i = 1
         for value in values:
             self.lastblock['info' + str(i)] = value
             i += 1
 
-        self.protocol.data_received(self.lastblock) # Schedule execution of actual protocol state
+        # Execute protocol state
+        self.taskInProgress = True
+        yield from self.loop.run_in_executor(None, self.protocol.state.do, self.protocol, self.lastblock)
+        while self.taskInProgress:
+            yield from asyncio.sleep(0.01, loop=self.loop)
+
+    def _deleteData(self, idBlock):
+        """Delete an existing block"""
+        self.protocol.state = self.protocol.states['36R']
+        self.lastblock = idBlock
+        # Schedule execution of actual protocol state
+        self.loop.run_in_executor(None, self.protocol.state.do, self.protocol, idBlock)
+
+    @asyncio.coroutine
+    def _task_searchData(self, pattern):
+        """Search blocks matching a pattern"""
+        self.protocol.state = self.protocol.states['34R'] # Search
+        # Execute protocol state
+        self.taskInProgress = True
+        yield from self.loop.run_in_executor(None, self.protocol.state.do, self.protocol, pattern)
+        while self.taskInProgress:
+            yield from asyncio.sleep(0.01, loop=self.loop)
+
+    def _exportData(self):
+        """Get all blocks"""
+        pass
+        #self.protocol.state = self.protocol.states['32R']
+        # Schedule execution of actual protocol state
+        #self.loop.run_in_executor(None, self.protocol.state.do, self.protocol, pattern)
 
     # Extern methods
 
     def start(self):
         """Start the main loop"""
-        self.update('connection.state', 'Please start a connection')
-        self.loop.run_forever() # Run until the end of the loop
+        self.cmdH = self.loop.create_task(self._commandHandler()) # Command loop
+        self.loop.run_forever() # Run until the end of the main loop
         self.loop.close()       # Close the main loop
 
     def stop(self):
         """Close the connection to the server then stop the main loop"""
         if self.loop.is_running():
-            self.loop.call_soon_threadsafe(self.loop.stop) # Ask to stop the main loop
+            self.loop.call_soon_threadsafe(self.cmdH.cancel) # Ask for cancelling the command loop
+            while not self.cmdH.cancelled(): time.sleep(0.01) # Waiting cancellation
+            self.loop.call_soon_threadsafe(self.loop.stop) # Ask for stopping the main loop
         else:
             self.transport.close()
             self.loop.close()
 
     def command(self, property, value):
-        """Execute a command coming from UI layer"""
-        if property == "connection.close":
-            self._close()
+        """Create and enqueue a task from a command coming from UI layer"""
+        task = None
         if property == "connection.open.credentials":
-            try:
-                self._open()
-                self._setCredentials(*value)
-            except:
-                pass
+            # Direct execution because queue is empty at this moment
+            self._open()
+            self._setCredentials(*value)
+        if property == "connection.close":
+            task = self._task_close()
         if property == "application.editblock":
-            try:
-                self._addDataOrUpdateData(*value)
-            except:
-                pass
+            task = self._task_addDataOrUpdateData(*value)
+        if property == "application.deleteblock":
+            self._deleteData(*value)
+        if property == "application.searchblock":
+            task = self._task_searchData(value)
+        if property == "application.exportblock":
+            self._exportData()
+
+        if task is not None:
+            asyncio.run_coroutine_threadsafe(self.queue.put(task), self.loop)
 
     def assignLastSIB(self, index):
-        """Callback method for assigning last block used"""
+        """Callback method for assignation of last block used"""
         if self.lastblock: self.table[index] = self.lastblock
         self.lastblock = None
+
+    def removeLastSIB(self):
+        """Callback method for removing last block used"""
+        if self.lastblock: del self.table[self.lastblock]
+        self.latsblock = None
+
+    def assignSIB(self, index_sib, sib):
+        """Callback method for assignation of a block"""
+        self.table[index_sib] = sib
 

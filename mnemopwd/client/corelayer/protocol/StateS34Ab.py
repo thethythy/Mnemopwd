@@ -39,43 +39,46 @@ class StateS34Ab(StateSCC):
 
     def do(self, handler, data):
         """Action of the state S34Ab: treat each SIB"""
-        try:
+        with handler.lock:
+            try:
+                # Test if request is valid
+                is_aSIB = data[:5] == b";SIB;"
+                if is_aSIB:
+                    try:
+                        tab_data = data[5:].split(b';', maxsplit=2)
+                        index_sib = int(tab_data[0].decode())
+                        len_sib = int(tab_data[1].decode())
+                        psib = tab_data[2]
 
-            # Test if request is valid
-            is_aSIB = data[:5] == b";SIB;"
-            if is_aSIB:
+                        # Check if two SIB are received in the same packet
+                        if len_sib < len(psib):
+                            psib = tab_data[2][:len_sib]
+                            handler.data_received(b';'+ tab_data[2][len_sib:])
 
-                #with handler.lock:
+                        if len_sib == len(psib):
+                            sib = pickle.loads(psib)
+                            sib.control_integrity(handler.keyH)
+                            handler.core.assignSIB(index_sib, sib)
+                            handler.nbSIBDone += 1
+                        else:
+                            raise Exception("S34Ab protocol error" + str(handler.nbSIBDone))
 
-                tab_data = data[5:].split(b';', maxsplit=2)
+                        # Notify the UI layer
+                        handler.loop.call_soon_threadsafe(handler.notify,
+                            "application.state.loadbar", (handler.nbSIBDone, handler.nbSIB))
 
-                try:
-                    index_sib = int(tab_data[0].decode())
-                    len_sib = int(tab_data[1].decode())
-                    psib = tab_data[2]
+                        # Indicate the actual task is done
+                        if handler.nbSIBDone == handler.nbSIB:
+                            handler.core.taskInProgress = False
 
-                    # Check if two SIB are received in the same packet
-                    if len_sib < len(psib):
-                        psib = tab_data[2][:len_sib]
-                        handler.data_received(b';'+ tab_data[2][len_sib:])
+                    except:
+                        message = "S34Ab protocol error after " + str(handler.nbSIBDone) + "/" + str(handler.nbSIB) + " blocks"
+                        raise Exception(message)
 
-                    if len_sib == len(psib):
-                        sib = pickle.loads(psib)
-                        sib.control_integrity(handler.keyH)
-                        handler.core.assignSIB(index_sib, sib)
-                        handler.nbSIBDone += 1
-                    else:
-                        raise Exception("S34Ab protocol error" + str(handler.nbSIBDone))
+                else:
+                    message = "S34Ab protocol error after " + str(handler.nbSIBDone) + "/" + str(handler.nbSIB) + " blocks"
+                    raise Exception(message)
 
-                    handler.loop.call_soon_threadsafe(handler.notify,
-                        "application.state.loadbar", (handler.nbSIBDone, handler.nbSIB))
-
-                except:
-                    raise Exception("S34Ab protocol error" + str(handler.nbSIBDone))
-
-            else:
-                raise Exception("S34Ab protocol error" + str(handler.nbSIBDone))
-
-        except Exception as exc:
-            # Schedule a call to the exception handler
-            handler.loop.call_soon_threadsafe(handler.exception_handler, exc)
+            except Exception as exc:
+                # Schedule a call to the exception handler
+                handler.loop.call_soon_threadsafe(handler.exception_handler, exc)

@@ -50,7 +50,7 @@ class StateS36R(StateSCC):
 
                 # Notify the handler a property has changed
                 handler.loop.call_soon_threadsafe(handler.notify,
-                    "application.state", "Block removing request sended to server")
+                    "application.state", "Information block removing request sended to server")
 
         except Exception as exc:
             # Schedule a call to the exception handler

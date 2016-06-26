@@ -56,7 +56,7 @@ class StateS31A(StateSCC):
                     if data[3:] == b"1":
                         message = "Configuration accepted"
                     elif data[3:] == b"2":
-                        message = "New configuration accpeted"
+                        message = "New configuration accepted"
                     else:
                         raise Exception("S31 protocol error")
 
@@ -68,6 +68,8 @@ class StateS31A(StateSCC):
 
                     # Notify the handler a property has changed
                     handler.loop.call_soon_threadsafe(handler.notify, "connection.state", message)
+                else:
+                    raise Exception("S31 protocol error")
 
         except Exception as exc:
             # Schedule a call to the exception handler
