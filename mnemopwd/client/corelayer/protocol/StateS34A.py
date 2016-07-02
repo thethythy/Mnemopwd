@@ -67,7 +67,7 @@ class StateS34A(StateSCC):
 
                             else:
                                 handler.core.taskInProgress = False
-                                handler.loop.call_soon_threadsafe(handler.notify,
+                                handler.loop.run_in_executor(None, handler.notify,
                                     "application.state", "No information found")
 
                         except:

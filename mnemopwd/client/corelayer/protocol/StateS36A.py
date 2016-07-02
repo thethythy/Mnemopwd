@@ -54,7 +54,7 @@ class StateS36A(StateSCC):
                     # Update core table
                     handler.core.removeLastSIB()
                     # Notify the handler a property has changed
-                    handler.loop.call_soon_threadsafe(handler.notify,
+                    handler.loop.run_in_executor(None, handler.notify,
                         "application.state", "Information block deleted by server")
                 else:
                     raise Exception("S36 protocol error")

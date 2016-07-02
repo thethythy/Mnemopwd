@@ -51,7 +51,7 @@ class StateS1CA():
             is_OK = data[:2] == b"OK"
             if is_OK:
                 # Notify the handler a property has changed
-                handler.loop.call_soon_threadsafe(handler.notify, "connection.state", "Session started")
+                handler.loop.run_in_executor(None, handler.notify, "connection.state", "Session started")
             else:
                 raise Eception("S1 procotol error")
 

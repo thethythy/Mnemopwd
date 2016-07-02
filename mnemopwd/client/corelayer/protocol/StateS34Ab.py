@@ -58,16 +58,16 @@ class StateS34Ab(StateSCC):
                         if len_sib == len(psib):
                             sib = pickle.loads(psib)
                             sib.control_integrity(handler.keyH)
-                            handler.core.assignSIB(index_sib, sib)
+                            handler.core.assignResultSearchSIB(index_sib, sib)
                             handler.nbSIBDone += 1
                         else:
                             raise Exception("S34Ab protocol error" + str(handler.nbSIBDone))
 
                         # Notify the UI layer
-                        handler.loop.call_soon_threadsafe(handler.notify,
+                        handler.loop.run_in_executor(None, handler.notify,
                             "application.state.loadbar", (handler.nbSIBDone, handler.nbSIB))
 
-                        # Indicate the actual task is done
+                        # Indicate the task is done
                         if handler.nbSIBDone == handler.nbSIB:
                             handler.core.taskInProgress = False
 

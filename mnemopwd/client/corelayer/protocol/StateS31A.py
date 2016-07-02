@@ -67,7 +67,8 @@ class StateS31A(StateSCC):
                                     cur3=Configuration.curve3, cip3=Configuration.cipher3)
 
                     # Notify the handler a property has changed
-                    handler.loop.call_soon_threadsafe(handler.notify, "connection.state", message)
+                    handler.loop.run_in_executor(None, handler.notify, "connection.state", message)
+
                 else:
                     raise Exception("S31 protocol error")
 

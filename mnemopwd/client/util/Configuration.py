@@ -73,7 +73,7 @@ class Configuration:
     port_min = 49152        # Minimum port value
     port_max = 65535        # Maximum port value
     loglevel = 'DEBUG'      # Default logging level
-    poolsize = 1            # Pool executor size: 1 for serializing protocol states
+    poolsize = 1            # Pool executor size
     queuesize = 500         # Queue size: up to 500 commands can be scheduled
     curve1 = 'sect571r1'    # Curve name for the first stage
     cipher1 = 'aes-256-cbc' # Cipher name for the first stage

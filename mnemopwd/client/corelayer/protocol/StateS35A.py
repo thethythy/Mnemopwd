@@ -59,7 +59,7 @@ class StateS35A(StateSCC):
                             raise Exception("S35 protocol error")
 
                         # Notify the handler a property has changed
-                        handler.loop.call_soon_threadsafe(handler.notify,
+                        handler.loop.run_in_executor(None, handler.notify,
                             "application.state", "New informations saved by server")
 
                         # Indicate the actual task is done

@@ -50,7 +50,7 @@ class StateS35R(StateSCC):
                     handler.loop.call_soon_threadsafe(handler.transport.write, message)
 
                     # Notify the handler a property has changed
-                    handler.loop.call_soon_threadsafe(handler.notify,
+                    handler.loop.run_in_executor(None, handler.notify,
                         "application.state", "New informations sended to server")
 
             except Exception as exc:
