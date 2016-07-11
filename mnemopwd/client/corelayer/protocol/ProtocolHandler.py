@@ -34,6 +34,7 @@ from client.util.Configuration import Configuration
 Handler of the secure protocol connection with the server
 """
 
+
 class ProtocolHandler(asyncio.Protocol):
     """
     The secure protocol handler in communication with the server.
@@ -67,14 +68,15 @@ class ProtocolHandler(asyncio.Protocol):
         self.loop = core.loop
         self.password = self.login = 'None'
         # The protocol states
-        self.states = {'0':StateS0(),
-                       '1S':StateS1S(), '1CR':StateS1CR(), '1CA':StateS1CA(),
-                       '21R':StateS21R(), '21A':StateS21A(),
-                       '22R':StateS22R(), '22A':StateS22A(),
-                       '31R':StateS31R(), '31A':StateS31A(),
-                       '34R':StateS34R(), '34A':StateS34A(), '34Ab':StateS34Ab(),
-                       '35R':StateS35R(), '35A':StateS35A(),
-                       '36R':StateS36R(), '36A':StateS36A()}
+        self.states = {'0': StateS0(),
+                       '1S': StateS1S(), '1CR': StateS1CR(), '1CA': StateS1CA(),
+                       '21R': StateS21R(), '21A': StateS21A(),
+                       '22R': StateS22R(), '22A': StateS22A(),
+                       '31R': StateS31R(), '31A': StateS31A(),
+                       '34R': StateS34R(), '34A': StateS34A(), '34Ab': StateS34Ab(),
+                       '35R': StateS35R(), '35A': StateS35A(),
+                       '36R': StateS36R(), '36A': StateS36A(),
+                       '37R': StateS37R(), '37A': StateS37A()}
         # The client configuration
         self.config = Configuration.curve1 + ";" + Configuration.cipher1 + ";" + \
                       Configuration.curve2 + ";" + Configuration.cipher2 + ";" + \
@@ -85,23 +87,23 @@ class ProtocolHandler(asyncio.Protocol):
     def connection_made(self, transport):
         self.transport = transport
         self.peername = transport.get_extra_info('peername')
-        self.state = self.states['0'] # State 0 at the beginning
+        self.state = self.states['0']  # State 0 at the beginning
 
     def data_received(self, data):
         # Wait for actual execution before scheduling a new execution
         with self.lock:
-            self.loop.run_in_executor(None, self.state.do, self, data) # Future execution
+            self.loop.run_in_executor(None, self.state.do, self, data)  # Future execution
 
     def connection_lost(self, exc):
         if exc:
             self.notify('connection.state.error', str(exc).capitalize())
-        yield from self.core._close()
+        yield from self.core.close()
 
     def exception_handler(self, exc):
         """Exception handler for actions executed by the executor"""
         self.notify('connection.state.error', str(exc).capitalize())
-        yield from self.core._close()
+        yield from self.core.close()
 
-    def notify(self, property, value):
+    def notify(self, key, value):
         """Notify ClientCore a property has changed"""
-        self.core.update(property, value)
+        self.core.update(key, value)
