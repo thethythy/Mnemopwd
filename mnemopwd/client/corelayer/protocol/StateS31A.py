@@ -34,44 +34,50 @@ from client.corelayer.protocol.StateSCC import StateSCC
 from common.KeyHandler import KeyHandler
 from client.util.Configuration import Configuration
 
+
 @singleton
 class StateS31A(StateSCC):
     """State S31 : Configuration"""
 
     def do(self, handler, data):
         """Action of the state S31A: treat response of configuration request"""
-        try:
+        with handler.lock:
+            try:
 
-            # Test challenge response
-            if self.control_challenge(handler, data):
+                # Test challenge response
+                if self.control_challenge(handler, data):
 
-                # Test if configuration request is rejected
-                is_KO = data[:5] == b"ERROR"
-                if is_KO:
-                    raise Exception((data[6:]).decode())
+                    # Test if configuration request is rejected
+                    is_KO = data[:5] == b"ERROR"
+                    if is_KO:
+                        raise Exception((data[6:]).decode())
 
-                # Test if configuration is accepted
-                is_OK = data[:2] == b"OK"
-                if is_OK:
-                    if data[3:] == b"1":
-                        message = "Configuration accepted"
-                    elif data[3:] == b"2":
-                        message = "New configuration accepted"
+                    # Test if configuration is accepted
+                    is_OK = data[:2] == b"OK"
+                    if is_OK:
+                        if data[3:] == b"1":
+                            message = "Configuration accepted"
+                        elif data[3:] == b"2":
+                            message = "New configuration accepted"
+                        else:
+                            raise Exception("S31 protocol error")
+
+                        # Create the client KeyHandler
+                        handler.keyH = KeyHandler(handler.ms,
+                                                  cur1=Configuration.curve1, cip1=Configuration.cipher1,
+                                                  cur2=Configuration.curve2, cip2=Configuration.cipher2,
+                                                  cur3=Configuration.curve3, cip3=Configuration.cipher3)
+
+                        # Task is ended
+                        handler.core.taskInProgress = False
+
+                        # Notify the handler a property has changed
+                        handler.loop.run_in_executor(None, handler.notify, "application.keyhandler", handler.keyH)
+                        handler.loop.run_in_executor(None, handler.notify, "connection.state", message)
+
                     else:
                         raise Exception("S31 protocol error")
 
-                    # Create the client KeyHandler
-                    handler.keyH = KeyHandler(handler.ms,
-                                    cur1=Configuration.curve1, cip1=Configuration.cipher1,
-                                    cur2=Configuration.curve2, cip2=Configuration.cipher2,
-                                    cur3=Configuration.curve3, cip3=Configuration.cipher3)
-
-                    # Notify the handler a property has changed
-                    handler.loop.run_in_executor(None, handler.notify, "connection.state", message)
-
-                else:
-                    raise Exception("S31 protocol error")
-
-        except Exception as exc:
-            # Schedule a call to the exception handler
-            handler.loop.call_soon_threadsafe(handler.exception_handler, exc)
+            except Exception as exc:
+                # Schedule a call to the exception handler
+                handler.loop.call_soon_threadsafe(handler.exception_handler, exc)

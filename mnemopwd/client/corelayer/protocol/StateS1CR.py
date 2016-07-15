@@ -35,45 +35,46 @@ from pyelliptic import OpenSSL
 from pyelliptic import Cipher
 from pyelliptic import hmac_sha256
 
+
 @singleton
-class StateS1CR():
+class StateS1CR:
     """State S1CR : Session"""
 
     def do(self, handler, data):
         """Action of the state S1CR: answer the challenge request"""
+        with handler.lock:
+            try:
+                # Test for S1CR command
+                is_cd_S1CR = data[:10] == b"CHALLENGER"
+                if not is_cd_S1CR:
+                    raise Exception('S1CR protocol error')
 
-        try:
-            # Test for S1CR command
-            is_cd_S1CR = data[:10] == b"CHALLENGER"
-            if not is_cd_S1CR : raise Exception('S1CR protocol error')
+                # Get esession number
+                blocksize = OpenSSL.get_cipher('aes-256-cbc').get_blocksize()
+                iv = data[11:11+blocksize]
+                esession = data[12+blocksize:]
 
-            # Get esession number
-            blocksize = OpenSSL.get_cipher('aes-256-cbc').get_blocksize()
-            iv = data[11:11+blocksize]
-            esession = data[12+blocksize:]
+                # Decrypt session number
+                ctx = Cipher(handler.ms, iv, 0, 'aes-256-cbc')
+                session = ctx.ciphering(esession)
 
-            # Decrypt session number
-            ctx = Cipher(handler.ms, iv, 0, 'aes-256-cbc')
-            session = ctx.ciphering(esession)
+                # Compute challenge answer
+                challenge = hmac_sha256(handler.ms, session + b'S1.12')
 
-            # Compute challenge answer
-            challenge = hmac_sha256(handler.ms, session + b'S1.12')
+                # Encrypt challenge answer
+                echallenge = handler.ephecc.encrypt(challenge, pubkey=handler.ephecc.get_pubkey())
 
-            # Encrypt challenge answer
-            echallenge = handler.ephecc.encrypt(challenge, pubkey=handler.ephecc.get_pubkey())
+                # Send challenge answer
+                message = b'CHALLENGEA;' + echallenge
+                handler.loop.call_soon_threadsafe(handler.transport.write, message)
 
-            # Send challenge answer
-            message = b'CHALLENGEA;' + echallenge
-            handler.loop.call_soon_threadsafe(handler.transport.write, message)
+                # Notify the handler a property has changed
+                handler.loop.run_in_executor(None, handler.notify, "connection.state", "Sending challenge answer")
 
-            # Notify the handler a property has changed
-            handler.loop.run_in_executor(None, handler.notify, "connection.state", "Sending challenge answer")
+            except Exception as exc:
+                # Schedule a call to the exception handler
+                handler.loop.call_soon_threadsafe(handler.exception_handler, exc)
 
-        except Exception as exc:
-            # Schedule a call to the exception handler
-            handler.loop.call_soon_threadsafe(handler.exception_handler, exc)
-
-        else:
-            handler.session = session # Store the session number
-            handler.state = handler.states['1CA'] # Next state
-
+            else:
+                handler.session = session  # Store the session number
+                handler.state = handler.states['1CA']  # Next state

@@ -32,35 +32,37 @@ State S21 : Login
 from client.util.funcutils import singleton
 from client.corelayer.protocol.StateSCC import StateSCC
 
+
 @singleton
 class StateS21A(StateSCC):
     """State S21 : Login"""
 
     def do(self, handler, data):
         """Action of the state S21A: treat response of login request"""
-        try:
+        with handler.lock:
+            try:
 
-            # Test challenge response
-            if self.control_challenge(handler, data):
+                # Test challenge response
+                if self.control_challenge(handler, data):
 
-                # Test if login request is rejected
-                is_KO = data[:5] == b"ERROR"
-                if is_KO:
-                    message = (data[6:]).decode()
-                    raise Exception(message)
+                    # Test if login request is rejected
+                    is_KO = data[:5] == b"ERROR"
+                    if is_KO:
+                        message = (data[6:]).decode()
+                        raise Exception(message)
 
-                # Test if login is accepted
-                is_OK = data[:2] == b"OK"
-                if is_OK:
-                    # Notify the handler a property has changed
-                    handler.loop.run_in_executor(None, handler.notify, "connection.state.login", "Connected to server")
-                else:
-                    raise Exception("S21 protocol error")
+                    # Test if login is accepted
+                    is_OK = data[:2] == b"OK"
+                    if is_OK:
+                        # Notify the handler a property has changed
+                        handler.loop.run_in_executor(None, handler.notify, "connection.state.login", "Connected to server")
+                    else:
+                        raise Exception("S21 protocol error")
 
-        except Exception as exc:
-            # Schedule a call to the exception handler
-            handler.loop.call_soon_threadsafe(handler.exception_handler, exc)
+            except Exception as exc:
+                # Schedule a call to the exception handler
+                handler.loop.call_soon_threadsafe(handler.exception_handler, exc)
 
-        else:
-            handler.state = handler.states['31R'] # Next state
-            handler.loop.run_in_executor(None, handler.state.do, handler, None) # Future execution
+            else:
+                handler.state = handler.states['31R']  # Next state
+                handler.loop.run_in_executor(None, handler.state.do, handler, None)  # Future execution

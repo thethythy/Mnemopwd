@@ -6,14 +6,14 @@
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
-# 1. Redistributions of source code must retain the above copyright notice, this 
+# 1. Redistributions of source code must retain the above copyright notice, this
 # list of conditions and the following disclaimer.
 #
 # 2. Redistributions in binary form must reproduce the above copyright notice,
 # this list of conditions and the following disclaimer in the documentation
 # and/or other materials provided with the distribution.
 #
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 # AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
 # THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
 # PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
@@ -35,7 +35,7 @@ class LoginWindow(TitledBorderWindow):
     """
     The login window: get the login/password user credentials
     """
-    
+
     def __init__(self, parent):
         """Create the window"""
         size_y = 14
@@ -45,17 +45,17 @@ class LoginWindow(TitledBorderWindow):
                                     int(curses.LINES / 2) - int(size_y / 2),
                                     int(curses.COLS / 2) - int(size_x / 2),
                                     "Connection window", modal=True)
-        
+
         self.window.addstr(5, 2, "Login")
         self.window.addstr(8, 2, "Password")
-        
+
         # Ordered list of shortcut keys
         self.shortcuts = ['', '', 'N', 'L', 'A']
-        
+
         # Editable components
         self.logineditor = InputBox(self, 3, size_x - 15, 5 - 1, 12, self.shortcuts)
-        self.passeditor = InputBox(self, 3, size_x - 15, 8 - 1, 12, self.shortcuts, secret=True) 
-        
+        self.passeditor = InputBox(self, 3, size_x - 15, 8 - 1, 12, self.shortcuts, secret=True)
+
         # Actionnable components
         posx = gap = int(((size_x - 2) - (9 + 7 + 8)) / 4) + 1
         self.connectButton = ButtonBox(self, 11, posx, "Connect", 'N')
@@ -63,32 +63,37 @@ class LoginWindow(TitledBorderWindow):
         self.clearButton = ButtonBox(self, 11, posx, "Clear", 'L')
         posx = posx + 7 + gap
         self.cancelButton = ButtonBox(self, 11, posx, "Cancel", 'A')
-        
+
         # Ordered list of components
-        self.items = [self.logineditor, self.passeditor, self.connectButton, 
+        self.items = [self.logineditor, self.passeditor, self.connectButton,
                       self.clearButton, self.cancelButton]
-        
+
         self.window.refresh()
-        
+
     def start(self):
         while True:
             result = TitledBorderWindow.start(self) # Default controller
-            
+
+            # Next item for editable items
+            if type(result) is InputBox:
+                result.focus_off()
+                self.index = (self.index + 1) % len(self.items)
+
             # Cancel login window
-            if result == False or result == self.cancelButton:
+            elif result == False or result == self.cancelButton:
                 self.close()
                 return False, False
-                
+
             # Clear all input boxes
             elif result == self.clearButton:
                 self.logineditor.clear()
                 self.passeditor.clear()
-                self.clearButton.focusOff()
+                self.clearButton.focus_off()
                 self.index = 0
-                
+
             # Try to return login and password
             elif result == self.connectButton:
-                self.connectButton.focusOff()
+                self.connectButton.focus_off()
                 if self.logineditor.value is None :
                     self.index = 0
                 elif self.passeditor.value is None :

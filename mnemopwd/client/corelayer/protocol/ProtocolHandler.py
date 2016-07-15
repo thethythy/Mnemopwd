@@ -40,7 +40,7 @@ class ProtocolHandler(asyncio.Protocol):
     The secure protocol handler in communication with the server.
     The first state is S0. The state objects are responsible of choosing the next state.
 
-    Attribut(s):
+    Attribute(s):
     - core: the ClientCore instance
     - loop: the asyncio loop
     - states: sequence of state objects
@@ -96,13 +96,14 @@ class ProtocolHandler(asyncio.Protocol):
 
     def connection_lost(self, exc):
         if exc:
-            self.notify('connection.state.error', str(exc).capitalize())
-        yield from self.core.close()
+            self.loop.run_in_executor(None, self.notify, 'connection.state.error', str(exc).capitalize())
+        self.core.close()
 
     def exception_handler(self, exc):
         """Exception handler for actions executed by the executor"""
         self.notify('connection.state.error', str(exc).capitalize())
-        yield from self.core.close()
+        self.core.taskInProgress = False
+        self.core.close()
 
     def notify(self, key, value):
         """Notify ClientCore a property has changed"""

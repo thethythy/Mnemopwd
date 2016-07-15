@@ -33,36 +33,36 @@ State S1 : Session
 from client.util.Configuration import Configuration
 from client.util.funcutils import singleton
 
+
 @singleton
-class StateS1CA():
+class StateS1CA:
     """State S1CA : Session"""
 
     def do(self, handler, data):
         """Action of the state S1CA: wait server response of the client challenge answer"""
+        with handler.lock:
+            try:
+                # Test if challenge is rejected
+                is_KO = data[:5] == b"ERROR"
+                if is_KO:
+                    protocol_data = data[6:]
+                    raise Exception(protocol_data)
 
-        try:
-            # Test if challenge is rejected
-            is_KO = data[:5] == b"ERROR"
-            if is_KO:
-                protocol_data = data[6:]
-                raise Exception(protocol_data)
+                # Test if challenge is accepted
+                is_OK = data[:2] == b"OK"
+                if is_OK:
+                    # Notify the handler a property has changed
+                    handler.loop.run_in_executor(None, handler.notify, "connection.state", "Session started")
+                else:
+                    raise Exception("S1 protocol error")
 
-            # Test if challenge is accepted
-            is_OK = data[:2] == b"OK"
-            if is_OK:
-                # Notify the handler a property has changed
-                handler.loop.run_in_executor(None, handler.notify, "connection.state", "Session started")
+            except Exception as exc:
+                # Schedule a call to the exception handler
+                handler.loop.call_soon_threadsafe(handler.exception_handler, exc)
+
             else:
-                raise Eception("S1 procotol error")
-
-        except Exception as exc:
-            # Schedule a call to the exception handler
-            handler.loop.call_soon_threadsafe(handler.exception_handler, exc)
-
-        else:
-            if Configuration.first_execution:
-                handler.state = handler.states['22R'] # Next state is S22
-            else:
-                handler.state = handler.states['21R'] # Next state is S21
-            handler.loop.run_in_executor(None, handler.state.do, handler, None) # Future execution
-
+                if Configuration.first_execution:
+                    handler.state = handler.states['22R']  # Next state is S22
+                else:
+                    handler.state = handler.states['21R']  # Next state is S21
+                handler.loop.run_in_executor(None, handler.state.do, handler, None)  # Future execution

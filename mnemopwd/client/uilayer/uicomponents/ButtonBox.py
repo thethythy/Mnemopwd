@@ -28,6 +28,7 @@
 import curses
 from client.uilayer.uicomponents.Component import Component
 
+
 class ButtonBox(Component):
     """A simple button text box"""
     
@@ -35,21 +36,21 @@ class ButtonBox(Component):
         self.label = ' ' + label + ' '
         Component.__init__(self, parent, 1, len(self.label) + 1, y, x)
         self.shortcut = shortcut
-        self.focusOff()
+        self.focus_off()
         
-    def focusOn(self):
+    def focus_on(self):
         """See mother class"""
         self.window.addstr(0, 0, self.label, curses.A_BLINK | curses.A_REVERSE)
         if self.shortcut:
-            self.window.addstr(0, self.label.upper().find(self.shortcut) , self.shortcut, 
+            self.window.addstr(0, self.label.upper().find(self.shortcut), self.shortcut,
                                curses.A_UNDERLINE | curses.A_BLINK | curses.A_REVERSE)
         self.window.refresh()
         
-    def focusOff(self):
+    def focus_off(self):
         """See mother class"""
         self.window.addstr(0, 0, self.label, curses.A_REVERSE)
         if self.shortcut:
-            self.window.addstr(0, self.label.upper().find(self.shortcut) , self.shortcut, 
+            self.window.addstr(0, self.label.upper().find(self.shortcut), self.shortcut,
                                curses.A_UNDERLINE | curses.A_REVERSE)
         self.window.refresh()
         
@@ -67,9 +68,9 @@ class ButtonBox(Component):
         
     def redraw(self):
         """See mother class"""
-        self.focusOff()
+        self.focus_off()
         
-    def setLabel(self, label, focus=False):
+    def set_label(self, label, focus=False):
         """Set the label of the button"""
         self.window.erase()
         self.label = ' ' + label + ' '
@@ -78,6 +79,6 @@ class ButtonBox(Component):
     def _create(self, focus):
         self.window = self.parent.window.derwin(1, len(self.label) + 1, self.y, self.x)
         if focus:
-            self.focusOn()
+            self.focus_on()
         else:
-            self.focusOff()
+            self.focus_off()

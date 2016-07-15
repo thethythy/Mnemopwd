@@ -32,35 +32,36 @@ State S22 : Creation
 from client.util.funcutils import singleton
 from client.corelayer.protocol.StateSCC import StateSCC
 
+
 @singleton
 class StateS22R(StateSCC):
     """State S22 : Creation"""
 
     def do(self, handler, data):
         """Action of the state S22R: creation request"""
+        with handler.lock:
+            try:
+                # Challenge creation
+                echallenge = self.compute_challenge(handler, b"S22.7")
+                if echallenge:
 
-        try:
-            # Challenge creation
-            echallenge = self.compute_challenge(handler, b"S22.7")
-            if echallenge:
+                    # Encrypt login
+                    elogin = handler.ephecc.encrypt(handler.login, pubkey=handler.ephecc.get_pubkey())
 
-                # Encrypt login
-                elogin = handler.ephecc.encrypt(handler.login, pubkey=handler.ephecc.get_pubkey())
+                    # Compute then encrypt id
+                    id = self.compute_client_id(handler.ms, handler.login)
+                    eid = handler.ephecc.encrypt(id, pubkey=handler.ephecc.get_pubkey())
 
-                # Compute then encrypt id
-                id = self.compute_client_id(handler.ms, handler.login)
-                eid = handler.ephecc.encrypt(id, pubkey=handler.ephecc.get_pubkey())
+                    # Send login request
+                    message = echallenge + b';CREATION;' + eid + b';' + elogin
+                    handler.loop.call_soon_threadsafe(handler.transport.write, message)
 
-                # Send login request
-                message = echallenge + b';CREATION;' + eid + b';' + elogin
-                handler.loop.call_soon_threadsafe(handler.transport.write, message)
+                    # Notify the handler a property has changed
+                    handler.loop.run_in_executor(None, handler.notify, "connection.state", "User account creation request")
 
-                # Notify the handler a property has changed
-                handler.loop.run_in_executor(None, handler.notify, "connection.state", "User account creation request")
+            except Exception as exc:
+                # Schedule a call to the exception handler
+                handler.loop.call_soon_threadsafe(handler.exception_handler, exc)
 
-        except Exception as exc:
-            # Schedule a call to the exception handler
-            handler.loop.call_soon_threadsafe(handler.exception_handler, exc)
-
-        else:
-            handler.state = handler.states['22A'] # Next state
+            else:
+                handler.state = handler.states['22A']  # Next state

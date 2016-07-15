@@ -36,7 +36,8 @@ from client.uilayer.uiapplication.MainWindow import MainWindow
 Standard curses user interface.
 """
 
-locale.setlocale(locale.LC_ALL, '') # Set locale setting
+locale.setlocale(locale.LC_ALL, '')  # Set locale setting
+
 
 class ClientUI(Thread, Observer):
     """
@@ -52,23 +53,23 @@ class ClientUI(Thread, Observer):
     - update: update the UI (implementation of the Observer class method)
     """
 
-    encoding = locale.getpreferredencoding() # Get locale encoding
+    encoding = locale.getpreferredencoding()  # Get locale encoding
 
     def __init__(self, facade):
         """Create an initialize UI"""
         Thread.__init__(self)
         Observer.__init__(self)
 
-        self.corefacade = facade # Store the facade of the domain layer
+        self.corefacade = facade  # Store the facade of the domain layer
 
         # curses initialization
         self.window = curses.initscr()
-        self.window.keypad(1) # Let special keys be a single key
-        curses.noecho() # No echoing key pressed
-        try: curses.curs_set(0) # No cursor
-        except: pass
-        curses.mousemask(curses.BUTTON1_CLICKED | curses.BUTTON2_CLICKED |
-                         curses.BUTTON3_CLICKED | curses.BUTTON4_CLICKED) # Mouse events
+        self.window.keypad(1)  # Let special keys be a single key
+        curses.noecho()  # No echoing key pressed
+        try:
+            curses.curs_set(0)  # No cursor
+        except:
+            pass
 
         # Open the main window
         self.wmain = MainWindow(self)
@@ -77,29 +78,39 @@ class ClientUI(Thread, Observer):
         """Stop UI and return to normal interaction"""
         curses.nocbreak()
         self.window.keypad(False)
-        try: curses.curs_set(2)
-        except: pass
+        try:
+            curses.curs_set(2)
+        except:
+            pass
         curses.echo()
         curses.endwin()
 
     def run(self):
         """The loop interaction"""
-        self.wmain.start() # Interaction as long as window is not closed
-        self.corefacade.stop() # Stop the core layer
+        self.wmain.start()  # Interaction as long as window is not closed
+        self.corefacade.stop()  # Stop the core layer
 
-    def update(self, property, value):
+    def update(self, key, value):
         """Implementation of the method of the class Observer."""
-        if property == "connection.state":
+        if key == "connection.state":
             self.wmain.update_status(value)
-        if property == "connection.state.login":
-            self.wmain.update_window(property, value)
-        if property == "connection.state.logout":
-            self.wmain.update_window(property, value)
-        if property == "connection.state.error":
-            self.wmain.update_window(property, value)
-        if property == "application.state":
+        if key == "connection.state.login":
+            self.wmain.update_window(key, value)
+        if key == "connection.state.logout":
+            self.wmain.update_window(key, value)
+        if key == "connection.state.error":
+            self.wmain.update_window(key, value)
+        if key == "application.state":
             self.wmain.update_status(value)
+        if key == "application.keyhandler":
+            self.wmain.update_window(key, value)
+        if key == "application.state.loadbar":
+            self.wmain.update_load_bar(*value)
+        if key == "application.searchblock.result":
+            self.wmain.update_window(key, value)
+        if key == "application.searchblock.oneresult":
+            self.wmain.update_window(key, value)
 
-    def inform(self, property, value):
-        """Indicate to core layer one user demand"""
-        self.corefacade.command(property, value)
+    def inform(self, key, value):
+        """Indicate to core layer a user demand"""
+        self.corefacade.command(key, value)

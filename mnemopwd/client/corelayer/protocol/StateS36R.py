@@ -32,29 +32,30 @@ State S36 : DeleteData
 from client.util.funcutils import singleton
 from client.corelayer.protocol.StateSCC import StateSCC
 
+
 @singleton
 class StateS36R(StateSCC):
     """State S36 : DeleteData"""
 
     def do(self, handler, data):
         """Action of the state S36R: send a index block to delete"""
+        with handler.lock:
+            try:
+                # Challenge creation
+                echallenge = self.compute_challenge(handler, b'S36.4')
+                if echallenge:
+                    # Send DeleteData request
+                    message = echallenge + b';DELETEDATA;' + (str(data)).encode()
+                    handler.loop.call_soon_threadsafe(handler.transport.write, message)
 
-        try:
-            # Challenge creation
-            echallenge = self.compute_challenge(handler, b"S36.4")
-            if echallenge:
+                    # Notify the handler a property has changed
+                    handler.loop.run_in_executor(None, handler.notify,
+                                                 'application.state',
+                                                 'Information block removing request send to server')
 
-                # Send DeleteData request
-                message = echallenge + b';DELETEDATA;' + (str(data)).encode()
-                handler.loop.call_soon_threadsafe(handler.transport.write, message)
+            except Exception as exc:
+                # Schedule a call to the exception handler
+                handler.loop.call_soon_threadsafe(handler.exception_handler, exc)
 
-                # Notify the handler a property has changed
-                handler.loop.run_in_executor(None, handler.notify,
-                    "application.state", "Information block removing request sended to server")
-
-        except Exception as exc:
-            # Schedule a call to the exception handler
-            handler.loop.call_soon_threadsafe(handler.exception_handler, exc)
-
-        else:
-            handler.state = handler.states['36A'] # Next state
+            else:
+                handler.state = handler.states['36A']  # Next state

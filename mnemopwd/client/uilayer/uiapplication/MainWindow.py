@@ -28,12 +28,14 @@
 import curses
 
 from client.util.Configuration import Configuration
+from client.util.funcutils import sfill
 from client.uilayer.uicomponents.BaseWindow import BaseWindow
 from client.uilayer.uicomponents.ButtonBox import ButtonBox
 from client.uilayer.uiapplication.LoginWindow import LoginWindow
 from client.uilayer.uiapplication.EditionWindow import EditionWindow
 from client.uilayer.uiapplication.SearchWindow import SearchWindow
 from client.uilayer.uiapplication.CreateMenu import CreateMenu
+
 
 class MainWindow(BaseWindow):
     """
@@ -43,15 +45,15 @@ class MainWindow(BaseWindow):
     def __init__(self, facade):
         """Create the window"""
         BaseWindow.__init__(self, None, curses.LINES - 2, curses.COLS, 0, 0)
-        self.uifacade = facade # Reference on ui layer facade
-        self.connected = False # Login state
+        self.uifacade = facade  # Reference on ui layer facade
+        self.connected = False  # Login state
 
         # Menu zone
         self.window.hline(1, 0, curses.ACS_HLINE, curses.COLS)
         message = "MnemoPwd Client v" + Configuration.version
         self.window.addstr(0, curses.COLS - len(message) - 1, message)
         self.window.addch(0, curses.COLS - len(message) - 3, curses.ACS_VLINE)
-        self.window.addch(1, curses.COLS - len(message) - 3 , curses.ACS_BTEE)
+        self.window.addch(1, curses.COLS - len(message) - 3, curses.ACS_BTEE)
         self.window.refresh()
 
         self.searchButton = ButtonBox(self, 0, 0, "Search", shortcut='E')
@@ -66,42 +68,57 @@ class MainWindow(BaseWindow):
         self.items = [self.searchButton, self.newButton, self.loginButton, self.exitButton]
 
         # Edition window
-        self.editscr = EditionWindow(self, curses.LINES - 4, int(curses.COLS * 2/3), \
+        self.editscr = EditionWindow(self, curses.LINES - 4, int(curses.COLS * 2/3),
                                      2, int(curses.COLS * 1/3), "Edition", Configuration.btypes)
 
         # Search window
-        self.searchscr = SearchWindow(self, curses.LINES - 4, int(curses.COLS * 1/3), \
-                                      2, 0, "Search")
+        self.searchscr = SearchWindow(self, curses.LINES - 4, int(curses.COLS * 1/3), 2, 0, "Search")
 
         # Status window
         self.statscr = curses.newwin(2, curses.COLS, curses.LINES - 2, 0)
         self.statscr.hline(0, 0, curses.ACS_HLINE, curses.COLS)
-        self.statscr.attrset(curses.A_DIM)
         self.statscr.refresh()
 
-    def _getCredentials(self):
+    def _get_credentials(self):
         """Get login/password"""
         self.update_status('Please start a connection')
         login, passwd = LoginWindow(self).start()
-        if (login != False):
+        if login is not False:
             self.uifacade.inform("connection.open.credentials", (login, passwd))
             self.window.addstr(1, 0, login+passwd)
             login = passwd = "                            "
 
-    def _editNewBlock(self, number, idBlock):
+    def _handle_block(self, number, idblock):
         """Start block edition"""
-        message = "Edit '" + ((Configuration.btypes[str(number)])["1"])["name"] + "' new block"
+        # Change status message
+        message = "Edit '" + ((Configuration.btypes[str(number)])["1"])["name"] + "' information block"
         self.update_status(message)
-        self.editscr.setType(number)
-        result, values = self.editscr.start()
-        if result:
-            self.uifacade.inform("application.editblock", (idBlock, values))
-        else:
-            self.update_status(' ')
 
-    def start(self):
+        # Prepare edition window
+        if idblock is None:
+            self.editscr.set_type(number)
+
+        # Do edition
+        result, values = self.editscr.start()
+
+        # According to the result, save / update or delete or do nothing
+        if result is True:
+            self.uifacade.inform("application.editblock", (idblock, values))
+            self.searchscr.do_search()  # Update search window
+        elif values is True:
+            self.uifacade.inform("application.deleteblock", idblock)
+            self.searchscr.do_search()  # Update search window
+        else:
+            self.update_status('')
+
+    def _search_block(self):
+        """Start searching block"""
+        self.searchscr.pre_search()
+        return self.searchscr.start()
+
+    def start(self, timeout=-1):
         # Get login/password
-        self._getCredentials()
+        self._get_credentials()
 
         while True:
             # Interaction loop
@@ -110,53 +127,85 @@ class MainWindow(BaseWindow):
             # Search some entries
             if result == self.searchButton:
                 if self.connected:
-                    pass
+                    self.searchButton.focus_off()
+                    result, values = self._search_block()
+                    if type(result) is int:
+                        self._handle_block(int(values[0]), result)
                 else:
                     self.update_status('Please start a connection')
 
             # Create a new entry
             elif result == self.newButton:
                 if self.connected:
-                    self.newButton.focusOff()
+                    self.newButton.focus_off()
                     result = CreateMenu(self, Configuration.btypes, 2, 9).start()
                     if result:
-                        self._editNewBlock(result, 0)
+                        self._handle_block(result, None)
                 else:
                     self.update_status('Please start a connection')
 
             # Try a new connection or close connection
             elif result == self.loginButton:
                 if not self.connected:
-                    self.loginButton.focusOff()
-                    self._getCredentials()
+                    self.loginButton.focus_off()
+                    self._get_credentials()
                 else:
                     self.uifacade.inform("connection.close", None)
 
             # Quit application
             elif result == self.exitButton:
-                if self.connected: self.uifacade.inform("connection.close", None)
+                if self.connected:
+                    self.uifacade.inform("connection.close", None)
                 break
 
-    def update_window(self, property, value):
+    def update_window(self, key, value):
         """Update the main window content"""
-        if property == "connection.state.login":
+        if key == "connection.state.login":
             self.connected = True
-            self.loginButton.setLabel("Logout", self.loginButton == self.items[self.index])
+            self.loginButton.set_label("Logout", self.loginButton == self.items[self.index])
             self.exitButton.move(0, 24, self.exitButton == self.items[self.index])
             self.update_status(value)
-        if property == "connection.state.logout":
+        if key == "connection.state.logout":
             self.connected = False
-            self.loginButton.setLabel("Login", self.loginButton == self.items[self.index])
+            self.loginButton.set_label("Login", self.loginButton == self.items[self.index])
             self.exitButton.move(0, 23, self.exitButton == self.items[self.index])
             self.update_status(value)
             self.editscr.clear_content()
-        if property == "connection.state.error":
+            self.searchscr.clear_content()
+        if key == "connection.state.error":
             self.connected = False
-            self.loginButton.setLabel("Login", self.loginButton == self.items[self.index])
+            self.loginButton.set_label("Login", self.loginButton == self.items[self.index])
             self.exitButton.move(0, 23, self.exitButton == self.items[self.index])
             self.update_status(value)
             self.editscr.clear_content()
+            self.searchscr.clear_content()
             curses.flash()
+        if key == "application.keyhandler":
+            self.editscr.set_keyhandler(value)
+        if key == "application.searchblock.result":
+            self.searchscr.post_search(value)
+        if key == "application.searchblock.oneresult":
+            self.searchscr.add_a_result(*value)
+        if key == "application.editionblock.seteditors":
+            number, values = value
+            self.editscr.set_type(number)
+            self.editscr.set_infos(values)
+        if key == "application.editionblock.cleareditors":
+            self.editscr.clear_content()
+
+    def update_load_bar(self, actual, maxi):
+        import math
+        max_len = curses.COLS - 15
+        actual_len = int(actual * max_len / maxi)
+        percent = str(math.floor(actual_len * 100 / max_len))
+        message = sfill(actual_len, '█')
+        currenty, currentx = curses.getsyx()  # Save current cursor position
+        self.statscr.move(1, 7)
+        self.statscr.clrtoeol()
+        self.statscr.addstr(1, 8, percent + " %")  # Show percentage
+        self.statscr.addstr(1, 14, message)  # Show load bar
+        self.statscr.refresh()
+        curses.setsyx(currenty, currentx)   # Set cursor position to saved position
 
     def update_status(self, value):
         """Update the status window content"""

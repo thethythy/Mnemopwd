@@ -33,8 +33,9 @@ State SO : KeySharing
 from client.util.funcutils import singleton
 from pyelliptic import ECC
 
+
 @singleton
-class StateS0():
+class StateS0:
     """State S0 : KeySharing"""
 
     def do(self, handler, data):
@@ -43,13 +44,16 @@ class StateS0():
         try:
             # Test for S1C command
             is_cd_S0C = data[:10] == b"KEYSHARING"
-            if not is_cd_S0C : raise Exception('S0 protocol error')
+            if not is_cd_S0C:
+                raise Exception('S0 protocol error')
 
             # Test for ephemeral server public key
             protocol_data = data[11:]
             ephecc = ECC(pubkey=protocol_data)
-            try: assert protocol_data == ephecc.get_pubkey()
-            except AssertionError : raise Exception('bad ephemeral server public key')
+            try:
+                assert protocol_data == ephecc.get_pubkey()
+            except AssertionError:
+                raise Exception('bad ephemeral server public key')
 
             # Notify the handler a property has changed
             handler.loop.run_in_executor(None, handler.notify, "connection.state", "Waiting for login/password")
@@ -59,5 +63,5 @@ class StateS0():
             handler.loop.call_soon_threadsafe(handler.exception_handler, exc)
 
         else:
-            handler.ephecc = ephecc # Store the ephemeral public key
-            handler.state = handler.states['1S'] # Next state
+            handler.ephecc = ephecc  # Store the ephemeral public key
+            handler.state = handler.states['1S']  # Next state

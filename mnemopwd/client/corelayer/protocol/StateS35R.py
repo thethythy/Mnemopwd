@@ -33,6 +33,7 @@ from client.util.funcutils import singleton
 from client.corelayer.protocol.StateSCC import StateSCC
 import pickle
 
+
 @singleton
 class StateS35R(StateSCC):
     """State S35 : AddData"""
@@ -42,7 +43,7 @@ class StateS35R(StateSCC):
         with handler.lock:
             try:
                 # Challenge creation
-                echallenge = self.compute_challenge(handler, b"S35.6")
+                echallenge = self.compute_challenge(handler, b'S35.6')
                 if echallenge:
 
                     # Send AddData request
@@ -51,11 +52,11 @@ class StateS35R(StateSCC):
 
                     # Notify the handler a property has changed
                     handler.loop.run_in_executor(None, handler.notify,
-                        "application.state", "New informations sended to server")
+                                                 'application.state', 'New information send to server')
 
             except Exception as exc:
                 # Schedule a call to the exception handler
                 handler.loop.call_soon_threadsafe(handler.exception_handler, exc)
 
             else:
-                handler.state = handler.states['35A'] # Next state
+                handler.state = handler.states['35A']  # Next state

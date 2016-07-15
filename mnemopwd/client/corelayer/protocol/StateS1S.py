@@ -34,29 +34,30 @@ from client.util.funcutils import singleton
 from pyelliptic import ECC
 from pyelliptic import pbkdf2
 
+
 @singleton
-class StateS1S():
+class StateS1S:
     """State S1S : Session"""
 
     def do(self, handler, data):
         """Action of the state S1S: send the master secret"""
+        with handler.lock:
+            try:
+                # Compute the master secret
+                salt, ms = pbkdf2(handler.password, salt=handler.login)
+                ems = handler.ephecc.encrypt(ms, pubkey=handler.ephecc.get_pubkey())
 
-        try:
-            # Compute the master secret
-            salt, ms = pbkdf2(handler.password, salt=handler.login)
-            ems = handler.ephecc.encrypt(ms, pubkey=handler.ephecc.get_pubkey())
+                # Send master secret
+                message = b'SESSION;' + ems
+                handler.loop.call_soon_threadsafe(handler.transport.write, message)
 
-            # Send master secret
-            message = b'SESSION;' + ems
-            handler.loop.call_soon_threadsafe(handler.transport.write, message)
+                # Notify the handler a property has changed
+                handler.loop.run_in_executor(None, handler.notify, "connection.state", "Waiting session number")
 
-            # Notify the handler a property has changed
-            handler.loop.run_in_executor(None, handler.notify, "connection.state", "Waiting session number")
+            except Exception as exc:
+                # Schedule a call to the exception handler
+                handler.loop.call_soon_threadsafe(handler.exception_handler, exc)
 
-        except Exception as exc:
-            # Schedule a call to the exception handler
-            handler.loop.call_soon_threadsafe(handler.exception_handler, exc)
-
-        else:
-            handler.ms = ms # Store the master secret
-            handler.state = handler.states['1CR'] # Next state
+            else:
+                handler.ms = ms  # Store the master secret
+                handler.state = handler.states['1CR']  # Next state

@@ -25,27 +25,21 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import curses
+from client.uilayer.uicomponents.ButtonBox import ButtonBox
 
-from client.uilayer.uicomponents.BaseWindow import BaseWindow
 
-class TitledOnBorderWindow(BaseWindow):
-    """
-    A window with a border and a title on border. It can contain other components.
-    """
+class MetaButtonBox(ButtonBox):
+    """A button box with a user data"""
 
-    def __init__(self, parent, h, w, y, x, title, modal=False, menu=False):
-        """Create base window"""
-        BaseWindow.__init__(self, parent, h, w, y, x, modal=modal, menu=menu)
-        self.title = title
-        self._create()
+    def __init__(self, parent, y, x, label, shortcut=None, data=None):
+        """Object initialization"""
+        ButtonBox.__init__(self, parent, y, x, label, shortcut=shortcut)
+        self.data = data
 
-    def redraw(self):
-        """See mother class"""
-        self._create()
-        BaseWindow.redraw(self)
+    def set_data(self, data):
+        """Set user data"""
+        self.data = data
 
-    def _create(self):
-        self.window.border()
-        self.window.addstr(0, 2, '[ ' + self.title + ' ]')
-        self.window.refresh()
+    def get_data(self):
+        """Get user data"""
+        return self.data

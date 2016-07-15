@@ -31,6 +31,7 @@ and without insert mode)"""
 import curses
 import curses.ascii
 
+
 class TextEditor:
     """Editing widget using the interior of a window object.
      Supports the following key bindings:
@@ -58,8 +59,8 @@ class TextEditor:
     def __init__(self, win):
         self.win = win
         (self.maxy, self.maxx) = win.getmaxyx()
-        self.maxy = self.maxy - 1
-        self.maxx = self.maxx - 1
+        self.maxy -= 1
+        self.maxx -= 1
         self.stripspaces = 1
         win.keypad(1)
 
@@ -73,7 +74,7 @@ class TextEditor:
                 break
             elif last == 0:
                 break
-            last = last - 1
+            last -= 1
         return last
 
     def _insert_printable_char(self, ch):
@@ -85,12 +86,18 @@ class TextEditor:
         except curses.error:
             pass
 
+    def populate(self, value):
+        """Preset value in the editor"""
+        self.win.move(0, 0)
+        for ch in value:
+            self._insert_printable_char(ch)
+
     def do_command(self, ch):
-        "Process a single editing command."
+        """Process a single editing command."""
         (y, x) = self.win.getyx()
         if ch == curses.ascii.SOH:                             # ^a
             self.win.move(y, 0)
-        elif ch in (curses.ascii.STX,curses.KEY_LEFT, curses.ascii.BS,curses.KEY_BACKSPACE):
+        elif ch in (curses.ascii.STX, curses.KEY_LEFT, curses.ascii.BS, curses.KEY_BACKSPACE):
             if x > 0:
                 self.win.move(y, x-1)
             elif y == 0:
@@ -149,7 +156,7 @@ class TextEditor:
         return 1
 
     def gather(self):
-        "Collect and return the contents of the window."
+        """Collect and return the contents of the window."""
         result = ""
         for y in range(self.maxy+1):
             self.win.move(y, 0)
@@ -157,15 +164,15 @@ class TextEditor:
             if stop == 0 and self.stripspaces:
                 continue
             for x in range(self.maxx+1):
-                if self.stripspaces and x >= stop: # A bug corrected here
+                if self.stripspaces and x >= stop:  # A bug corrected here
                     break
-                result = result + chr(self.win.inch(y, x))
+                result += chr(self.win.inch(y, x))
             if self.maxy > 0:
-                result = result + "\n"
+                result += "\n"
         return result
 
     def edit(self, validate=None):
-        "Edit in the widget window and collect the results."
+        """Edit in the widget window and collect the results."""
         while 1:
             ch = self.win.getch()
             if validate:
@@ -176,4 +183,3 @@ class TextEditor:
                 break
             self.win.refresh()
         return self.gather()
-

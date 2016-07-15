@@ -32,31 +32,32 @@ State S31 : Configuration
 from client.util.funcutils import singleton
 from client.corelayer.protocol.StateSCC import StateSCC
 
+
 @singleton
 class StateS31R(StateSCC):
     """State S31 : Configuration"""
 
     def do(self, handler, data):
         """Action of the state S31R: send client configuration"""
+        with handler.lock:
+            try:
+                # Challenge creation
+                echallenge = self.compute_challenge(handler, b"S31.6")
+                if echallenge:
 
-        try:
-            # Challenge creation
-            echallenge = self.compute_challenge(handler, b"S31.6")
-            if echallenge:
+                    # Encrypt config
+                    econfig = handler.ephecc.encrypt(handler.config, pubkey=handler.ephecc.get_pubkey())
 
-                # Encrypt config
-                econfig = handler.ephecc.encrypt(handler.config, pubkey=handler.ephecc.get_pubkey())
+                    # Send configuration request
+                    message = echallenge + b';CONFIGURATION;' + econfig
+                    handler.loop.call_soon_threadsafe(handler.transport.write, message)
 
-                # Send configuration request
-                message = echallenge + b';CONFIGURATION;' + econfig
-                handler.loop.call_soon_threadsafe(handler.transport.write, message)
+                    # Notify the handler a property has changed
+                    handler.loop.run_in_executor(None, handler.notify, "connection.state", "Configuration request")
 
-                # Notify the handler a property has changed
-                handler.loop.run_in_executor(None, handler.notify, "connection.state", "Configuration request")
+            except Exception as exc:
+                # Schedule a call to the exception handler
+                handler.loop.call_soon_threadsafe(handler.exception_handler, exc)
 
-        except Exception as exc:
-            # Schedule a call to the exception handler
-            handler.loop.call_soon_threadsafe(handler.exception_handler, exc)
-
-        else:
-            handler.state = handler.states['31A'] # Next state
+            else:
+                handler.state = handler.states['31A']  # Next state

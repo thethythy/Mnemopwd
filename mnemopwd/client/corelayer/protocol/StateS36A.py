@@ -32,33 +32,35 @@ State S36 : DeleteData
 from client.util.funcutils import singleton
 from client.corelayer.protocol.StateSCC import StateSCC
 
+
 @singleton
 class StateS36A(StateSCC):
     """State S36 : DeleteData"""
 
     def do(self, handler, data):
         """Action of the state S36A: treat response of DeleteData request"""
-        try:
+        with handler.lock:
+            try:
 
-            # Test challenge response
-            if self.control_challenge(handler, data):
+                # Test challenge response
+                if self.control_challenge(handler, data):
 
-                # Test if request is rejected
-                is_KO = data[:5] == b"ERROR"
-                if is_KO:
-                    raise Exception((data[6:]).decode())
+                    # Test if request is rejected
+                    is_KO = data[:5] == b"ERROR"
+                    if is_KO:
+                        raise Exception((data[6:]).decode())
 
-                # Test if request is accepted
-                is_OK = data[:2] == b"OK"
-                if is_OK:
-                    # Update core table
-                    handler.core.removeLastSIB()
-                    # Notify the handler a property has changed
-                    handler.loop.run_in_executor(None, handler.notify,
-                        "application.state", "Information block deleted by server")
-                else:
-                    raise Exception("S36 protocol error")
+                    # Test if request is accepted
+                    is_OK = data[:2] == b"OK"
+                    if is_OK:
+                        # Notify the handler a property has changed
+                        handler.loop.run_in_executor(None, handler.notify,
+                                                     'application.state', 'Information block deleted by server')
+                        # Indicate the actual task is done
+                        handler.core.taskInProgress = False
+                    else:
+                        raise Exception("S36 protocol error")
 
-        except Exception as exc:
-            # Schedule a call to the exception handler
-            handler.loop.call_soon_threadsafe(handler.exception_handler, exc)
+            except Exception as exc:
+                # Schedule a call to the exception handler
+                handler.loop.call_soon_threadsafe(handler.exception_handler, exc)

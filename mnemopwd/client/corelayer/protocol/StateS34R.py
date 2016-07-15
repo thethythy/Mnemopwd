@@ -32,6 +32,7 @@ State S34 : SearchData
 from client.util.funcutils import singleton
 from client.corelayer.protocol.StateSCC import StateSCC
 
+
 @singleton
 class StateS34R(StateSCC):
     """State S34 : SearchData"""
@@ -52,12 +53,11 @@ class StateS34R(StateSCC):
                     handler.loop.call_soon_threadsafe(handler.transport.write, message)
 
                     # Notify the handler a property has changed
-                    handler.loop.run_in_executor(None, handler.notify,
-                        "application.state", "The server is searching...")
+                    handler.loop.run_in_executor(None, handler.notify, "application.state", "The server is searching...")
 
             except Exception as exc:
                 # Schedule a call to the exception handler
                 handler.loop.call_soon_threadsafe(handler.exception_handler, exc)
 
             else:
-                handler.state = handler.states['34A'] # Next state
+                handler.state = handler.states['34A']  # Next state

@@ -32,6 +32,7 @@ State S35 : AddData
 from client.util.funcutils import singleton
 from client.corelayer.protocol.StateSCC import StateSCC
 
+
 @singleton
 class StateS35A(StateSCC):
     """State S35 : AddData"""
@@ -54,19 +55,19 @@ class StateS35A(StateSCC):
                         index = data[3:]
                         try:
                             index = int(index.decode())
-                            handler.core.assignLastSIB(index)
+                            handler.core.assign_last_block(index)
                         except:
-                            raise Exception("S35 protocol error")
+                            raise Exception('S35 protocol error')
 
                         # Notify the handler a property has changed
-                        handler.loop.run_in_executor(None, handler.notify,
-                            "application.state", "New informations saved by server")
+                        handler.loop.run_in_executor(None, handler.notify, 'application.state',
+                                                     'New information saved by server')
 
                         # Indicate the actual task is done
                         handler.core.taskInProgress = False
 
                     else:
-                        raise Exception("S35 protocol error")
+                        raise Exception('S35 protocol error')
 
             except Exception as exc:
                 # Schedule a call to the exception handler

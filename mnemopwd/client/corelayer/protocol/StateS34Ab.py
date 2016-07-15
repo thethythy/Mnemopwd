@@ -33,6 +33,7 @@ from client.util.funcutils import singleton
 from client.corelayer.protocol.StateSCC import StateSCC
 import pickle
 
+
 @singleton
 class StateS34Ab(StateSCC):
     """State S34 : SearchData"""
@@ -53,30 +54,30 @@ class StateS34Ab(StateSCC):
                         # Check if two SIB are received in the same packet
                         if len_sib < len(psib):
                             psib = tab_data[2][:len_sib]
-                            handler.data_received(b';'+ tab_data[2][len_sib:])
+                            handler.loop.run_in_executor(None, handler.data_received, tab_data[2][len_sib:])
 
                         if len_sib == len(psib):
                             sib = pickle.loads(psib)
                             sib.control_integrity(handler.keyH)
-                            handler.core.assignResultSearchSIB(index_sib, sib)
+                            handler.core.assign_result_search_block(index_sib, sib)
                             handler.nbSIBDone += 1
                         else:
                             raise Exception("S34Ab protocol error" + str(handler.nbSIBDone))
 
                         # Notify the UI layer
-                        handler.loop.run_in_executor(None, handler.notify,
-                            "application.state.loadbar", (handler.nbSIBDone, handler.nbSIB))
+                        handler.loop.run_in_executor(None, handler.notify, "application.state.loadbar",
+                                                     (handler.nbSIBDone, handler.nbSIB))
 
                         # Indicate the task is done
                         if handler.nbSIBDone == handler.nbSIB:
                             handler.core.taskInProgress = False
 
                     except:
-                        message = "S34Ab protocol error after " + str(handler.nbSIBDone) + "/" + str(handler.nbSIB) + " blocks"
+                        message = "S34Ab protocol error " + str(handler.nbSIBDone) + "/" + str(handler.nbSIB) + " blocks"
                         raise Exception(message)
 
                 else:
-                    message = "S34Ab protocol error after " + str(handler.nbSIBDone) + "/" + str(handler.nbSIB) + " blocks"
+                    message = "S34Ab protocol error " + str(handler.nbSIBDone) + "/" + str(handler.nbSIB) + " blocks"
                     raise Exception(message)
 
             except Exception as exc:

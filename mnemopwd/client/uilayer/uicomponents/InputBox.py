@@ -26,15 +26,17 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import curses
+import curses.ascii
 from client.uilayer.uicomponents.TextEditor import TextEditor
 from client.uilayer.uicomponents.SecretTextEditor import SecretTextEditor
 from client.uilayer.uicomponents.Component import Component
+
 
 class InputBox(Component):
     """
     A simple text editor with a border line
 
-    Attributs:
+    Attributes:
     - value: the output text after edition
     - shortcuts: list of shortcut keys for ending edition
     - secret: is it a secret text?
@@ -55,26 +57,27 @@ class InputBox(Component):
         self.shortcuts = shortcuts
         self.secret = secret
         self.option = option
+        self.showOrHide = show
 
         # Cursor position
         self.cursor_y = 0
         self.cursor_x = 0
 
-    def isEditable(self):
+    def is_editable(self):
         """This component is editable"""
         return True
 
-    def isActionnable(self):
+    def is_actionnable(self):
         """Return True by default (actionnable)"""
         return False
 
-    def focusOn(self):
+    def focus_on(self):
         """See mother class"""
         self.editorbox.addstr(self.cursor_y, self.cursor_x, '█', curses.A_BLINK)
         self.editorbox.move(self.cursor_y, self.cursor_x)
         self.editorbox.refresh()
 
-    def focusOff(self):
+    def focus_off(self):
         """See mother class"""
         self.editorbox.move(self.cursor_y, self.cursor_x)
         self.editorbox.clrtoeol()
@@ -87,15 +90,28 @@ class InputBox(Component):
     def clear(self):
         self.value = None
         self.cursor_x = 0
-        self.focusOff()
+        self.focus_off()
 
     def show(self):
+        self.showOrHide = True
+        if self.value is not None:
+            self.editor.populate(self.value)
+            self.cursor_x = len(self.value)
         self.window.border()
         self.window.refresh()
 
     def hide(self):
+        self.showOrHide = False
         self.window.clear()
         self.window.refresh()
+
+    def redraw(self):
+        if self.showOrHide:
+            if self.value is not None:
+                self.editor.populate(self.value)
+                self.cursor_x = len(self.value)
+            self.window.border()
+            self.window.refresh()
 
     def _controller_(self, ch):
         if ch in [curses.KEY_UP, curses.KEY_DOWN, curses.ascii.TAB, curses.ascii.CR,
@@ -112,8 +128,10 @@ class InputBox(Component):
             return ch
 
     def edit(self):
-        try: curses.curs_set(2)
-        except curses.error: pass
+        try:
+            curses.curs_set(2)
+        except curses.error:
+            pass
         result = self.editor.edit(self._controller_)
         if result != self.value:
             if result != "":
@@ -122,6 +140,7 @@ class InputBox(Component):
             else:
                 self.value = None
                 self.cursor_x = 0
-        try: curses.curs_set(0)
-        except curses.error: pass
-
+        try:
+            curses.curs_set(0)
+        except curses.error:
+            pass

@@ -32,7 +32,6 @@ State S34 : SearchData
 from client.util.funcutils import singleton
 from client.corelayer.protocol.StateSCC import StateSCC
 
-import logging
 
 @singleton
 class StateS34A(StateSCC):
@@ -50,25 +49,25 @@ class StateS34A(StateSCC):
                     if is_OK:
                         try:
                             tab_data = data[3:].split(b';', maxsplit=1)
-                            nbSIB = int(tab_data[0].decode())
+                            nbblock = int(tab_data[0].decode())
 
                             # Are there SIB to treat ?
-                            if nbSIB > 0:
-                                handler.nbSIB = nbSIB # Number of SIB to treat
-                                handler.nbSIBDone = 0 # Number of SIB already treated
-                                handler.state = handler.states['34Ab'] # Next state
+                            if nbblock > 0:
+                                handler.nbSIB = nbblock  # Number of SIB to treat
+                                handler.nbSIBDone = 0  # Number of SIB already treated
+                                handler.state = handler.states['34Ab']  # Next state
 
                                 # Check if the first SIB is already received
                                 try:
                                     if len(tab_data[1]) > 0:
-                                        handler.data_received(b';'+ tab_data[1])
+                                        handler.loop.run_in_executor(None, handler.data_received, b';' + tab_data[1])
                                 except IndexError:
                                     pass
 
                             else:
                                 handler.core.taskInProgress = False
-                                handler.loop.run_in_executor(None, handler.notify,
-                                    "application.state", "No information found")
+                                handler.loop.run_in_executor(None, handler.notify, "application.state",
+                                                             "No information found")
 
                         except:
                             raise Exception("S34A protocol error")
@@ -77,6 +76,5 @@ class StateS34A(StateSCC):
                         raise Exception("S34A protocol error")
 
             except Exception as exc:
-                logging.debug(str(data))
                 # Schedule a call to the exception handler
                 handler.loop.call_soon_threadsafe(handler.exception_handler, exc)

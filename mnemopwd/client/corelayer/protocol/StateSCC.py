@@ -33,6 +33,7 @@ import hashlib
 from pyelliptic import hmac_sha256
 from pyelliptic import hmac_sha512
 
+
 class StateSCC():
     """Challenge creation and others useful methods"""
     
@@ -45,7 +46,7 @@ class StateSCC():
             
         except Exception as exc:
             # Schedule a callback to client exception handler
-            hnadler.loop.call_soon_threadsafe(handler.exception_handler, exc)
+            handler.loop.call_soon_threadsafe(handler.exception_handler, exc)
             return False
         
         else:
@@ -61,7 +62,7 @@ class StateSCC():
                 
         except Exception as exc:
             # Schedule a callback to client exception handler
-            hnadler.loop.call_soon_threadsafe(handler.exception_handler, exc)
+            handler.loop.call_soon_threadsafe(handler.exception_handler, exc)
             return False
         
         else:

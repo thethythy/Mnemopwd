@@ -27,7 +27,8 @@
 
 import curses
 
-class Component():
+
+class Component:
     """Abstract component"""
     
     def __init__(self, parent, h, w, y, x, modal=False):
@@ -45,27 +46,29 @@ class Component():
         # Create a new window
         if isinstance(self.parent, Component):
             self.window = self.parent.window.derwin(h, w, y, x)
-        else: 
+        elif parent is None:
             self.window = curses.newwin(h, w, y, x)
+        else:
+            self.window = self.parent
 
         # Clear the content to have an empty window
         self.window.clear()
         self.window.refresh()
 
-    def isEditable(self):
+    def is_editable(self):
         """Return False by default (not editable)"""
         return False
         
-    def isActionnable(self):
+    def is_actionnable(self):
         """Return True by default (actionnable)"""
         return True
     
-    def focusOn(self):
+    def focus_on(self):
         """This component obtains the focus"""
         pass
         
-    def focusOff(self):
-        """This component losts the focus"""
+    def focus_off(self):
+        """This component has lost the focus"""
         pass
         
     def enclose(self, y, x):
@@ -89,4 +92,3 @@ class Component():
         # Restore the old screen if needed
         if self.modal and isinstance(self.parent, Component):
             self.parent.redraw()
-
