@@ -34,6 +34,7 @@ from client.uilayer.uicomponents.ButtonBox import ButtonBox
 from client.uilayer.uiapplication.LoginWindow import LoginWindow
 from client.uilayer.uiapplication.EditionWindow import EditionWindow
 from client.uilayer.uiapplication.SearchWindow import SearchWindow
+from client.uilayer.uiapplication.ApplicationMenu import ApplicationMenu
 from client.uilayer.uiapplication.CreateMenu import CreateMenu
 
 
@@ -56,16 +57,15 @@ class MainWindow(BaseWindow):
         self.window.addch(1, curses.COLS - len(message) - 3, curses.ACS_BTEE)
         self.window.refresh()
 
-        self.searchButton = ButtonBox(self, 0, 0, "Search", shortcut='E')
-        self.newButton = ButtonBox(self, 0, 9, "New", shortcut='N')
-        self.loginButton = ButtonBox(self, 0, 15, "Login", shortcut='L')
-        self.exitButton = ButtonBox(self, 0, 23, "Quit", shortcut='U')
+        self.applicationButton = ButtonBox(self, 0, 0, "MnemoPwd", shortcut='M')
+        self.newButton = ButtonBox(self, 0, 11, "New", shortcut='N')
+        self.searchButton = ButtonBox(self, 0, 17, "Search", shortcut='E')
 
         # Ordered list of shortcut keys
-        self.shortcuts = ['E', 'N', 'L', 'U']
+        self.shortcuts = ['M', 'N', 'E']
 
         # Ordered list of components
-        self.items = [self.searchButton, self.newButton, self.loginButton, self.exitButton]
+        self.items = [self.applicationButton, self.newButton, self.searchButton]
 
         # Edition window
         self.editscr = EditionWindow(self, curses.LINES - 4, int(curses.COLS * 2/3),
@@ -124,15 +124,19 @@ class MainWindow(BaseWindow):
             # Interaction loop
             result = BaseWindow.start(self)
 
-            # Search some entries
-            if result == self.searchButton:
-                if self.connected:
-                    self.searchButton.focus_off()
-                    result, values = self._search_block()
-                    if type(result) is int:
-                        self._handle_block(int(values[0]), result)
-                else:
-                    self.update_status('Please start a connection')
+            # Main menu
+            if result == self.applicationButton:
+                self.applicationButton.focus_off()
+                result = ApplicationMenu(self, 2, 0, self.connected).start()
+                if result == 'QUIT':
+                    if self.connected:
+                        self.uifacade.inform("connection.close", None)
+                    break
+                if result == 'LOGINOUT':
+                    if not self.connected:
+                        self._get_credentials()  # Try a connection
+                    else:
+                        self.uifacade.inform("connection.close", None)  # Disconnection
 
             # Create a new entry
             elif result == self.newButton:
@@ -144,38 +148,28 @@ class MainWindow(BaseWindow):
                 else:
                     self.update_status('Please start a connection')
 
-            # Try a new connection or close connection
-            elif result == self.loginButton:
-                if not self.connected:
-                    self.loginButton.focus_off()
-                    self._get_credentials()
-                else:
-                    self.uifacade.inform("connection.close", None)
-
-            # Quit application
-            elif result == self.exitButton:
+            # Search some entries
+            elif result == self.searchButton:
                 if self.connected:
-                    self.uifacade.inform("connection.close", None)
-                break
+                    self.searchButton.focus_off()
+                    result, values = self._search_block()
+                    if type(result) is int:
+                        self._handle_block(int(values[0]), result)
+                else:
+                    self.update_status('Please start a connection')
 
     def update_window(self, key, value):
         """Update the main window content"""
         if key == "connection.state.login":
             self.connected = True
-            self.loginButton.set_label("Logout", self.loginButton == self.items[self.index])
-            self.exitButton.move(0, 24, self.exitButton == self.items[self.index])
             self.update_status(value)
         if key == "connection.state.logout":
             self.connected = False
-            self.loginButton.set_label("Login", self.loginButton == self.items[self.index])
-            self.exitButton.move(0, 23, self.exitButton == self.items[self.index])
             self.update_status(value)
             self.editscr.clear_content()
             self.searchscr.clear_content()
         if key == "connection.state.error":
             self.connected = False
-            self.loginButton.set_label("Login", self.loginButton == self.items[self.index])
-            self.exitButton.move(0, 23, self.exitButton == self.items[self.index])
             self.update_status(value)
             self.editscr.clear_content()
             self.searchscr.clear_content()
