@@ -54,7 +54,7 @@ class EditionWindow(TitledOnBorderWindow):
         self.deleteButton = ButtonBox(self, posy, posx, "Delete", 'T')
 
         self._shortcuts = ['A', 'L', 'N', 'T']
-        self._items = [self.saveButton, self.clearButton, self.cancelButton, self.deleteButton]
+        self._items = self.items = [self.saveButton, self.clearButton, self.cancelButton, self.deleteButton]
 
         # Separator
         self.window.hline(h - 3, 1, curses.ACS_HLINE, w - 2)
@@ -151,7 +151,7 @@ class EditionWindow(TitledOnBorderWindow):
             info_comp = infos_comp[i]
             try:
                 info_comp["c_object"].value = values[2 + i - 2]
-                info_comp["c_object"].redraw()
+                info_comp["c_object"].show()
             except IndexError:
                 continue  # Nothing to do because of optional values
             #except KeyError:
@@ -161,13 +161,15 @@ class EditionWindow(TitledOnBorderWindow):
         """Clear the window content"""
         if self.number_type > 0:
             infos_comp = self.cpb[self.number_type]
-            for i in range(1, len(infos_comp)+1):
+            for i in range(1, len(infos_comp) + 1):
                 info_comp = infos_comp[i]
                 self.window.addstr(info_comp["l_pos_y"], 2, sfill(self.w - 3, ' '))
                 if i > 1:
+                    info_comp["c_object"].clear()
                     info_comp["c_object"].hide()
             self.window.refresh()
-            self.shortcuts = self.items = []
+            self.shortcuts = []
+            self.items = self._items
             self.number_type = self.index = 0
 
     def _clear_editors(self):
@@ -231,3 +233,8 @@ class EditionWindow(TitledOnBorderWindow):
                     self._clear_editors()
                     self.clear_content()
                     return False, True
+
+    def redraw(self):
+        """See mother class"""
+        self.window.hline(self.h - 3, 1, curses.ACS_HLINE, self.w - 2)
+        TitledOnBorderWindow.redraw(self)

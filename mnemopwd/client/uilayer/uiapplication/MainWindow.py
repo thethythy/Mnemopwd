@@ -32,6 +32,7 @@ from client.util.funcutils import sfill
 from client.uilayer.uicomponents.BaseWindow import BaseWindow
 from client.uilayer.uicomponents.ButtonBox import ButtonBox
 from client.uilayer.uiapplication.LoginWindow import LoginWindow
+from client.uilayer.uiapplication.UserAccountWindow import UserAccountWindow
 from client.uilayer.uiapplication.EditionWindow import EditionWindow
 from client.uilayer.uiapplication.SearchWindow import SearchWindow
 from client.uilayer.uiapplication.ApplicationMenu import ApplicationMenu
@@ -128,15 +129,27 @@ class MainWindow(BaseWindow):
             if result == self.applicationButton:
                 self.applicationButton.focus_off()
                 result = ApplicationMenu(self, 2, 0, self.connected).start()
-                if result == 'QUIT':
-                    if self.connected:
-                        self.uifacade.inform("connection.close", None)
-                    break
-                if result == 'LOGINOUT':
+                if result == ApplicationMenu.ITEM1:  # Login/logout
                     if not self.connected:
                         self._get_credentials()  # Try a connection
                     else:
                         self.uifacade.inform("connection.close", None)  # Disconnection
+                if result == ApplicationMenu.ITEM2:  # Create user account
+                    if not self.connected:
+                        result = UserAccountWindow(self).start()
+                        # TODO
+                    else:
+                        self.update_status('You must be disconnected to create a new user account')
+                if result == ApplicationMenu.ITEM3:  # Delete user account
+                    pass
+                    # TODO
+                if result == ApplicationMenu.ITEM4:  # Lock screen
+                    pass
+                    # TODO
+                if result == ApplicationMenu.ITEM5:  # Quit application
+                    if self.connected:
+                        self.uifacade.inform("connection.close", None)  # Disconnection
+                    break
 
             # Create a new entry
             elif result == self.newButton:

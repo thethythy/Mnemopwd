@@ -35,10 +35,16 @@ class ApplicationMenu(BaseWindow):
     The menu for login/logout, user account, quit application
     """
 
+    ITEM1 = 'LOGINOUT'
+    ITEM2 = 'CUACCOUNT'
+    ITEM3 = 'DUACCOUNT'
+    ITEM4 = 'LOCK'
+    ITEM5 = 'QUIT'
+
     def __init__(self, parent, y, x, connected):
         """Create the menu"""
         # Create the window
-        BaseWindow.__init__(self, parent, 4, 21 + 3, y, x, menu=True, modal=True)
+        BaseWindow.__init__(self, parent, 5, 21 + 3, y, x, menu=True, modal=True)
         self.window.refresh()
 
         # Login/logout button
@@ -46,20 +52,24 @@ class ApplicationMenu(BaseWindow):
             name = 'Logout' + sfill(19 - 6, ' ')
         else:
             name = 'Login' + sfill(19 - 5, ' ')
-        self.items.append(MetaButtonBox(self, 0, 0, name, shortcut='L', data='LOGINOUT'))
+        self.items.append(MetaButtonBox(self, 0, 0, name, shortcut='L', data=self.ITEM1))
 
         # Create user account button
-        self.items.append(MetaButtonBox(self, 1, 0, 'Create user account', shortcut='A', data='CUACCOUNT'))
+        self.items.append(MetaButtonBox(self, 1, 0, 'Create user account', shortcut='A', data=self.ITEM2))
 
         # Delete user account button
-        self.items.append(MetaButtonBox(self, 2, 0, 'Delete user account', shortcut='E', data='DUACCOUNT'))
+        self.items.append(MetaButtonBox(self, 2, 0, 'Delete user account', shortcut='E', data=self.ITEM3))
+
+        # Lock screen
+        name = 'Lock screen' + sfill(19 - 11, ' ')
+        self.items.append(MetaButtonBox(self, 3, 0, name, shortcut='K', data=self.ITEM4))
 
         # Quit button
         name = 'Quit' + sfill(19 - 4, ' ')
-        self.items.append(MetaButtonBox(self, 3, 0, name, shortcut='U', data='QUIT'))
+        self.items.append(MetaButtonBox(self, 4, 0, name, shortcut='U', data=self.ITEM5))
 
         # Ordered list of shortcut keys
-        self.shortcuts = ['L', 'A', 'E', 'U']
+        self.shortcuts = ['L', 'A', 'E', 'K', 'U']
 
     def start(self, timeout=-1):
         """See mother class"""
