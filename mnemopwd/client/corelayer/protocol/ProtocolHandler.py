@@ -73,6 +73,7 @@ class ProtocolHandler(asyncio.Protocol):
                        '21R': StateS21R(), '21A': StateS21A(),
                        '22R': StateS22R(), '22A': StateS22A(),
                        '31R': StateS31R(), '31A': StateS31A(),
+                       '33R': StateS33R(), '33A': StateS33A(),
                        '34R': StateS34R(), '34A': StateS34A(), '34Ab': StateS34Ab(),
                        '35R': StateS35R(), '35A': StateS35A(),
                        '36R': StateS36R(), '36A': StateS36A(),
@@ -81,8 +82,8 @@ class ProtocolHandler(asyncio.Protocol):
         self.config = Configuration.curve1 + ";" + Configuration.cipher1 + ";" + \
                       Configuration.curve2 + ";" + Configuration.cipher2 + ";" + \
                       Configuration.curve3 + ";" + Configuration.cipher3
-        # Reentrant lock for serializing thread execution
-        self.lock = threading.RLock()
+        # Lock object for serializing thread execution
+        self.lock = threading.Lock()
 
     def connection_made(self, transport):
         self.transport = transport

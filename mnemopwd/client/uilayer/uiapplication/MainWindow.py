@@ -26,6 +26,7 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import curses
+import hashlib
 
 from client.util.Configuration import Configuration
 from client.util.funcutils import sfill
@@ -33,6 +34,7 @@ from client.uilayer.uicomponents.BaseWindow import BaseWindow
 from client.uilayer.uicomponents.ButtonBox import ButtonBox
 from client.uilayer.uiapplication.LoginWindow import LoginWindow
 from client.uilayer.uiapplication.UserAccountWindow import UserAccountWindow
+from client.uilayer.uiapplication.UserAccountDeletionWindow import UserAccountDeletionWindow
 from client.uilayer.uiapplication.EditionWindow import EditionWindow
 from client.uilayer.uiapplication.SearchWindow import SearchWindow
 from client.uilayer.uiapplication.ApplicationMenu import ApplicationMenu
@@ -49,6 +51,8 @@ class MainWindow(BaseWindow):
         BaseWindow.__init__(self, None, curses.LINES - 2, curses.COLS, 0, 0)
         self.uifacade = facade  # Reference on ui layer facade
         self.connected = False  # Login state
+        self.login = None       # User account login
+        self.hpassword = None   # User account password
 
         # Menu zone
         self.window.hline(1, 0, curses.ACS_HLINE, curses.COLS)
@@ -80,14 +84,34 @@ class MainWindow(BaseWindow):
         self.statscr.hline(0, 0, curses.ACS_HLINE, curses.COLS)
         self.statscr.refresh()
 
+    def hash_password(self, password):
+        """Compute a digest of the password"""
+        ho = hashlib.sha512()
+        ho.update(password.encode())
+        return ho.digest()
+
     def _get_credentials(self):
         """Get login/password"""
         self.update_status('Please start a connection')
         login, passwd = LoginWindow(self).start()
         if login is not False:
+            self.login = login
+            self.hpassword = self.hash_password(passwd)
             self.uifacade.inform("connection.open.credentials", (login, passwd))
-            self.window.addstr(1, 0, login+passwd)
-            login = passwd = "                            "
+
+    def _set_credentials(self):
+        """Create a new user account"""
+        login, passwd = UserAccountWindow(self).start()
+        if login is not False:
+            self.login = login
+            self.hpassword = self.hash_password(passwd)
+            self.uifacade.inform("connection.open.newcredentials", (login, passwd))
+
+    def _delete_user_account(self):
+        """Try to delete a user account"""
+        result = UserAccountDeletionWindow(self).start()
+        if result:
+            self.uifacade.inform("connection.close.deletion", None)
 
     def _handle_block(self, number, idblock):
         """Start block edition"""
@@ -118,6 +142,7 @@ class MainWindow(BaseWindow):
         return self.searchscr.start()
 
     def start(self, timeout=-1):
+        """See mother class"""
         # Get login/password
         self._get_credentials()
 
@@ -136,13 +161,14 @@ class MainWindow(BaseWindow):
                         self.uifacade.inform("connection.close", None)  # Disconnection
                 if result == ApplicationMenu.ITEM2:  # Create user account
                     if not self.connected:
-                        result = UserAccountWindow(self).start()
-                        # TODO
+                        self._set_credentials()  # Try to create a new user account
                     else:
                         self.update_status('You must be disconnected to create a new user account')
                 if result == ApplicationMenu.ITEM3:  # Delete user account
-                    pass
-                    # TODO
+                    if self.connected:
+                        self._delete_user_account()  # Try to delete user account
+                    else:
+                        self.update_status('You must be connected to a user account to delete it')
                 if result == ApplicationMenu.ITEM4:  # Lock screen
                     pass
                     # TODO
@@ -171,21 +197,23 @@ class MainWindow(BaseWindow):
                 else:
                     self.update_status('Please start a connection')
 
+    def _post_close(self, value):
+        """Actions to do after the connection has been closed"""
+        self.login = self.hpassword = None
+        self.connected = False
+        self.update_status(value)
+        self.editscr.clear_content()
+        self.searchscr.clear_content()
+
     def update_window(self, key, value):
         """Update the main window content"""
         if key == "connection.state.login":
             self.connected = True
             self.update_status(value)
         if key == "connection.state.logout":
-            self.connected = False
-            self.update_status(value)
-            self.editscr.clear_content()
-            self.searchscr.clear_content()
+            self._post_close(value)
         if key == "connection.state.error":
-            self.connected = False
-            self.update_status(value)
-            self.editscr.clear_content()
-            self.searchscr.clear_content()
+            self._post_close(value)
             curses.flash()
         if key == "application.keyhandler":
             self.editscr.set_keyhandler(value)

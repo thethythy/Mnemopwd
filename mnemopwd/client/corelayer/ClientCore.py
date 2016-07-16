@@ -164,12 +164,29 @@ class ClientCore(Subject):
             yield from asyncio.sleep(0.01, loop=self.loop)
 
     @asyncio.coroutine
+    def _task_new_credentials(self, login, password):
+        """Start state S1"""
+        Configuration.first_execution = True
+        yield from self._task_set_credentials(login, password)
+        Configuration.first_execution = False
+
+    @asyncio.coroutine
     def _task_close(self):
         """Close the connection with the server"""
         self.taskInProgress = False
         self.queue = asyncio.Queue(maxsize=Configuration.queuesize, loop=self.loop)
         self.transport.close()
         yield from self.loop.run_in_executor(None, self.update, 'connection.state.logout', 'Connection closed')
+
+    @asyncio.coroutine
+    def _task_deletion(self):
+        """User account deletion request"""
+        self.protocol.state = self.protocol.states['33R']  # Deletion
+        # Execute protocol state
+        self.taskInProgress = True
+        yield from self.loop.run_in_executor(None, self.protocol.state.do, self.protocol, None)
+        while self.taskInProgress:
+            yield from asyncio.sleep(0.01, loop=self.loop)
 
     @asyncio.coroutine
     def _task_add_data_or_update_data(self, idblock, values):
@@ -287,8 +304,13 @@ class ClientCore(Subject):
         if key == "connection.open.credentials":
             self._open()  # Direct execution because queue is empty at this moment
             task = self._task_set_credentials(*value)
+        if key == "connection.open.newcredentials":
+            self._open()  # Direct execution because queue is empty at this moment
+            task = self._task_new_credentials(*value)
         if key == "connection.close":
             task = self._task_close()
+        if key == "connection.close.deletion":
+            task = self._task_deletion()
         if key == "application.editblock":
             task = self._task_add_data_or_update_data(*value)
         if key == "application.deleteblock":
