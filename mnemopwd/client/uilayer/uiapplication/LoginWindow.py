@@ -31,6 +31,7 @@ from client.uilayer.uicomponents.TitledBorderWindow import TitledBorderWindow
 from client.uilayer.uicomponents.InputBox import InputBox
 from client.uilayer.uicomponents.ButtonBox import ButtonBox
 
+
 class LoginWindow(TitledBorderWindow):
     """
     The login window: get the login/password user credentials
@@ -70,9 +71,9 @@ class LoginWindow(TitledBorderWindow):
 
         self.window.refresh()
 
-    def start(self):
+    def start(self, timeout=-1):
         while True:
-            result = TitledBorderWindow.start(self) # Default controller
+            result = TitledBorderWindow.start(self)  # Default controller
 
             # Next item for editable items
             if type(result) is InputBox:
@@ -94,11 +95,10 @@ class LoginWindow(TitledBorderWindow):
             # Try to return login and password
             elif result == self.connectButton:
                 self.connectButton.focus_off()
-                if self.logineditor.value is None :
+                if self.logineditor.value is None:
                     self.index = 0
-                elif self.passeditor.value is None :
+                elif self.passeditor.value is None:
                     self.index = 1
                 else:
                     self.close()
                     return self.logineditor.value, self.passeditor.value
-

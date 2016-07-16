@@ -143,8 +143,10 @@ class MainWindow(BaseWindow):
 
     def start(self, timeout=-1):
         """See mother class"""
-        # Get login/password
-        self._get_credentials()
+        if Configuration.first_execution:
+            self._set_credentials()  # Propose to create a user account
+        else:
+            self._get_credentials()  # Propose to connect to an existing user account
 
         while True:
             # Interaction loop

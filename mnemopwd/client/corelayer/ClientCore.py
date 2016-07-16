@@ -124,22 +124,25 @@ class ClientCore(Subject):
             if not self.loop.is_running():
                 print(e)
                 print("Enable to connect to server. Retry or verify your configuration")
+                exit(1)
             else:
                 self.update('connection.state', 'Enable to connect to server. Retry or verify your configuration')
-            raise
+                raise
         except ssl.SSLError as e:
             if not self.loop.is_running():
                 print(e)
                 print("There is a problem with the certificat.")
+                exit(1)
             else:
                 self.update('connection.state', 'There is a problem with the certificat.')
-            raise
+                raise
         except Exception as e:
             if not self.loop.is_running():
                 print(e)
+                exit(1)
             else:
                 self.update('connection.state', 'An unexpected exception occurred')
-            raise
+                raise
 
     @asyncio.coroutine
     def _command_handler(self):
@@ -302,11 +305,17 @@ class ClientCore(Subject):
         task = None
 
         if key == "connection.open.credentials":
-            self._open()  # Direct execution because queue is empty at this moment
-            task = self._task_set_credentials(*value)
+            try:
+                self._open()  # Direct execution because queue is empty at this moment
+                task = self._task_set_credentials(*value)
+            except:
+                pass
         if key == "connection.open.newcredentials":
-            self._open()  # Direct execution because queue is empty at this moment
-            task = self._task_new_credentials(*value)
+            try:
+                self._open()  # Direct execution because queue is empty at this moment
+                task = self._task_new_credentials(*value)
+            except:
+                pass
         if key == "connection.close":
             task = self._task_close()
         if key == "connection.close.deletion":

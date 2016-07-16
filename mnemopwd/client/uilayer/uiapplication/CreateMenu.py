@@ -29,6 +29,7 @@ from client.uilayer.uicomponents.BaseWindow import BaseWindow
 from client.uilayer.uicomponents.ButtonBox import ButtonBox
 from client.util.funcutils import sfill
 
+
 class CreateMenu(BaseWindow):
     """
     The menu for creating a new entry in the database
@@ -38,7 +39,8 @@ class CreateMenu(BaseWindow):
         """Create the menu"""
         # Create the window
         max_len = 0
-        for type in btypes.values(): max_len = max(max_len, len((type["1"])["name"]))
+        for btype in btypes.values():
+            max_len = max(max_len, len((btype["1"])["name"]))
         BaseWindow.__init__(self, parent, len(btypes), max_len + 3, y, x, menu=True, modal=True)
         self.window.refresh()
 
@@ -49,13 +51,13 @@ class CreateMenu(BaseWindow):
             self.items.append(ButtonBox(self, posy, 0, name + sfill(max_len - len(name), ' ')))
             posy += 1
 
-    def start(self):
+    def start(self, timeout=-1):
         while True:
             # Interaction loop
             result = BaseWindow.start(self)
 
             # Escape
-            if result == False or type(result) is int:
+            if result is False or type(result) is int:
                 self.close()
                 return False
 
