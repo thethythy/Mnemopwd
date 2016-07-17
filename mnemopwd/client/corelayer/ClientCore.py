@@ -252,17 +252,16 @@ class ClientCore(Subject):
     @asyncio.coroutine
     def _task_export_data(self):
         """Get all blocks"""
-        pass
-        #self.protocol.state = self.protocol.states['32R']  # Export
-        #self.searchTable = list()  # Reset search table
+        self.protocol.state = self.protocol.states['32R']  # Export
+        self.searchTable = list()  # Reset search table
         # Execute protocol state
-        #self.taskInProgress = True
-        #yield from self.loop.run_in_executor(None, self.protocol.state.do, self.protocol, None)
-        #while self.taskInProgress:
-        #    yield from asyncio.sleep(0.01, loop=self.loop)
+        self.taskInProgress = True
+        yield from self.loop.run_in_executor(None, self.protocol.state.do, self.protocol, None)
+        while self.taskInProgress:
+            yield from asyncio.sleep(0.01, loop=self.loop)
         # Notify the result to UI layer
-        #if len(self.searchTable) > 0:
-        #    yield from self.loop.run_in_executor(None, self.update, 'application.searchblock.result', self.searchTable)
+        if len(self.searchTable) > 0:
+            yield from self.loop.run_in_executor(None, self.update, 'application.searchblock.result', self.searchTable)
 
     @asyncio.coroutine
     def _task_get_block_values(self, index):
