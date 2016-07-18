@@ -74,6 +74,11 @@ class ClientUI(Thread, Observer):
         # Open the main window
         self.wmain = MainWindow(self)
 
+    def clear_content(self):
+        """Clear the window content"""
+        self.window.erase()
+        self.window.refresh()
+
     def stop(self):
         """Stop UI and return to normal interaction"""
         curses.nocbreak()

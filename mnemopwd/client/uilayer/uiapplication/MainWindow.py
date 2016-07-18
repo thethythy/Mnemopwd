@@ -35,6 +35,7 @@ from client.uilayer.uicomponents.ButtonBox import ButtonBox
 from client.uilayer.uiapplication.LoginWindow import LoginWindow
 from client.uilayer.uiapplication.UserAccountWindow import UserAccountWindow
 from client.uilayer.uiapplication.UserAccountDeletionWindow import UserAccountDeletionWindow
+from client.uilayer.uiapplication.UnlockScreenWindow import UnlockScreenWindow
 from client.uilayer.uiapplication.EditionWindow import EditionWindow
 from client.uilayer.uiapplication.SearchWindow import SearchWindow
 from client.uilayer.uiapplication.ApplicationMenu import ApplicationMenu
@@ -55,13 +56,6 @@ class MainWindow(BaseWindow):
         self.hpassword = None   # User account password
 
         # Menu zone
-        self.window.hline(1, 0, curses.ACS_HLINE, curses.COLS)
-        message = "MnemoPwd Client v" + Configuration.version
-        self.window.addstr(0, curses.COLS - len(message) - 1, message)
-        self.window.addch(0, curses.COLS - len(message) - 3, curses.ACS_VLINE)
-        self.window.addch(1, curses.COLS - len(message) - 3, curses.ACS_BTEE)
-        self.window.refresh()
-
         self.applicationButton = ButtonBox(self, 0, 0, "MnemoPwd", shortcut='M')
         self.newButton = ButtonBox(self, 0, 11, "New", shortcut='N')
         self.searchButton = ButtonBox(self, 0, 17, "Search", shortcut='E')
@@ -83,6 +77,18 @@ class MainWindow(BaseWindow):
         self.statscr = curses.newwin(2, curses.COLS, curses.LINES - 2, 0)
         self.statscr.hline(0, 0, curses.ACS_HLINE, curses.COLS)
         self.statscr.refresh()
+
+        self._decorate()
+
+    def _decorate(self):
+        """Show specific content"""
+        self.window.hline(1, 0, curses.ACS_HLINE, curses.COLS)
+        message = "MnemoPwd Client v" + Configuration.version
+        self.window.addstr(0, curses.COLS - len(message) - 1, message)
+        self.window.addch(0, curses.COLS - len(message) - 3, curses.ACS_VLINE)
+        self.window.addch(1, curses.COLS - len(message) - 3, curses.ACS_BTEE)
+        self.statscr.hline(0, 0, curses.ACS_HLINE, curses.COLS)
+        self.window.refresh()
 
     def hash_password(self, password):
         """Compute a digest of the password"""
@@ -112,6 +118,17 @@ class MainWindow(BaseWindow):
         result = UserAccountDeletionWindow(self).start()
         if result:
             self.uifacade.inform("connection.close.deletion", None)
+
+    def _lock_screen(self):
+        """Lock / unlock the screen"""
+        self.uifacade.clear_content()
+        self.window.timeout(-1)
+        self.window.addstr(int(curses.LINES / 2), int(curses.COLS / 2 - 13), "Hit a key to unlock screen")
+        self.window.getch()
+        while UnlockScreenWindow(self).start() is False:
+            self.window.addstr(int(curses.LINES / 2), int(curses.COLS / 2 - 13), "Hit a key to unlock screen")
+            self.window.getch()
+        self.redraw()
 
     def _handle_block(self, number, idblock):
         """Start block edition"""
@@ -148,9 +165,22 @@ class MainWindow(BaseWindow):
         else:
             self._get_credentials()  # Propose to connect to an existing user account
 
+        # Automatic lock screen
+        counter = 0
+        timer = Configuration.lock * 60 * 1000  # Timer in ms
+
         while True:
             # Interaction loop
-            result = BaseWindow.start(self)
+            result = BaseWindow.start(self, timeout=100)  # Timeout of 100 ms
+
+            # Lock screen ?
+            if result == 'timeout' and timer > 0 and self.connected:
+                counter += 100
+                if counter >= timer:
+                    self._lock_screen()
+                    counter = 0
+            else:
+                counter = 0
 
             # Main menu
             if result == self.applicationButton:
@@ -172,8 +202,8 @@ class MainWindow(BaseWindow):
                     else:
                         self.update_status('You must be connected to a user account to delete it')
                 if result == ApplicationMenu.ITEM4:  # Lock screen
-                    pass
-                    # TODO
+                    if self.connected:
+                        self._lock_screen()
                 if result == ApplicationMenu.ITEM5:  # Quit application
                     if self.connected:
                         self.uifacade.inform("connection.close", None)  # Disconnection
@@ -261,6 +291,8 @@ class MainWindow(BaseWindow):
 
     def redraw(self):
         """See mother class"""
+        self._decorate()
         self.editscr.redraw()
         self.searchscr.redraw()
+        self.update_status('')
         BaseWindow.redraw(self)

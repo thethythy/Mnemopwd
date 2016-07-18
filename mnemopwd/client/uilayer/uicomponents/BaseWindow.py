@@ -71,8 +71,18 @@ class BaseWindow(Component):
         if nbitems > 0:
             self.items[self.index].focus_on()  # Focus on component at index
 
+        reset = False  # Reset timeout
         while True:
             c = self.window.getch()
+
+            # Timeout ?
+            if c == -1 and reset is False:
+                return 'timeout'
+            elif c == -1 and reset is True:
+                reset = False
+                return 'reset'
+            elif c != -1:
+                reset = True
 
             # Next component
             if c in [curses.KEY_DOWN, curses.ascii.TAB]:
@@ -90,7 +100,7 @@ class BaseWindow(Component):
                 self.index = (self.index - 1) % nbitems
                 self.items[self.index].focus_on()
 
-            # Next actionnable component or edit editable component
+            # Next actionable component or edit editable component
             elif c in [curses.KEY_LEFT] and self.items[self.index].is_actionnable():
                 if self.menu:
                     curses.ungetch(curses.KEY_LEFT)
@@ -98,7 +108,7 @@ class BaseWindow(Component):
                 else:
                     curses.ungetch(curses.KEY_UP)
 
-            # Previous actionnable component or edit editable component
+            # Previous actionable component or edit editable component
             elif c in [curses.KEY_RIGHT] and self.items[self.index].is_actionnable():
                 if self.menu:
                     curses.ungetch(curses.KEY_RIGHT)
