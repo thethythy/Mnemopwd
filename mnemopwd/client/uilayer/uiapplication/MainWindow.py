@@ -27,6 +27,7 @@
 
 import curses
 import hashlib
+import os
 
 from client.util.Configuration import Configuration
 from client.util.funcutils import sfill
@@ -91,9 +92,9 @@ class MainWindow(BaseWindow):
         self.window.refresh()
 
     def hash_password(self, password):
-        """Compute a digest of the password"""
+        """Compute a digest of the password. USe a random salt value"""
         ho = hashlib.sha512()
-        ho.update(password.encode())
+        ho.update(password.encode() + self.salt)
         return ho.digest()
 
     def _get_credentials(self):
@@ -102,6 +103,7 @@ class MainWindow(BaseWindow):
         login, passwd = LoginWindow(self).start()
         if login is not False:
             self.login = login
+            self.salt = (os.urandom(256))[64:128]  # Random salt value
             self.hpassword = self.hash_password(passwd)
             self.uifacade.inform("connection.open.credentials", (login, passwd))
 
@@ -110,6 +112,7 @@ class MainWindow(BaseWindow):
         login, passwd = UserAccountWindow(self).start()
         if login is not False:
             self.login = login
+            self.salt = (os.urandom(256))[64:128]  # Random salt value
             self.hpassword = self.hash_password(passwd)
             self.uifacade.inform("connection.open.newcredentials", (login, passwd))
 
