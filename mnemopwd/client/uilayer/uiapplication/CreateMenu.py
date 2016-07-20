@@ -25,6 +25,8 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import curses
+
 from client.uilayer.uicomponents.BaseWindow import BaseWindow
 from client.uilayer.uicomponents.MetaButtonBox import MetaButtonBox
 from client.util.funcutils import sfill
@@ -47,9 +49,14 @@ class CreateMenu(BaseWindow):
         # Add buttons (preserving the order indicated in the json file)
         posy = 0
         for i in range(1, len(btypes) + 1):
-            name = ((btypes[str(i)])["1"])["name"]
-            self.items.append(MetaButtonBox(self, posy, 0, name + sfill(max_len - len(name), ' '), data=i))
-            posy += 1
+            btype = btypes[str(i)]
+            name = btype["1"]["name"]
+            high = (len(btype) - 1) * 4 + 2
+            if high <= (curses.LINES - 4):
+                self.items.append(MetaButtonBox(self, posy, 0, name + sfill(max_len - len(name), ' '), data=i))
+                posy += 1
+            else:
+                self.parent.update_status("The type '{}' has too many fields for the actual window size".format(name))
 
     def start(self, timeout=-1):
         while True:

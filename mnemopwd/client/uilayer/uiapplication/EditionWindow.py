@@ -68,6 +68,11 @@ class EditionWindow(TitledOnBorderWindow):
         for i in range(1, len(btypes)+1):
             btype = btypes[str(i)]
 
+            # Control size of the screen with the number of fields
+            high = (len(btype) - 1) * 4 + 2
+            if high > (curses.LINES - 4):
+                continue
+
             # Search label max size and get shortcuts list
             shortcuts = []
             max_len = 0
