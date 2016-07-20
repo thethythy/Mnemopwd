@@ -32,7 +32,6 @@ State S31 : Configuration
 from client.util.funcutils import singleton
 from client.corelayer.protocol.StateSCC import StateSCC
 from common.KeyHandler import KeyHandler
-from client.util.Configuration import Configuration
 
 
 @singleton
@@ -63,10 +62,11 @@ class StateS31A(StateSCC):
                             raise Exception("S31 protocol error")
 
                         # Create the client KeyHandler
+                        cypher_suite = handler.config.split(';')
                         handler.keyH = KeyHandler(handler.ms,
-                                                  cur1=Configuration.curve1, cip1=Configuration.cipher1,
-                                                  cur2=Configuration.curve2, cip2=Configuration.cipher2,
-                                                  cur3=Configuration.curve3, cip3=Configuration.cipher3)
+                                                  cur1=cypher_suite[0], cip1=cypher_suite[1],
+                                                  cur2=cypher_suite[2], cip2=cypher_suite[3],
+                                                  cur3=cypher_suite[4], cip3=cypher_suite[5])
 
                         # Task is ended
                         handler.core.taskInProgress = False

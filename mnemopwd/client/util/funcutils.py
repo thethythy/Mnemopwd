@@ -28,55 +28,71 @@
 # ---------------------------------------------------------
 # Singleton class
 
+
 def singleton(the_class):
-    instances = {} # Dictionary of singleton objects
+    instances = {}  # Dictionary of singleton objects
+
     def get_instance():
         if the_class not in instances:
             # Create a singleton object and store it
             instances[the_class] = the_class()
         return instances[the_class]
+
     return get_instance
 
 # ---------------------------------------------------------
 # Design pattern Observer
 
-class Subject():
+
+class Subject:
     """
     Subject of observation
     """
 
     def __init__(self):
         """Initiliaze the attribut self.observers = []"""
-        self.observers = [] # List of observers
+        self.observers = []  # List of observers
 
-    def addObserver(self, obs):
+    def add_observer(self, obs):
         """Add a new observer"""
         if isinstance(obs, Observer):
             self.observers.append(obs)
 
-    def delObserver(self, obs):
+    def del_observer(self, obs):
         """Delete an observer"""
         if isinstance(obs, Observer):
             self.observers.remove(obs)
 
-    def update(self, property, value):
+    def update(self, key, value):
         """Update all the observers"""
-        for obs in self.observers: obs.update(property, value)
+        for obs in self.observers:
+            obs.update(key, value)
 
-class Observer():
+
+class Observer:
     """
     An observer of the subject
     """
 
-    def update(self, property, value):
+    def update(self, key, value):
         """Update the observer"""
         pass
 
+
 # ---------------------------------------------------------
-# sfill(n,c) : fill a string with n * character c
+# Various functions
 
 def sfill(n, c):
+    """Fill a string with n * character c"""
     string = ''
-    for i in range(n): string += c
+    for i in range(n):
+        string += c
     return string
 
+
+def is_none(name):
+    """return '' if a string is equal to 'None' otherwise returns the string"""
+    if name == 'None':
+        return ''
+    else:
+        return name

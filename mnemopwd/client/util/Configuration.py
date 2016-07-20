@@ -34,7 +34,6 @@ The priority (from low to high) for loading configuration values is :
 - the command line values
 """
 
-import logging
 import configparser
 import argparse
 import os.path
@@ -42,6 +41,7 @@ import os
 import stat
 import json
 
+from client.util.funcutils import is_none
 from common.util.X509 import X509
 
 
@@ -125,27 +125,21 @@ class Configuration:
             Configuration.certfile = fileparser['server']['certfile']
             Configuration.timeout = int(fileparser['server']['timeout'])
 
-            def _test_none(name):
-                if name == 'None':
-                    return ""
-                else:
-                    return name
-
-            Configuration.curve1 = _test_none(fileparser['client']['curve1'])
-            Configuration.cipher1 = _test_none(fileparser['client']['cipher1'])
-            Configuration.curve2 = _test_none(fileparser['client']['curve2'])
-            Configuration.cipher2 = _test_none(fileparser['client']['cipher2'])
-            Configuration.curve3 = _test_none(fileparser['client']['curve3'])
-            Configuration.cipher3 = _test_none(fileparser['client']['cipher3'])
+            Configuration.curve1 = is_none(fileparser['client']['curve1'])
+            Configuration.cipher1 = is_none(fileparser['client']['cipher1'])
+            Configuration.curve2 = is_none(fileparser['client']['curve2'])
+            Configuration.cipher2 = is_none(fileparser['client']['cipher2'])
+            Configuration.curve3 = is_none(fileparser['client']['curve3'])
+            Configuration.cipher3 = is_none(fileparser['client']['cipher3'])
             Configuration.lock = int(fileparser['client']['lock'])
 
     @staticmethod
     def __create_config_file__(fileparser):
         """Method to create default configuration file"""
         fileparser['server'] = {'server': Configuration.server + " # Server IP",
-                                'port': str(Configuration.port)
-                                        + " # Values allowed: " + str(Configuration.port_min)
-                                        + ".." + str(Configuration.port_max),
+                                'port': str(Configuration.port) +
+                                        " # Values allowed: " + str(Configuration.port_min) +
+                                        ".." + str(Configuration.port_max),
                                 'certfile': Configuration.certfile + " # Use an absolute path",
                                 'timeout': str(Configuration.timeout) + " # Timeout on connection request"}
         fileparser['client'] = {'curve1': Configuration.curve1 + " # Values allowed: ...",

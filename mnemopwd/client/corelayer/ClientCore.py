@@ -160,6 +160,7 @@ class ClientCore(Subject):
         while self.protocol.state != self.protocol.states['1S']:
             yield from asyncio.sleep(0.01, loop=self.loop)
         # Execute protocol state
+        Configuration.first_execution = False
         self.taskInProgress = True
         self.loop.run_in_executor(None, self.protocol.state.do, self.protocol, None)
         # Waiting for the end of the task

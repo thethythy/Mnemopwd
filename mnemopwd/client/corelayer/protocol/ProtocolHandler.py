@@ -29,6 +29,7 @@ import asyncio
 import threading
 from client.corelayer.protocol import *
 from client.util.Configuration import Configuration
+from client.util.funcutils import is_none
 
 """
 Handler of the secure protocol connection with the server
@@ -80,9 +81,9 @@ class ProtocolHandler(asyncio.Protocol):
                        '36R': StateS36R(), '36A': StateS36A(),
                        '37R': StateS37R(), '37A': StateS37A()}
         # The client configuration
-        self.config = Configuration.curve1 + ";" + Configuration.cipher1 + ";" + \
-                      Configuration.curve2 + ";" + Configuration.cipher2 + ";" + \
-                      Configuration.curve3 + ";" + Configuration.cipher3
+        self.config = is_none(Configuration.curve1) + ";" + is_none(Configuration.cipher1) + ";" + \
+                      is_none(Configuration.curve2) + ";" + is_none(Configuration.cipher2) + ";" + \
+                      is_none(Configuration.curve3) + ";" + is_none(Configuration.cipher3)
         # Lock object for serializing thread execution
         self.lock = threading.Lock()
 
