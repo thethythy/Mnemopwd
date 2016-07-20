@@ -57,12 +57,12 @@ class MainWindow(BaseWindow):
         self.hpassword = None   # User account password
 
         # Menu zone
-        self.applicationButton = ButtonBox(self, 0, 0, "MnemoPwd", shortcut='M')
+        self.applicationButton = ButtonBox(self, 0, 0, "MnemoPwd", shortcut='E')
         self.newButton = ButtonBox(self, 0, 11, "New", shortcut='N')
-        self.searchButton = ButtonBox(self, 0, 17, "Search", shortcut='E')
+        self.searchButton = ButtonBox(self, 0, 17, "Search", shortcut='R')
 
         # Ordered list of shortcut keys
-        self.shortcuts = ['M', 'N', 'E']
+        self.shortcuts = ['E', 'N', 'R']
 
         # Ordered list of components
         self.items = [self.applicationButton, self.newButton, self.searchButton]
@@ -90,6 +90,17 @@ class MainWindow(BaseWindow):
         self.window.addch(1, curses.COLS - len(message) - 3, curses.ACS_BTEE)
         self.statscr.hline(0, 0, curses.ACS_HLINE, curses.COLS)
         self.window.refresh()
+
+    def lock_screen(self):
+        """Lock / unlock the screen"""
+        self.uifacade.clear_content()
+        self.window.timeout(-1)
+        self.window.addstr(int(curses.LINES / 2), int(curses.COLS / 2 - 13), "Hit a key to unlock screen")
+        self.window.getch()
+        while UnlockScreenWindow(self).start() is False:
+            self.window.addstr(int(curses.LINES / 2), int(curses.COLS / 2 - 13), "Hit a key to unlock screen")
+            self.window.getch()
+        self.redraw()
 
     def hash_password(self, password):
         """Compute a digest of the password. USe a random salt value"""
@@ -121,17 +132,6 @@ class MainWindow(BaseWindow):
         result = UserAccountDeletionWindow(self).start()
         if result:
             self.uifacade.inform("connection.close.deletion", None)
-
-    def _lock_screen(self):
-        """Lock / unlock the screen"""
-        self.uifacade.clear_content()
-        self.window.timeout(-1)
-        self.window.addstr(int(curses.LINES / 2), int(curses.COLS / 2 - 13), "Hit a key to unlock screen")
-        self.window.getch()
-        while UnlockScreenWindow(self).start() is False:
-            self.window.addstr(int(curses.LINES / 2), int(curses.COLS / 2 - 13), "Hit a key to unlock screen")
-            self.window.getch()
-        self.redraw()
 
     def _handle_block(self, number, idblock):
         """Start block edition"""
@@ -180,7 +180,7 @@ class MainWindow(BaseWindow):
             if result == 'timeout' and timer > 0 and self.connected:
                 counter += 100
                 if counter >= timer:
-                    self._lock_screen()
+                    self.lock_screen()
                     counter = 0
             else:
                 counter = 0
@@ -206,7 +206,7 @@ class MainWindow(BaseWindow):
                         self.update_status('You must be connected to a user account to delete it')
                 if result == ApplicationMenu.ITEM4:  # Lock screen
                     if self.connected:
-                        self._lock_screen()
+                        self.lock_screen()
                 if result == ApplicationMenu.ITEM5:  # Quit application
                     if self.connected:
                         self.uifacade.inform("connection.close", None)  # Disconnection

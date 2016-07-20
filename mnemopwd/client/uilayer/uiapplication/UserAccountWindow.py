@@ -52,7 +52,7 @@ class UserAccountWindow(TitledBorderWindow):
         self.window.addstr(11, 2, "Password again")
 
         # Ordered list of shortcut keys
-        self.shortcuts = ['', '', '', 'R', 'L', 'A']
+        self.shortcuts = ['', '', '', 'T', 'L', 'A']
 
         # Editable components
         self.logineditor = InputBox(self, 3, size_x - 21, 5 - 1, 18, self.shortcuts)
@@ -61,7 +61,7 @@ class UserAccountWindow(TitledBorderWindow):
 
         # Actionnable components
         posx = gap = int(((size_x - 2) - (8 + 7 + 8)) / 4) + 1
-        self.createButton = ButtonBox(self, 14, posx, "Create", 'R')
+        self.createButton = ButtonBox(self, 14, posx, "Create", 'T')
         posx = posx + 8 + gap
         self.clearButton = ButtonBox(self, 14, posx, "Clear", 'L')
         posx = posx + 7 + gap

@@ -66,6 +66,7 @@ class ClientUI(Thread, Observer):
         self.window = curses.initscr()
         self.window.keypad(1)  # Let special keys be a single key
         curses.noecho()  # No echoing key pressed
+        curses.nonl()  # Leave newline mode
         try:
             curses.curs_set(0)  # No cursor
         except:
@@ -81,13 +82,14 @@ class ClientUI(Thread, Observer):
 
     def stop(self):
         """Stop UI and return to normal interaction"""
-        curses.nocbreak()
-        self.window.keypad(False)
         try:
             curses.curs_set(2)
         except:
             pass
+        curses.nonl()  # Enter newline mode
+        curses.nocbreak()
         curses.echo()
+        self.window.keypad(False)
         curses.endwin()
 
     def run(self):

@@ -27,6 +27,7 @@
 
 import curses
 
+from client.util.Configuration import Configuration
 from client.uilayer.uicomponents.TitledOnBorderWindow import TitledOnBorderWindow
 from client.uilayer.uicomponents.ButtonBox import ButtonBox
 from client.uilayer.uicomponents.InputBox import InputBox
@@ -45,15 +46,15 @@ class EditionWindow(TitledOnBorderWindow):
         # Buttons
         posy = h - 2
         posx = gap = int(((w - 2) - (6 + 7 + 8 + 8)) / 5) + 1
-        self.saveButton = ButtonBox(self, posy, posx, "Save", 'A')
+        self.saveButton = ButtonBox(self, posy, posx, "Save", 'S')
         posx = posx + 6 + gap
         self.clearButton = ButtonBox(self, posy, posx, "Clear", 'L')
         posx = posx + 7 + gap
-        self.cancelButton = ButtonBox(self, posy, posx, "Cancel", 'N')
+        self.cancelButton = ButtonBox(self, posy, posx, "Cancel", 'A')
         posx = posx + 8 + gap
-        self.deleteButton = ButtonBox(self, posy, posx, "Delete", 'T')
+        self.deleteButton = ButtonBox(self, posy, posx, "Delete", 'E')
 
-        self._shortcuts = ['A', 'L', 'N', 'T']
+        self._shortcuts = ['S', 'L', 'A', 'E']
         self._items = self.items = [self.saveButton, self.clearButton, self.cancelButton, self.deleteButton]
 
         # Separator
@@ -196,8 +197,22 @@ class EditionWindow(TitledOnBorderWindow):
 
     def start(self, timeout=-1):
         """See mother class"""
+
+        # Automatic lock screen
+        counter = 0
+        timer = Configuration.lock * 60 * 1000  # Timer in ms
+
         while True:
-            result = TitledOnBorderWindow.start(self)  # Default controller
+            result = TitledOnBorderWindow.start(self, timeout=100)  # Default controller
+
+            # Lock screen ?
+            if result == 'timeout' and timer > 0:
+                counter += 100
+                if counter >= timer:
+                    self.parent.lock_screen()
+                    counter = 0
+            else:
+                counter = 0
 
             # Next item for editable items
             if type(result) is InputBox:

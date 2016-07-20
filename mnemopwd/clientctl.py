@@ -35,17 +35,17 @@ import time
 if __name__ == "__main__":
     #MnemopwdFingerPrint().control_fingerprint()
     Configuration.configure()
-    if Configuration.action == 'status' :
+    if Configuration.action == 'status':
         ClientCore().stop()
-    elif Configuration.action == 'start' :
+    elif Configuration.action == 'start':
         try:
             core = ClientCore()  # The domain layer
             ui = ClientUI(core)  # The UI layer (linked to the domain layer)
-            core.addObserver(ui) # Use design pattern Observer to update UI layer
+            core.add_observer(ui)  # Use design pattern Observer to update UI layer
 
             ui.start()   # Always start the UI layer before the domain layer
-            time.sleep(0.1) # Waiting the UI initialization
-            core.start() # Start domain layer
+            time.sleep(0.1)  # Waiting the UI initialization
+            core.start()  # Start domain layer
 
         except:
             exit()

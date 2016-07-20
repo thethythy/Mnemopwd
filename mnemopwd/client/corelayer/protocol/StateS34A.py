@@ -31,6 +31,7 @@ State S34 : SearchData
 
 from client.util.funcutils import singleton
 from client.corelayer.protocol.StateSCC import StateSCC
+import logging
 
 
 @singleton
@@ -76,5 +77,6 @@ class StateS34A(StateSCC):
                         raise Exception("S34A protocol error")
 
             except Exception as exc:
+                logging.debug(str(data[:50]))
                 # Schedule a call to the exception handler
                 handler.loop.call_soon_threadsafe(handler.exception_handler, exc)

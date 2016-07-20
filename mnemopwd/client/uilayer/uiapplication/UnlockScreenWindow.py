@@ -51,7 +51,7 @@ class UnlockScreenWindow(TitledBorderWindow):
         self.window.addstr(8, 2, "Password")
 
         # Ordered list of shortcut keys
-        self.shortcuts = ['', '', 'N', 'L', 'A']
+        self.shortcuts = ['', '', 'U', 'L', 'A']
 
         # Editable components
         self.logineditor = InputBox(self, 3, size_x - 15, 5 - 1, 12, self.shortcuts)
@@ -115,6 +115,5 @@ class UnlockScreenWindow(TitledBorderWindow):
 
     def close(self):
         """Close the window"""
-        curses.nl()
         self.window.erase()
         self.window.refresh()

@@ -26,7 +26,7 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from client.uilayer.uicomponents.BaseWindow import BaseWindow
-from client.uilayer.uicomponents.ButtonBox import ButtonBox
+from client.uilayer.uicomponents.MetaButtonBox import MetaButtonBox
 from client.util.funcutils import sfill
 
 
@@ -48,7 +48,7 @@ class CreateMenu(BaseWindow):
         posy = 0
         for i in range(1, len(btypes) + 1):
             name = ((btypes[str(i)])["1"])["name"]
-            self.items.append(ButtonBox(self, posy, 0, name + sfill(max_len - len(name), ' ')))
+            self.items.append(MetaButtonBox(self, posy, 0, name + sfill(max_len - len(name), ' '), data=i))
             posy += 1
 
     def start(self, timeout=-1):
@@ -64,4 +64,4 @@ class CreateMenu(BaseWindow):
             # Return the number of block type selected
             else:
                 self.close()
-                return self.index + 1
+                return self.items[self.index].get_data()

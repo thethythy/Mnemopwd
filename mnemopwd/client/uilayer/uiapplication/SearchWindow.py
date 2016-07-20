@@ -28,6 +28,7 @@
 import curses
 import curses.ascii
 
+from client.util.Configuration import Configuration
 from client.uilayer.uicomponents.TitledOnBorderWindow import TitledOnBorderWindow
 from client.uilayer.uicomponents.Component import Component
 from client.uilayer.uicomponents.InputBox import InputBox
@@ -54,6 +55,10 @@ class SearchWindow(TitledOnBorderWindow):
         self.items = [self.patternEditor, self.resultPanel]
 
         self.window.refresh()
+
+    def lock_screen(self):
+        """Lock the screen"""
+        self.parent.lock_screen()
 
     def clear_content(self):
         """Clear the window content"""
@@ -116,9 +121,23 @@ class SearchWindow(TitledOnBorderWindow):
 
     def start(self, timeout=-1):
         """See mother class"""
+
+        # Automatic lock screen
+        counter = 0
+        timer = Configuration.lock * 60 * 1000  # Timer in ms
+
         while True:
             self.update_status("Edit pattern filter")
             result = TitledOnBorderWindow.start(self, 100)  # Default controller (timeout of 100 ms)
+
+            # Lock screen ?
+            if result == 'timeout' and timer > 0:
+                counter += 100
+                if counter >= timer:
+                    self.parent.lock_screen()
+                    counter = 0
+            else:
+                counter = 0
 
             # Try to create or update the block
             if result == self.patternEditor:
@@ -127,7 +146,7 @@ class SearchWindow(TitledOnBorderWindow):
             # Navigate in result panel
             elif result == self.resultPanel:
                 self.update_status("Navigate or hit return to edit")
-                result = self.resultPanel.start()
+                result = self.resultPanel.start(timeout=100)
                 self.update_status("")
                 if result == -1:
                     self.index -= 1  # Focus on previous item

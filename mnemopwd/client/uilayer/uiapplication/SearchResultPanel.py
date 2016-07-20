@@ -28,6 +28,7 @@
 import curses
 import curses.ascii
 
+from client.util.Configuration import Configuration
 from client.uilayer.uicomponents.MetaButtonBox import MetaButtonBox
 from client.uilayer.uicomponents.BaseWindow import BaseWindow
 
@@ -40,12 +41,8 @@ class SearchResultPanel(BaseWindow):
     def __init__(self, parent, h, w, y, x, modal=False, menu=False):
         """Create base window"""
         BaseWindow.__init__(self, parent, h, w, y, x, modal=modal, menu=menu)
-        self._create()
         self.intern_pad = curses.newpad(1000, w - 1)
         self.scroll_pos = 0
-
-    def _create(self):
-        self.window.refresh()
 
     def _update_application(self, show):
         """Update application window"""
@@ -83,7 +80,12 @@ class SearchResultPanel(BaseWindow):
 
     def start(self, timeout=-1):
         """See mother class"""
-        curses.nonl()
+        self.window.timeout(timeout)  # timeout for getch function
+        self.window.getch()  # Clear the buffer ?
+
+        # Automatic lock screen
+        counter = 0
+        timer = Configuration.lock * 60 * 1000  # Timer in ms
 
         nbitems = len(self.items)
         if nbitems > 0:
@@ -92,6 +94,16 @@ class SearchResultPanel(BaseWindow):
 
         while True:
             c = self.window.getch()
+
+            # Timeout ?
+            if c == -1 and timer > 0:
+                counter += 100
+                if counter >= timer:
+                    self.parent.lock_screen()
+                    self.items[self.index].focus_on()
+                    counter = 0
+            elif c != -1:
+                counter = 0
 
             # Next component
             if c in [curses.KEY_DOWN, curses.ascii.TAB]:
@@ -123,8 +135,3 @@ class SearchResultPanel(BaseWindow):
                 self.items[self.index].focus_off()
                 self._update_application(False)
                 return False
-
-    def redraw(self):
-        """See mother class"""
-        self._create()
-        BaseWindow.redraw(self)

@@ -32,6 +32,7 @@ State S32 : Exportation
 from client.util.funcutils import singleton
 from client.corelayer.protocol.StateSCC import StateSCC
 import pickle
+import logging
 
 
 @singleton
@@ -81,5 +82,6 @@ class StateS32Ab(StateSCC):
                     raise Exception(message)
 
             except Exception as exc:
+                logging.debug(str(data[:50]))
                 # Schedule a call to the exception handler
                 handler.loop.call_soon_threadsafe(handler.exception_handler, exc)

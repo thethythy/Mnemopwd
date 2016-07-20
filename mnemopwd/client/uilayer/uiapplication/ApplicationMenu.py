@@ -55,7 +55,7 @@ class ApplicationMenu(BaseWindow):
         self.items.append(MetaButtonBox(self, 0, 0, name, shortcut='L', data=self.ITEM1))
 
         # Create user account button
-        self.items.append(MetaButtonBox(self, 1, 0, 'Create user account', shortcut='A', data=self.ITEM2))
+        self.items.append(MetaButtonBox(self, 1, 0, 'Create user account', shortcut='N', data=self.ITEM2))
 
         # Delete user account button
         self.items.append(MetaButtonBox(self, 2, 0, 'Delete user account', shortcut='E', data=self.ITEM3))
@@ -69,7 +69,7 @@ class ApplicationMenu(BaseWindow):
         self.items.append(MetaButtonBox(self, 4, 0, name, shortcut='U', data=self.ITEM5))
 
         # Ordered list of shortcut keys
-        self.shortcuts = ['L', 'A', 'E', 'K', 'U']
+        self.shortcuts = ['L', 'N', 'E', 'K', 'U']
 
     def start(self, timeout=-1):
         """See mother class"""

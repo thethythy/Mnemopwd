@@ -64,7 +64,6 @@ class BaseWindow(Component):
 
     def start(self, timeout=-1):
         """Start interaction loop of the window"""
-        curses.nonl()
         self.window.timeout(timeout)  # timeout for getch function
 
         nbitems = len(self.items)
@@ -79,7 +78,6 @@ class BaseWindow(Component):
             if c == -1 and reset is False:
                 return 'timeout'
             elif c == -1 and reset is True:
-                reset = False
                 return 'reset'
             elif c != -1:
                 reset = True
@@ -141,11 +139,6 @@ class BaseWindow(Component):
                     self.items[self.index].focus_off()
                     curses.ungetch(c)
                     self.items[self.index].edit()
-
-    def close(self):
-        """Close the window"""
-        curses.nl()
-        Component.close(self)
 
     def redraw(self):
         """See the mother class"""
