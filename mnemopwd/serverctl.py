@@ -31,6 +31,7 @@ from server.util.Configuration import Configuration
 from server.util.Daemon import Daemon
 from server.server import Server
 
+
 class ServerDaemon(Daemon):
     def run(self):
         Server().start()

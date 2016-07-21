@@ -32,6 +32,7 @@ python application on POSIX systems.
 
 import errno
 import logging
+import socket
 from logging.handlers import RotatingFileHandler
 import os
 import signal
@@ -75,6 +76,7 @@ class Daemon(object):
 
         try:
             self.check_pid_writable()
+            self.check_server_accessibility()
             self.daemonize()
         except:
             logging.exception("failed to start due to an exception")
@@ -85,6 +87,9 @@ class Daemon(object):
             try:
                 self.run()
             except (KeyboardInterrupt, SystemExit):
+                pass
+            except OSError as exc:
+                logging.exception(str(exc))
                 pass
             except:
                 logging.exception("stopping with an exception")
@@ -174,6 +179,15 @@ class Daemon(object):
         if not os.access(check, os.W_OK):
             msg = 'unable to write to pidfile %s' % Configuration.pidfile
             sys.exit(msg)
+
+    def check_server_accessibility(self):
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.bind((Configuration.host, Configuration.port))
+        except OSError as exc:
+            if exc.errno == 48:
+                print("address [%s:%d] already in use" % (Configuration.host, Configuration.port))
+                sys.exit(1)
 
     def write_pid(self):
         """Write to the pid file"""
