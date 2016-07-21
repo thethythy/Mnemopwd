@@ -30,7 +30,6 @@ Provides a simple Daemon class to ease the process of forking a
 python application on POSIX systems.
 """
 
-import configparser
 import errno
 import logging
 from logging.handlers import RotatingFileHandler
@@ -38,8 +37,10 @@ import os
 import signal
 import sys
 import time
+import datetime
 
 from server.util.Configuration import Configuration
+
 
 class Daemon(object):
     """Daemon base class"""
@@ -56,7 +57,7 @@ class Daemon(object):
         elif Configuration.action == 'status':
             self.status()
         else:
-            raise ValueError(action)
+            raise ValueError(Configuration.action)
 
     def on_sigterm(self, signalnum, frame):
         """Handle segterm by treating as a keyboard interrupt"""
@@ -117,8 +118,8 @@ class Daemon(object):
 
     def start_logging(self):
         """Configure the logging module"""
-        handler = RotatingFileHandler(Configuration.logfile, \
-                                      maxBytes=Configuration.logmaxmb * 1024 * 1024, \
+        handler = RotatingFileHandler(Configuration.logfile,
+                                      maxBytes=Configuration.logmaxmb * 1024 * 1024,
                                       backupCount=Configuration.logbackups)
         log = logging.getLogger()
         log.setLevel(Configuration.loglevel)
@@ -151,7 +152,9 @@ class Daemon(object):
                            "from pidfile %s: %s" % (pid, Configuration.pidfile, err.strerror))
                     sys.exit(msg)
             else:
-                msg = ('instance seems to be running (pid %s) ' % pid)
+                mtime = os.stat(Configuration.pidfile).st_mtime
+                since = datetime.timedelta(seconds=(time.time() - mtime))
+                msg = 'instance [pid %s] seems to be running since %s [%s days]' % (pid, time.ctime(mtime), since.days)
                 sys.exit(msg)
         elif status:
             print('no instance seems to be running')
