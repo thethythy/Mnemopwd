@@ -42,39 +42,43 @@ class StateS32A(StateSCC):
         """Action of the state S32A: treat response of exportation request"""
         with handler.lock:
             try:
-                # Test challenge response
-                if self.control_challenge(handler, data):
 
-                    # Test if request is accepted
-                    is_OK = data[:2] == b"OK"
-                    if is_OK:
-                        try:
-                            tab_data = data[3:].split(b';', maxsplit=1)
-                            nbblock = int(tab_data[0].decode())
+                # Test if request is rejected
+                is_KO = data[:5] == b"ERROR"
+                if is_KO:
+                    message = (data[6:]).decode()
+                    raise Exception(message)
 
-                            # Are there SIB to treat ?
-                            if nbblock > 0:
-                                handler.nbSIB = nbblock  # Number of SIB to treat
-                                handler.nbSIBDone = 0  # Number of SIB already treated
-                                handler.state = handler.states['32Ab']  # Next state
+                # Test if request is accepted
+                is_OK = data[:2] == b"OK"
+                if is_OK:
+                    try:
+                        tab_data = data[3:].split(b';', maxsplit=1)
+                        nbblock = int(tab_data[0].decode())
 
-                                # Check if the first SIB is already received
-                                try:
-                                    if len(tab_data[1]) > 0:
-                                        handler.loop.run_in_executor(None, handler.data_received, b';' + tab_data[1])
-                                except IndexError:
-                                    pass
+                        # Are there SIB to treat ?
+                        if nbblock > 0:
+                            handler.nbSIB = nbblock  # Number of SIB to treat
+                            handler.nbSIBDone = 0  # Number of SIB already treated
+                            handler.state = handler.states['32Ab']  # Next state
 
-                            else:
-                                handler.core.taskInProgress = False
-                                handler.loop.run_in_executor(None, handler.notify, "application.state",
-                                                             "No information found")
+                            # Check if the first SIB is already received
+                            try:
+                                if len(tab_data[1]) > 0:
+                                    handler.loop.run_in_executor(None, handler.data_received, b';' + tab_data[1])
+                            except IndexError:
+                                pass
 
-                        except:
-                            raise Exception("S32A protocol error")
+                        else:
+                            handler.core.taskInProgress = False
+                            handler.loop.run_in_executor(None, handler.notify, "application.state",
+                                                         "No information found")
 
-                    else:
+                    except:
                         raise Exception("S32A protocol error")
+
+                else:
+                    raise Exception("S32A protocol error")
 
             except Exception as exc:
                 logging.debug(str(data[:50]))

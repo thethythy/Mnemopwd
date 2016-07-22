@@ -41,24 +41,22 @@ class StateS33A(StateSCC):
         """Action of the state S33A: treat response of user account deletion request"""
         with handler.lock:
             try:
-                # Test challenge response
-                if self.control_challenge(handler, data):
 
-                    # Test if user account deletion request is rejected
-                    is_KO = data[:5] == b"ERROR"
-                    if is_KO:
-                        message = (data[6:]).decode()
-                        raise Exception(message)
+                # Test if user account deletion request is rejected
+                is_KO = data[:5] == b"ERROR"
+                if is_KO:
+                    message = (data[6:]).decode()
+                    raise Exception(message)
 
-                    # Test if user account creation request is accepted
-                    is_OK = data[:2] == b"OK"
-                    if is_OK:
-                        # Notify the handler a property has changed
-                        handler.loop.run_in_executor(None, handler.notify, "connection.state.logout", "User account deleted")
-                        # Task is ended
-                        handler.core.taskInProgress = False
-                    else:
-                        raise Exception("S33 protocol error")
+                # Test if user account creation request is accepted
+                is_OK = data[:2] == b"OK"
+                if is_OK:
+                    # Notify the handler a property has changed
+                    handler.loop.run_in_executor(None, handler.notify, "connection.state.logout", "User account deleted")
+                    # Task is ended
+                    handler.core.taskInProgress = False
+                else:
+                    raise Exception("S33 protocol error")
 
             except Exception as exc:
                 # Schedule a call to the exception handler

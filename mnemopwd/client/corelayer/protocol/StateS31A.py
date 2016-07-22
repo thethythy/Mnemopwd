@@ -43,40 +43,37 @@ class StateS31A(StateSCC):
         with handler.lock:
             try:
 
-                # Test challenge response
-                if self.control_challenge(handler, data):
+                # Test if configuration request is rejected
+                is_KO = data[:5] == b"ERROR"
+                if is_KO:
+                    raise Exception((data[6:]).decode())
 
-                    # Test if configuration request is rejected
-                    is_KO = data[:5] == b"ERROR"
-                    if is_KO:
-                        raise Exception((data[6:]).decode())
-
-                    # Test if configuration is accepted
-                    is_OK = data[:2] == b"OK"
-                    if is_OK:
-                        if data[3:] == b"1":
-                            message = "Configuration accepted"
-                        elif data[3:] == b"2":
-                            message = "New configuration accepted"
-                        else:
-                            raise Exception("S31 protocol error")
-
-                        # Create the client KeyHandler
-                        cypher_suite = handler.config.split(';')
-                        handler.keyH = KeyHandler(handler.ms,
-                                                  cur1=cypher_suite[0], cip1=cypher_suite[1],
-                                                  cur2=cypher_suite[2], cip2=cypher_suite[3],
-                                                  cur3=cypher_suite[4], cip3=cypher_suite[5])
-
-                        # Task is ended
-                        handler.core.taskInProgress = False
-
-                        # Notify the handler a property has changed
-                        handler.loop.run_in_executor(None, handler.notify, "application.keyhandler", handler.keyH)
-                        handler.loop.run_in_executor(None, handler.notify, "connection.state", message)
-
+                # Test if configuration is accepted
+                is_OK = data[:2] == b"OK"
+                if is_OK:
+                    if data[3:] == b"1":
+                        message = "Configuration accepted"
+                    elif data[3:] == b"2":
+                        message = "New configuration accepted"
                     else:
                         raise Exception("S31 protocol error")
+
+                    # Create the client KeyHandler
+                    cypher_suite = handler.config.split(';')
+                    handler.keyH = KeyHandler(handler.ms,
+                                              cur1=cypher_suite[0], cip1=cypher_suite[1],
+                                              cur2=cypher_suite[2], cip2=cypher_suite[3],
+                                              cur3=cypher_suite[4], cip3=cypher_suite[5])
+
+                    # Task is ended
+                    handler.core.taskInProgress = False
+
+                    # Notify the handler a property has changed
+                    handler.loop.run_in_executor(None, handler.notify, "application.keyhandler", handler.keyH)
+                    handler.loop.run_in_executor(None, handler.notify, "connection.state", message)
+
+                else:
+                    raise Exception("S31 protocol error")
 
             except Exception as exc:
                 # Schedule a call to the exception handler

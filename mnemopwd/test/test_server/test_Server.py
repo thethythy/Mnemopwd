@@ -163,7 +163,7 @@ class Test_Server_Client_S1_KO(Test_Server_Client_S1_OK):
         protocol_cd = message[:5]
         protocol_data = message[6:]
         self.test.assertEqual(protocol_cd, b'ERROR')
-        self.test.assertEqual(protocol_data, b'challenge rejected')
+        self.test.assertEqual(protocol_data, b'application protocol error')
     
     def run(self):
         try:
@@ -238,7 +238,7 @@ class Test_Server_Client_S21_KO_ID(Test_Server_Client_S21_OK):
         protocol_cd = message[:5]
         protocol_data = message[6:]
         self.test.assertEqual(protocol_cd, b'ERROR')
-        self.test.assertEqual(protocol_data, b'incorrect id')
+        self.test.assertEqual(protocol_data, b'application protocol error')
         
     def run(self):
         try:
@@ -268,7 +268,7 @@ class Test_Server_Client_S21_KO_COUNT(Test_Server_Client_S21_KO_ID):
         protocol_cd = message[:5]
         protocol_data = message[6:]
         self.test.assertEqual(protocol_cd, b'ERROR')
-        self.test.assertEqual(protocol_data, b'user account does not exist')
+        self.test.assertEqual(protocol_data, b'application protocol error')
         
     def run(self):
         try:
@@ -349,7 +349,7 @@ class Test_Server_Client_S22_KO_ID(Test_Server_Client_S22_OK):
         protocol_cd = message[:5]
         protocol_data = message[6:]
         self.test.assertEqual(protocol_cd, b'ERROR')
-        self.test.assertEqual(protocol_data, b'incorrect id')
+        self.test.assertEqual(protocol_data, b'application protocol error')
         
     def run(self):
         try:
@@ -381,7 +381,7 @@ class Test_Server_Client_S22_KO_COUNT(Test_Server_Client_S22_OK):
         protocol_cd = message[:5]
         protocol_data = message[6:]
         self.test.assertEqual(protocol_cd, b'ERROR')
-        self.test.assertEqual(protocol_data, b'user account already used')
+        self.test.assertEqual(protocol_data, b'application protocol error')
         
     def run(self):
         try:
@@ -498,7 +498,7 @@ class Test_Server_Client_S31_KO(Test_Server_Client_S31_OK_SAME_CONFIG):
         protocol_cd = message[:5]
         protocol_data = message[6:]
         self.test.assertEqual(protocol_cd, b'ERROR')
-        self.test.assertEqual(protocol_data, b'wrong configuration')
+        self.test.assertEqual(protocol_data, b'application protocol error')
         
     def run(self):
         try:
@@ -976,7 +976,7 @@ class Test_Server_Client_S35_KO(Test_Server_Client_S35_OK_1):
         protocol_cd = message[:5]
         protocol_data = message[6:]
         self.test.assertEqual(protocol_cd, b'ERROR')
-        self.test.assertEqual(protocol_data, b'data rejected')
+        self.test.assertEqual(protocol_data, b'application protocol error')
         
     def run(self):
         try:
@@ -1104,7 +1104,7 @@ class Test_Server_Client_S36_KO_1(Test_Server_Client_S36_OK):
         protocol_cd = message[:5]
         self.test.assertEqual(protocol_cd, b'ERROR')
         protocol_data = message[6:]
-        self.test.assertEqual(protocol_data, b'index rejected')
+        self.test.assertEqual(protocol_data, b'application protocol error')
         
     def run(self):
         try:
@@ -1227,7 +1227,7 @@ class Test_Server_Client_S37_KO_1(Test_Server_Client_S37_OK):
         protocol_cd = message[:5]
         self.test.assertEqual(protocol_cd, b'ERROR')
         protocol_data = message[6:]
-        self.test.assertEqual(protocol_data, b'index rejected')
+        self.test.assertEqual(protocol_data, b'application protocol error')
         
     def run(self):
         try:

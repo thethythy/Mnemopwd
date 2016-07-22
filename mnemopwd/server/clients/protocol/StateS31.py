@@ -56,7 +56,7 @@ class StateS31(StateSCC):
                 result = client.configure_crypto(config.decode())
 
                 if result == False:
-                    message = b'ERROR;' + b'wrong configuration'
+                    message = b'ERROR;application protocol error'
                     client.loop.call_soon_threadsafe(client.transport.write, message)
                     raise Exception('wrong configuration {}'.format(config.decode()))
 
@@ -73,7 +73,7 @@ class StateS31(StateSCC):
                             message = b'OK;' + b'2'
                             client.loop.call_soon_threadsafe(client.transport.write, message)
                         else:
-                            message = b'ERROR;' + b'S31 operation aborted'
+                            message = b'ERROR;application protocol error'
                             client.loop.call_soon_threadsafe(client.transport.write, message)
                             raise Exception('S31 operation aborted')
 

@@ -61,7 +61,7 @@ class StateS33(StateSCC):
 
                 # If ids are not equal
                 if id != id_from_client :
-                    message = b'ERROR;' + b'incorrect id'
+                    message = b'ERROR;application protocol error'
                     client.loop.call_soon_threadsafe(client.transport.write, message)
                     raise Exception('incorrect id')
 
@@ -71,7 +71,7 @@ class StateS33(StateSCC):
 
                 # If login is unknown
                 if not exist :
-                    message = b'ERROR;' + b'user account does not exist'
+                    message = b'ERROR;application protocol error'
                     client.loop.call_soon_threadsafe(client.transport.write, message)
                     raise Exception('user account does not exist')
 
@@ -88,7 +88,7 @@ class StateS33(StateSCC):
 
                 # If deletion has failed for some reason
                 else:
-                    message = b'ERROR;' + b'deletion rejected'
+                    message = b'ERROR;application protocol error'
                     client.loop.call_soon_threadsafe(client.transport.write, message)
                     raise Exception('deletion rejected')
 

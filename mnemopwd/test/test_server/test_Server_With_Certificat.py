@@ -162,7 +162,7 @@ class Test_Server_Client_S1_KO(Test_Server_Client_S1_OK):
         protocol_cd = message[:5]
         protocol_data = message[6:]
         self.test.assertEqual(protocol_cd, b'ERROR')
-        self.test.assertEqual(protocol_data, b'challenge rejected')
+        self.test.assertEqual(protocol_data, b'application protocol error')
     
     def run(self):
         try:

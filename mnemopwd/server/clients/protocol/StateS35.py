@@ -57,7 +57,7 @@ class StateS35(StateSCC):
 
                 except AssertionError:
                     # Send an error message
-                    message = b'ERROR;' + b'data rejected'
+                    message = b'ERROR;application protocol error'
                     client.loop.call_soon_threadsafe(client.transport.write, message)
                     raise Exception('data rejected')
 

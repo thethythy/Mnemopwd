@@ -59,7 +59,7 @@ class StateS36(StateSCC):
                     client.loop.call_soon_threadsafe(client.transport.write, b'OK')
                     client.state = client.states['3'] # New client state
                 else:
-                    message = b'ERROR;' + b'index rejected'
+                    message = b'ERROR;application protocol error'
                     client.loop.call_soon_threadsafe(client.transport.write, message)
                     raise Exception('index rejected')
 

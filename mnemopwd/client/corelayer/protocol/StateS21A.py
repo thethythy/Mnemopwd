@@ -42,22 +42,19 @@ class StateS21A(StateSCC):
         with handler.lock:
             try:
 
-                # Test challenge response
-                if self.control_challenge(handler, data):
+                # Test if login request is rejected
+                is_KO = data[:5] == b"ERROR"
+                if is_KO:
+                    message = (data[6:]).decode()
+                    raise Exception(message)
 
-                    # Test if login request is rejected
-                    is_KO = data[:5] == b"ERROR"
-                    if is_KO:
-                        message = (data[6:]).decode()
-                        raise Exception(message)
-
-                    # Test if login is accepted
-                    is_OK = data[:2] == b"OK"
-                    if is_OK:
-                        # Notify the handler a property has changed
-                        handler.loop.run_in_executor(None, handler.notify, "connection.state.login", "Connected to server")
-                    else:
-                        raise Exception("S21 protocol error")
+                # Test if login is accepted
+                is_OK = data[:2] == b"OK"
+                if is_OK:
+                    # Notify the handler a property has changed
+                    handler.loop.run_in_executor(None, handler.notify, "connection.state.login", "Connected to server")
+                else:
+                    raise Exception("S21 protocol error")
 
             except Exception as exc:
                 # Schedule a call to the exception handler

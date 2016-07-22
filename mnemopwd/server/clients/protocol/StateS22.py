@@ -63,7 +63,7 @@ class StateS22(StateSCC):
 
                 # If ids are not equal
                 if id != id_from_client :
-                    message = b'ERROR;' + b'incorrect id'
+                    message = b'ERROR;application protocol error'
                     client.loop.call_soon_threadsafe(client.transport.write, message)
                     raise Exception('incorrect id')
 
@@ -76,7 +76,7 @@ class StateS22(StateSCC):
                     client.loop.call_soon_threadsafe(client.transport.write, b'OK')
                     client.state = client.states['31'] # Next state
                 else:
-                    message = b'ERROR;' + b'user account already used'
+                    message = b'ERROR;application protocol error'
                     client.loop.call_soon_threadsafe(client.transport.write, message)
                     raise Exception('user account already used')
 

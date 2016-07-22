@@ -58,7 +58,7 @@ class StateS1C():
                 client.loop.call_soon_threadsafe(client.transport.write, b'OK')
             else:
                 # Send challenge rejected
-                message = b'ERROR;' + b'challenge rejected'
+                message = b'ERROR;application protocol error'
                 client.loop.call_soon_threadsafe(client.transport.write, message)
                 raise Exception("challenge rejected")
 

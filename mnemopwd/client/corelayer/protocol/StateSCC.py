@@ -34,7 +34,7 @@ from pyelliptic import hmac_sha256
 from pyelliptic import hmac_sha512
 
 
-class StateSCC():
+class StateSCC:
     """Challenge creation and others useful methods"""
     
     def compute_challenge(self, handler, var):
@@ -51,26 +51,9 @@ class StateSCC():
         
         else:
             return echallenge
-            
-    def control_challenge(self, handler, data):
-        """Control the challenge response"""
-        try:
-            is_KO = data[:5] == b"ERROR"
-            protocol_data = data[6:]
-            if is_KO and b'challenge rejected' in protocol_data:
-                raise Exception(protocol_data.decode())
-                
-        except Exception as exc:
-            # Schedule a callback to client exception handler
-            handler.loop.call_soon_threadsafe(handler.exception_handler, exc)
-            return False
-        
-        else:
-            return True
 
     def compute_client_id(self, ms, login):
         """Compute a client id"""
         ho = hashlib.sha256()
         ho.update(hmac_sha512(ms, ms + login))
         return ho.digest()
-

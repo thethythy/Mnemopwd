@@ -41,22 +41,20 @@ class StateS22A(StateSCC):
         """Action of the state S22A: treat response of user account creation request"""
         with handler.lock:
             try:
-                # Test challenge response
-                if self.control_challenge(handler, data):
 
-                    # Test if user account creation request is rejected
-                    is_KO = data[:5] == b"ERROR"
-                    if is_KO:
-                        message = (data[6:]).decode()
-                        raise Exception(message)
+                # Test if user account creation request is rejected
+                is_KO = data[:5] == b"ERROR"
+                if is_KO:
+                    message = (data[6:]).decode()
+                    raise Exception(message)
 
-                    # Test if user account creation request is accepted
-                    is_OK = data[:2] == b"OK"
-                    if is_OK:
-                        # Notify the handler a property has changed
-                        handler.loop.run_in_executor(None, handler.notify, "connection.state.login", "Connected to server")
-                    else:
-                        raise Exception("S22 protocol error")
+                # Test if user account creation request is accepted
+                is_OK = data[:2] == b"OK"
+                if is_OK:
+                    # Notify the handler a property has changed
+                    handler.loop.run_in_executor(None, handler.notify, "connection.state.login", "Connected to server")
+                else:
+                    raise Exception("S22 protocol error")
 
             except Exception as exc:
                 # Schedule a call to the exception handler

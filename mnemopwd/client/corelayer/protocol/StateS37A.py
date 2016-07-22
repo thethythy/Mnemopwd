@@ -41,27 +41,25 @@ class StateS37A(StateSCC):
         """Action of the state S37A: treat response of UpdateData request"""
         with handler.lock:
             try:
-                # Test challenge response
-                if self.control_challenge(handler, data):
 
-                    # Test if request is rejected
-                    is_KO = data[:5] == b"ERROR"
-                    if is_KO:
-                        raise Exception((data[6:]).decode())
+                # Test if request is rejected
+                is_KO = data[:5] == b"ERROR"
+                if is_KO:
+                    raise Exception((data[6:]).decode())
 
-                    # Test if request is accepted
-                    is_OK = data[:2] == b"OK"
-                    if is_OK:
+                # Test if request is accepted
+                is_OK = data[:2] == b"OK"
+                if is_OK:
 
-                        # Notify the handler a property has changed
-                        handler.loop.run_in_executor(None, handler.notify,
-                                                     "application.state", "Information updated by server")
+                    # Notify the handler a property has changed
+                    handler.loop.run_in_executor(None, handler.notify,
+                                                 "application.state", "Information updated by server")
 
-                        # Indicate the actual task is done
-                        handler.core.taskInProgress = False
+                    # Indicate the actual task is done
+                    handler.core.taskInProgress = False
 
-                    else:
-                        raise Exception("S37 protocol error")
+                else:
+                    raise Exception("S37 protocol error")
 
             except Exception as exc:
                 # Schedule a call to the exception handler

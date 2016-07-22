@@ -49,7 +49,7 @@ class StateSCC():
             
             if challenge != challenge_bis :
                 # Send challenge rejected
-                message = b'ERROR;' + b"challenge rejected"
+                message = b'ERROR;application protocol error'
                 client.loop.call_soon_threadsafe(client.transport.write, message)
                 raise Exception(var.decode() + " challenge rejected")
             
