@@ -145,15 +145,15 @@ class MainWindow(BaseWindow):
             self.editscr.set_type(number)
 
         # Do edition
-        result, values = self.editscr.start()
+        result, sib = self.editscr.start()
 
         # According to the result, save / update or delete or do nothing
         if result is True:
-            self.uifacade.inform("application.editblock", (idblock, values))
-            self.searchscr.do_search()  # Update search window
-        elif values is True:
+            self.uifacade.inform("application.editblock", (idblock, sib))
+            #self.searchscr.do_search()  # Update search window
+        elif sib is True:
             self.uifacade.inform("application.deleteblock", idblock)
-            self.searchscr.do_search()  # Update search window
+            #self.searchscr.do_search()  # Update search window
         else:
             self.update_status('')
 
@@ -228,9 +228,9 @@ class MainWindow(BaseWindow):
             elif result == self.searchButton:
                 if self.connected:
                     self.searchButton.focus_off()
-                    result, values = self._search_block()
-                    if type(result) is int:
-                        self._handle_block(int(values[0]), result)
+                    number_type, idblock = self._search_block()
+                    if type(number_type) is int:
+                        self._handle_block(number_type, idblock)
                 else:
                     self.update_status('Please start a connection')
 
@@ -259,9 +259,9 @@ class MainWindow(BaseWindow):
         if key == "application.searchblock.oneresult":
             self.searchscr.add_a_result(*value)
         if key == "application.editionblock.seteditors":
-            number, values = value
-            self.editscr.set_type(number)
-            self.editscr.set_infos(values)
+            number_type, sib = value
+            self.editscr.set_type(number_type)
+            self.editscr.set_infos(number_type, sib)
         if key == "application.editionblock.cleareditors":
             self.editscr.clear_content()
 

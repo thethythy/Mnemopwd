@@ -32,6 +32,7 @@ from client.uilayer.uicomponents.TitledOnBorderWindow import TitledOnBorderWindo
 from client.uilayer.uicomponents.ButtonBox import ButtonBox
 from client.uilayer.uicomponents.InputBox import InputBox
 from client.util.funcutils import sfill
+from common.SecretInfoBlock import SecretInfoBlock
 
 
 class EditionWindow(TitledOnBorderWindow):
@@ -148,20 +149,18 @@ class EditionWindow(TitledOnBorderWindow):
             items.extend(self._items)
             self.items = items
 
-    def set_infos(self, values):
+    def set_infos(self, number_type, sib):
         """Set each information in each editor"""
         self.new_block = False  # Flag to indicate it is an existing block
         # Populate editors
-        infos_comp = self.cpb[int(values[0])]
+        infos_comp = self.cpb[number_type]
         for i in range(2, len(infos_comp) + 1):
             info_comp = infos_comp[i]
             try:
-                info_comp["c_object"].value = values[2 + i - 2]
+                info_comp["c_object"].value = sib['info' + str(3 + i - 2)].decode()
                 info_comp["c_object"].show()
-            except IndexError:
+            except KeyError:
                 continue  # Nothing to do because of optional values
-            #except KeyError:
-            #    continue  # Nothing to do because of optional values
 
     def clear_content(self):
         """Clear the window content"""
@@ -187,18 +186,21 @@ class EditionWindow(TitledOnBorderWindow):
     def _create_or_update(self):
         """Try to create or update an information block"""
         complete = True
-        values = list()
-        values.append(str(self.number_type))  # Add number_type for restoring purpose
-        values.append(self.cpb[self.number_type][1]["c_object"])  # Add the block type name
+        sib = SecretInfoBlock(self.keyH)
+        sib['info1'] = (str(self.number_type)).encode()  # Add number_type for restoring purpose
+        sib.nbInfo += 1
+        sib['info2'] = self.cpb[self.number_type][1]["c_object"]  # Add the block type name
         for index, item in enumerate(self.items):
             if item.is_editable():
                 if not item.option and item.value is None:
                     self.index = index
                     complete = False
+                    sib = None
                     break
                 if item.value is not None:
-                    values.append(item.value)  # Add expected and optional values
-        return complete, values
+                    sib.nbInfo += 1
+                    sib['info' + str(sib.nbInfo)] = item.value.encode()
+        return complete, sib
 
     def start(self, timeout=-1):
         """See mother class"""
@@ -227,11 +229,11 @@ class EditionWindow(TitledOnBorderWindow):
             # Try to create or update the block
             elif result == self.saveButton:
                 self.saveButton.focus_off()
-                complete, values = self._create_or_update()
+                complete, sib = self._create_or_update()
                 if complete:
                     self._clear_editors()
                     self.clear_content()
-                    return True, values
+                    return True, sib
 
             # Clear all input boxes
             elif result == self.clearButton:

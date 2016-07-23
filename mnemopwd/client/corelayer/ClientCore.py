@@ -195,20 +195,15 @@ class ClientCore(Subject):
             yield from asyncio.sleep(0.01, loop=self.loop)
 
     @asyncio.coroutine
-    def _task_add_data_or_update_data(self, idblock, values):
+    def _task_add_data_or_update_data(self, idblock, sib):
         """Add a new block or update an existing block"""
         if idblock is None:
             self.protocol.state = self.protocol.states['35R']  # Add a new block
         else:
             self.protocol.state = self.protocol.states['37R']  # Update an existing block
 
-        # Create a block
-        self.lastblock = SecretInfoBlock(self.protocol.keyH)
-        self.lastblock.nbInfo = len(values)
-        i = 1
-        for value in values:
-            self.lastblock['info' + str(i)] = value.encode()
-            i += 1
+        # Remember the block
+        self.lastblock = sib
 
         # Execute protocol state
         self.taskInProgress = True
@@ -269,12 +264,9 @@ class ClientCore(Subject):
     @asyncio.coroutine
     def _task_get_block_values(self, index):
         """Return values of a block"""
-        values = list()
         sib = self.table[index]
-        for j in range(1, sib.nbInfo + 1):  # For all info in sib
-            values.append(sib['info' + str(j)].decode())
         # Notify the result to UI layer
-        yield from self.loop.run_in_executor(None, self.update, 'application.searchblock.oneresult', (index, values))
+        yield from self.loop.run_in_executor(None, self.update, 'application.searchblock.oneresult', (index, sib))
 
     # External methods
 

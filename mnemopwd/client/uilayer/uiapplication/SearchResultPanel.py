@@ -47,15 +47,15 @@ class SearchResultPanel(BaseWindow):
     def _update_application(self, show):
         """Update application window"""
         if show is True:
-            idblock, values = self.items[self.index].get_data()
-            atuple = int(values[0]), values
+            idblock, sib = self.items[self.index].get_data()
+            atuple = int(sib['info1'].decode()), sib
             self.parent.update_window("application.editionblock.seteditors", atuple)
         else:
             self.parent.update_window("application.editionblock.cleareditors", None)
 
-    def add_item(self, index, values):
+    def add_item(self, idblock, sib):
         """Add a component in the window"""
-        item = MetaButtonBox(self, len(self.items), 0, values[1], data=(index, values))
+        item = MetaButtonBox(self, len(self.items), 0, sib['info2'].decode(), data=(idblock, sib))
         self.items.append(item)
 
     def remove_item(self, item_to_remove):

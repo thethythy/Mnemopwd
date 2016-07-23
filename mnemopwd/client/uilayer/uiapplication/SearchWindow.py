@@ -104,11 +104,11 @@ class SearchWindow(TitledOnBorderWindow):
         for index in table_result:
             self.parent.uifacade.inform("application.searchblock.blockvalues", index)
 
-    def add_a_result(self, index, values):
+    def add_a_result(self, index, sib):
         """Add a search result in the panel"""
         # Create and add a button to the result panel
         self.nbResult += 1
-        self.resultPanel.add_item(index, values)
+        self.resultPanel.add_item(index, sib)
         # Change focus on result panel if it is the last result
         if self.nbResult == self.nbMaxResult and self.index == 0:
             self.focus_off_force(1)
@@ -154,7 +154,8 @@ class SearchWindow(TitledOnBorderWindow):
                     self.index -= 1  # Focus on next item
                     curses.ungetch(curses.ascii.ESC)  # Quit window
                 elif isinstance(result, Component):
-                    return result.get_data()  # Return idBlock, block values
+                    idblock, sib = result.get_data()
+                    return int(sib['info1'].decode()), idblock  # Return number_type, idblock
 
             # Quit window or Escape
             elif result == 1 or result == -1 or result is False:
