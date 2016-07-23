@@ -177,10 +177,12 @@ class ClientCore(Subject):
     @asyncio.coroutine
     def _task_close(self):
         """Close the connection with the server"""
-        self.taskInProgress = False
-        self.queue = asyncio.Queue(maxsize=Configuration.queuesize, loop=self.loop)
-        self.transport.close()
+        logging.info("start _task_close")
         yield from self.loop.run_in_executor(None, self.update, 'connection.state.logout', 'Connection closed')
+        self.queue = asyncio.Queue(maxsize=Configuration.queuesize, loop=self.loop)
+        self.taskInProgress = False
+        self.transport.close()
+        logging.info("end _task_close")
 
     @asyncio.coroutine
     def _task_deletion(self):
@@ -292,10 +294,16 @@ class ClientCore(Subject):
     def stop(self):
         """Close the connection to the server then stop the main loop"""
         if self.loop.is_running():
-            self.loop.call_soon_threadsafe(self.cmdH.cancel)  # Ask for cancelling the command loop
+            # Waiting for the queue becomes empty
+            while not self.queue.empty():
+                time.sleep(0.01)
+            # Ask for cancelling the command loop
+            self.loop.call_soon_threadsafe(self.cmdH.cancel)
+            # Waiting for cancellation
             while not self.cmdH.cancelled():
-                time.sleep(0.01)  # Waiting cancellation
-            self.loop.call_soon_threadsafe(self.loop.stop)  # Ask for stopping the main loop
+                time.sleep(0.01)
+            # Ask for stopping the main loop
+            self.loop.call_soon_threadsafe(self.loop.stop)
         else:
             self.transport.close()
             self.loop.close()

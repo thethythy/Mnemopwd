@@ -28,6 +28,7 @@
 import curses
 import hashlib
 import os
+import time
 
 from client.util.Configuration import Configuration
 from client.util.funcutils import sfill
@@ -210,6 +211,7 @@ class MainWindow(BaseWindow):
                 if result == ApplicationMenu.ITEM5:  # Quit application
                     if self.connected:
                         self.uifacade.inform("connection.close", None)  # Disconnection
+                        time.sleep(0.1)  # Waiting for task execution
                     break
 
             # Create a new entry
