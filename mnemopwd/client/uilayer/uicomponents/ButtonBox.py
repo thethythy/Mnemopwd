@@ -32,11 +32,13 @@ from client.uilayer.uicomponents.Component import Component
 class ButtonBox(Component):
     """A simple button text box"""
     
-    def __init__(self, parent, y, x, label, shortcut=None):
+    def __init__(self, parent, y, x, label, shortcut=None, show=True):
         self.label = ' ' + label + ' '
         Component.__init__(self, parent, 1, len(self.label) + 1, y, x)
         self.shortcut = shortcut
-        self.focus_off()
+        self.showOrHide = show
+        if self.showOrHide:
+            self.focus_off()
         
     def focus_on(self):
         """See mother class"""
@@ -63,12 +65,26 @@ class ButtonBox(Component):
         self.y = y
         self.x = x
         self.window.erase()
-        self.window.refresh()
         self._create(focus)
-        
+
+    def show(self):
+        self.showOrHide = True
+        self.focus_off()
+
+    def hide(self):
+        self.showOrHide = False
+        self.window.clear()
+        self.window.refresh()
+
+    def close(self):
+        """See mother class"""
+        if self.showOrHide:
+            Component.close(self)
+
     def redraw(self):
         """See mother class"""
-        self.focus_off()
+        if self.showOrHide:
+            self.focus_off()
         
     def set_label(self, label, focus=False):
         """Set the label of the button"""
@@ -78,7 +94,8 @@ class ButtonBox(Component):
 
     def _create(self, focus):
         self.window = self.parent.window.derwin(1, len(self.label) + 1, self.y, self.x)
-        if focus:
-            self.focus_on()
-        else:
-            self.focus_off()
+        if self.showOrHide:
+            if focus:
+                self.focus_on()
+            else:
+                self.focus_off()

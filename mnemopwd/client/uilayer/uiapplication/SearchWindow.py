@@ -62,22 +62,10 @@ class SearchWindow(TitledOnBorderWindow):
 
     def clear_content(self):
         """Clear the window content"""
-        self._clear_result_panel()
+        self.nbResult = self.nbMaxResult = 0
+        self.resultPanel.clear_content()
         self.patternEditor.clear()
         self.patternEditor.hide()
-
-    def _clear_result_panel(self):
-        """Clear the content of the result panel"""
-        self.nbResult = self.nbMaxResult = 0
-        for item in self.resultPanel.items.copy():
-            self.resultPanel.remove_item(item)
-
-    def _do_search(self, pattern):
-        """Do searching operation on server side"""
-        if pattern == '*' or pattern in ['ALL', 'All', 'all']:
-            self.parent.uifacade.inform("application.exportblock", None)
-        else:
-            self.parent.uifacade.inform("application.searchblock", pattern)
 
     def update_status(self, message):
         """Update parent status"""
@@ -93,8 +81,13 @@ class SearchWindow(TitledOnBorderWindow):
     def do_search(self):
         """Start a searching operation"""
         if self.patternEditor.value is not None:
-            self._clear_result_panel()
-            self._do_search(self.patternEditor.value)
+            self.nbResult = self.nbMaxResult = 0
+            self.resultPanel.clear_content()
+            pattern = self.patternEditor.value
+            if pattern == '*' or pattern in ['ALL', 'All', 'all']:
+                self.parent.uifacade.inform("application.exportblock", None)
+            else:
+                self.parent.uifacade.inform("application.searchblock", pattern)
 
     def post_search(self, table_result):
         """Prepare window after searching"""

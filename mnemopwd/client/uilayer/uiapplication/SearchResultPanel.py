@@ -41,7 +41,6 @@ class SearchResultPanel(BaseWindow):
     def __init__(self, parent, h, w, y, x, modal=False, menu=False):
         """Create base window"""
         BaseWindow.__init__(self, parent, h, w, y, x, modal=modal, menu=menu)
-        self.intern_pad = curses.newpad(1000, w - 1)
         self.scroll_pos = 0
 
     def _update_application(self, show):
@@ -53,9 +52,24 @@ class SearchResultPanel(BaseWindow):
         else:
             self.parent.update_window("application.editionblock.cleareditors", None)
 
+    def _scroll_items(self, d):
+        """Scroll up or scroll down items"""
+        # Hide actual visible items
+        for i in range(self.index, self.index + ( - d * self.h), - d):
+            self.items[i].hide()
+        # Move all items
+        for item in self.items:
+            item.move(item.y - d, 0)
+        # Show only visible items
+        for i in range(self.index + d, self.index + d + ( - d * self.h), - d):
+            self.items[i].show()
+
     def add_item(self, idblock, sib):
         """Add a component in the window"""
-        item = MetaButtonBox(self, len(self.items), 0, sib['info2'].decode(), data=(idblock, sib))
+        label = sib['info2'].decode()[:self.w - 4]
+        nbitems = len(self.items)
+        show = (nbitems + 1) <= self.h
+        item = MetaButtonBox(self, nbitems, 0, label, show=show, data=(idblock, sib))
         self.items.append(item)
 
     def remove_item(self, item_to_remove):
@@ -65,6 +79,13 @@ class SearchResultPanel(BaseWindow):
                 self.items[i].close()
                 del self.items[i]
                 return
+
+    def clear_content(self):
+        """Delete all components"""
+        for i in range(len(self.items) - 1, -1, -1):
+            self.items[i].close()
+            del self.items[i]
+        self.index = 0
 
     def focus_on(self):
         """This window obtains the focus"""
@@ -108,9 +129,15 @@ class SearchResultPanel(BaseWindow):
             # Next component
             if c in [curses.KEY_DOWN, curses.ascii.TAB]:
                 self.items[self.index].focus_off()
+                # Bottom reached
                 if self.menu and (self.index + 1) >= nbitems:
                     self._update_application(False)
                     return 1
+                # Down by one
+                if (self.index + 1) < nbitems and (self.scroll_pos + 1) == self.h:
+                    self._scroll_items(1)
+                # Normal behaviour
+                self.scroll_pos = min(self.h - 1, self.scroll_pos + 1)
                 self.index = (self.index + 1) % nbitems
                 self.items[self.index].focus_on()
                 self._update_application(True)  # Update application window
@@ -118,9 +145,15 @@ class SearchResultPanel(BaseWindow):
             # Previous component
             elif c in [curses.KEY_UP]:
                 self.items[self.index].focus_off()
+                # Top reached
                 if self.menu and (self.index - 1) < 0:
                     self._update_application(False)
                     return -1
+                # Up by one
+                if (self.index - 1) >= 0 and self.scroll_pos == 0:
+                    self._scroll_items(-1)
+                # Normal behaviour
+                self.scroll_pos = max(0, self.scroll_pos - 1)
                 self.index = (self.index - 1) % nbitems
                 self.items[self.index].focus_on()
                 self._update_application(True)  # Update application window

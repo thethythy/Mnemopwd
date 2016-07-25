@@ -31,10 +31,28 @@ from client.uilayer.uicomponents.ButtonBox import ButtonBox
 class MetaButtonBox(ButtonBox):
     """A button box with a user data"""
 
-    def __init__(self, parent, y, x, label, shortcut=None, data=None):
+    def __init__(self, parent, y, x, label, shortcut=None, show=True, data=None):
         """Object initialization"""
-        ButtonBox.__init__(self, parent, y, x, label, shortcut=shortcut)
+        if show:
+            ButtonBox.__init__(self, parent, y, x, label, shortcut=shortcut, show=show)
+        else:
+            self.label = ' ' + label + ' '
+            self.parent = parent
+            self.y = y
+            self.x = x
+            self.shortcut = shortcut
+            self.modal = False
+            self.showOrHide = show
         self.data = data
+
+    def move(self, y, x, focus=False):
+        """See mother class"""
+        self.y = y
+        self.x = x
+
+    def show(self):
+        self.showOrHide = True
+        self._create(False)
 
     def set_data(self, data):
         """Set user data"""
