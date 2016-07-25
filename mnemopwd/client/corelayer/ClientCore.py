@@ -34,7 +34,6 @@ import concurrent.futures
 from client.util.Configuration import Configuration
 from client.util.funcutils import Subject
 from client.corelayer.protocol.ProtocolHandler import ProtocolHandler
-from common.SecretInfoBlock import SecretInfoBlock
 
 """
 Client part of MnemoPwd application.
@@ -94,6 +93,9 @@ class ClientCore(Subject):
             self.context.load_verify_locations(cafile=Configuration.certfile)  # Load certificat
         else:
             self.context.set_ciphers("AECDH-AES256-SHA")  # Cipher suite to use
+
+        # Transport handler
+        self.transport = None
 
         if Configuration.action == 'status':
             self._open()  # Try to open a connection to server
@@ -160,7 +162,6 @@ class ClientCore(Subject):
         while self.protocol.state != self.protocol.states['1S']:
             yield from asyncio.sleep(0.01, loop=self.loop)
         # Execute protocol state
-        Configuration.first_execution = False
         self.taskInProgress = True
         self.loop.run_in_executor(None, self.protocol.state.do, self.protocol, None)
         # Waiting for the end of the task
@@ -168,21 +169,13 @@ class ClientCore(Subject):
             yield from asyncio.sleep(0.01, loop=self.loop)
 
     @asyncio.coroutine
-    def _task_new_credentials(self, login, password):
-        """Start state S1"""
-        Configuration.first_execution = True
-        yield from self._task_set_credentials(login, password)
-        Configuration.first_execution = False
-
-    @asyncio.coroutine
     def _task_close(self):
         """Close the connection with the server"""
-        logging.info("start _task_close")
         yield from self.loop.run_in_executor(None, self.update, 'connection.state.logout', 'Connection closed')
         self.queue = asyncio.Queue(maxsize=Configuration.queuesize, loop=self.loop)
         self.taskInProgress = False
         self.transport.close()
-        logging.info("end _task_close")
+        self.transport = None
 
     @asyncio.coroutine
     def _task_deletion(self):
@@ -273,9 +266,11 @@ class ClientCore(Subject):
     @asyncio.coroutine
     def close(self):
         """Close the connection and empty the queue"""
-        self.taskInProgress = False
-        self.queue = asyncio.Queue(maxsize=Configuration.queuesize, loop=self.loop)
-        self.transport.close()
+        if self.transport is not None:
+            self.queue = asyncio.Queue(maxsize=Configuration.queuesize, loop=self.loop)
+            self.taskInProgress = False
+            self.transport.close()
+            self.transport = None
 
     def start(self):
         """Start the main loop"""
@@ -308,12 +303,6 @@ class ClientCore(Subject):
             try:
                 self._open()  # Direct execution because queue is empty at this moment
                 task = self._task_set_credentials(*value)
-            except:
-                pass
-        if key == "connection.open.newcredentials":
-            try:
-                self._open()  # Direct execution because queue is empty at this moment
-                task = self._task_new_credentials(*value)
             except:
                 pass
         if key == "connection.close":

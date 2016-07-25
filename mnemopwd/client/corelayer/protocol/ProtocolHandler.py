@@ -100,13 +100,12 @@ class ProtocolHandler(asyncio.Protocol):
     def connection_lost(self, exc):
         if exc:
             self.loop.run_in_executor(None, self.notify, 'connection.state.error', str(exc).capitalize())
-        self.core.close()
+        asyncio.run_coroutine_threadsafe(self.core.close(), self.loop)
 
     def exception_handler(self, exc):
         """Exception handler for actions executed by the executor"""
-        self.notify('connection.state.error', str(exc).capitalize())
-        self.core.taskInProgress = False
-        self.core.close()
+        self.loop.run_in_executor(None, self.notify, 'connection.state.error', str(exc).capitalize())
+        asyncio.run_coroutine_threadsafe(self.core.close(), self.loop)
 
     def notify(self, key, value):
         """Notify ClientCore a property has changed"""

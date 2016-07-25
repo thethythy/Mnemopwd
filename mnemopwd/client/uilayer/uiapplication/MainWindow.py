@@ -94,14 +94,15 @@ class MainWindow(BaseWindow):
 
     def lock_screen(self):
         """Lock / unlock the screen"""
-        self.uifacade.clear_content()
-        self.window.timeout(-1)
-        self.window.addstr(int(curses.LINES / 2), int(curses.COLS / 2 - 13), "Hit a key to unlock screen")
-        self.window.getch()
-        while UnlockScreenWindow(self).start() is False:
+        if self.connected:
+            self.uifacade.clear_content()
+            self.window.timeout(-1)
             self.window.addstr(int(curses.LINES / 2), int(curses.COLS / 2 - 13), "Hit a key to unlock screen")
             self.window.getch()
-        self.redraw()
+            while UnlockScreenWindow(self).start() is False:
+                self.window.addstr(int(curses.LINES / 2), int(curses.COLS / 2 - 13), "Hit a key to unlock screen")
+                self.window.getch()
+            self.redraw()
 
     def hash_password(self, password):
         """Compute a digest of the password. USe a random salt value"""
@@ -117,6 +118,7 @@ class MainWindow(BaseWindow):
             self.login = login
             self.salt = (os.urandom(256))[64:128]  # Random salt value
             self.hpassword = self.hash_password(passwd)
+            Configuration.first_execution = False
             self.uifacade.inform("connection.open.credentials", (login, passwd))
 
     def _set_credentials(self):
@@ -126,7 +128,8 @@ class MainWindow(BaseWindow):
             self.login = login
             self.salt = (os.urandom(256))[64:128]  # Random salt value
             self.hpassword = self.hash_password(passwd)
-            self.uifacade.inform("connection.open.newcredentials", (login, passwd))
+            Configuration.first_execution = True
+            self.uifacade.inform("connection.open.credentials", (login, passwd))
 
     def _delete_user_account(self):
         """Try to delete a user account"""
