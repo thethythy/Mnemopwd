@@ -183,7 +183,7 @@ class EditionWindow(TitledOnBorderWindow):
             if item.is_editable():
                 item.clear()
 
-    def _create_or_update(self):
+    def _try_create_sib(self):
         """Try to create or update an information block"""
         complete = True
         sib = SecretInfoBlock(self.keyH)
@@ -229,7 +229,7 @@ class EditionWindow(TitledOnBorderWindow):
             # Try to create or update the block
             elif result == self.saveButton:
                 self.saveButton.focus_off()
-                complete, sib = self._create_or_update()
+                complete, sib = self._try_create_sib()
                 if complete:
                     self._clear_editors()
                     self.clear_content()

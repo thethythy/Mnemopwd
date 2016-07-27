@@ -99,23 +99,29 @@ class ClientUI(Thread, Observer):
 
     def update(self, key, value):
         """Implementation of the method of the class Observer."""
-        if key == "connection.state":
+        if key == "connection.state":                       # Update connection state
             self.wmain.update_status(value)
-        if key == "connection.state.login":
+        if key == "connection.state.login":                 # Login
             self.wmain.update_window(key, value)
-        if key == "connection.state.logout":
+        if key == "connection.state.logout":                # Logout
             self.wmain.update_window(key, value)
-        if key == "connection.state.error":
+        if key == "connection.state.error":                 # An exception occurred
             self.wmain.update_window(key, value)
-        if key == "application.state":
+        if key == "application.state":                      # Update application state
             self.wmain.update_status(value)
-        if key == "application.keyhandler":
+        if key == "application.keyhandler":                 # Assign key handler object
             self.wmain.update_window(key, value)
-        if key == "application.state.loadbar":
+        if key == "application.state.loadbar":              # Update load bar
             self.wmain.update_load_bar(*value)
-        if key == "application.searchblock.result":
+        if key == "application.searchblock.result":         # Signal some results after a research or an exportation
             self.wmain.update_window(key, value)
-        if key == "application.searchblock.oneresult":
+        if key == "application.searchblock.oneresult":      # Add one result
+            self.wmain.update_window(key, value)
+        if key == "application.searchblock.tryoneresult":   # Try to add one result to a previous research
+            self.wmain.update_window(key, value)
+        if key == "application.searchblock.updateresult":   # Update one previous result
+            self.wmain.update_window(key, value)
+        if key == "application.searchblock.removeresult":   # Remove one previous result
             self.wmain.update_window(key, value)
 
     def inform(self, key, value):

@@ -25,6 +25,7 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import re
 import curses
 import curses.ascii
 
@@ -76,6 +77,7 @@ class SearchWindow(TitledOnBorderWindow):
 
     def pre_search(self):
         """Prepare window before searching"""
+        self.update_status("Edit pattern filter")
         self.patternEditor.show()
 
     def do_search(self):
@@ -97,14 +99,36 @@ class SearchWindow(TitledOnBorderWindow):
         for index in table_result:
             self.parent.uifacade.inform("application.searchblock.blockvalues", index)
 
-    def add_a_result(self, index, sib):
+    def add_a_result(self, idblock, sib):
         """Add a search result in the panel"""
         # Create and add a button to the result panel
         self.nbResult += 1
-        self.resultPanel.add_item(index, sib)
+        self.resultPanel.add_item(idblock, sib)
         # Change focus on result panel if it is the last result
         if self.nbResult == self.nbMaxResult and self.index == 0:
             self.focus_off_force(1)
+
+    def try_add_a_result(self, idblock, sib):
+        """Try to add a new block in the result panel"""
+        if self.patternEditor.value is not None:
+            pattern = self.patternEditor.value
+            if pattern == '*' or pattern in ['ALL', 'All', 'all']:
+                self.patternEditor.show()
+                self.add_a_result(idblock, sib)
+            else:
+                for j in range(1, sib.nbInfo + 1):  # For all info in sib
+                    if re.search(pattern, sib['info' + str(j)].decode()) is not None:
+                        self.patternEditor.show()
+                        self.add_a_result(idblock, sib)
+                        break  # One info match so stop loop now
+
+    def update_a_result(self, idblock, sib):
+        """Update a previous search result"""
+        self.resultPanel.update_item(idblock, sib)
+
+    def remove_a_result(self, idblock):
+        """Remove a previous search result"""
+        self.resultPanel.remove_item(idblock)
 
     def focus_off_force(self, direction):
         """This window must lost focus"""
@@ -120,7 +144,6 @@ class SearchWindow(TitledOnBorderWindow):
         timer = Configuration.lock * 60 * 1000  # Timer in ms
 
         while True:
-            self.update_status("Edit pattern filter")
             result = TitledOnBorderWindow.start(self, 100)  # Default controller (timeout of 100 ms)
 
             # Lock screen ?

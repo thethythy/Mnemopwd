@@ -153,10 +153,8 @@ class MainWindow(BaseWindow):
         # According to the result, save / update or delete or do nothing
         if result is True:
             self.uifacade.inform("application.editblock", (idblock, sib))
-            #self.searchscr.do_search()  # Update search window
         elif sib is True:
             self.uifacade.inform("application.deleteblock", idblock)
-            #self.searchscr.do_search()  # Update search window
         else:
             self.update_status('')
 
@@ -247,25 +245,31 @@ class MainWindow(BaseWindow):
 
     def update_window(self, key, value):
         """Update the main window content"""
-        if key == "connection.state.login":
+        if key == "connection.state.login":  # Normal login
             self.connected = True
             self.update_status(value)
-        if key == "connection.state.logout":
+        if key == "connection.state.logout":  # Normal logout
             self._post_close(value)
-        if key == "connection.state.error":
+        if key == "connection.state.error":  # Exception
             self._post_close(value)
             curses.flash()
-        if key == "application.keyhandler":
+        if key == "application.keyhandler":  # KeyHandler object assignation
             self.editscr.set_keyhandler(value)
-        if key == "application.searchblock.result":
+        if key == "application.searchblock.result":  # Search or importation result
             self.searchscr.post_search(value)
-        if key == "application.searchblock.oneresult":
+        if key == "application.searchblock.oneresult":  # Add one result
             self.searchscr.add_a_result(*value)
-        if key == "application.editionblock.seteditors":
+        if key == "application.searchblock.tryoneresult":  # Try to add a new block to panel result
+            self.searchscr.try_add_a_result(*value)
+        if key == "application.searchblock.updateresult":  # Update one result
+            self.searchscr.update_a_result(*value)
+        if key == "application.searchblock.removeresult":  # Remove one result
+            self.searchscr.remove_a_result(value)
+        if key == "application.editionblock.seteditors":  # Set edition window
             number_type, sib = value
             self.editscr.set_type(number_type)
             self.editscr.set_infos(number_type, sib)
-        if key == "application.editionblock.cleareditors":
+        if key == "application.editionblock.cleareditors":  # Clear edition window
             self.editscr.clear_content()
 
     def update_load_bar(self, actual, maxi):

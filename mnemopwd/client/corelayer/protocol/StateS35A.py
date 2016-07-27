@@ -29,6 +29,8 @@
 State S35 : AddData
 """
 
+import asyncio
+
 from client.util.funcutils import singleton
 from client.corelayer.protocol.StateSCC import StateSCC
 
@@ -53,7 +55,7 @@ class StateS35A(StateSCC):
                     index = data[3:]
                     try:
                         index = int(index.decode())
-                        handler.core.assign_last_block(index)
+                        asyncio.run_coroutine_threadsafe(handler.core.assign_last_block(index, 'add'), handler.loop)
                     except:
                         raise Exception('S35 protocol error')
 

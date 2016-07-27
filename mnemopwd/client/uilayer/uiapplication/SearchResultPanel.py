@@ -55,13 +55,26 @@ class SearchResultPanel(BaseWindow):
     def _scroll_items(self, d):
         """Scroll up or scroll down items"""
         # Hide actual visible items
-        for i in range(self.index, self.index + ( - d * self.h), - d):
+        for i in range(self.index, self.index + (- d * self.h), - d):
             self.items[i].hide()
         # Move all items
         for item in self.items:
             item.move(item.y - d, 0)
         # Show only visible items
-        for i in range(self.index + d, self.index + d + ( - d * self.h), - d):
+        for i in range(self.index + d, self.index + d + (- d * self.h), - d):
+            self.items[i].show()
+
+    def _half_scroll_up_items(self, pos):
+        """Scroll up items only from a certain position"""
+        # Hide certain visible items
+        end = min(len(self.items), pos + self.h - self.scroll_pos)
+        for i in range(pos, end):
+            self.items[i].hide()
+        # Move certain items
+        for i in range(pos, len(self.items)):
+            self.items[i].move(self.items[i].y - 1, 0)
+        # Show certain visible items
+        for i in range(pos, end):
             self.items[i].show()
 
     def add_item(self, idblock, sib):
@@ -72,13 +85,33 @@ class SearchResultPanel(BaseWindow):
         item = MetaButtonBox(self, nbitems, 0, label, show=show, data=(idblock, sib))
         self.items.append(item)
 
-    def remove_item(self, item_to_remove):
+    def update_item(self, idblock_to_update, new_sib):
+        """Update an component"""
+        for i, item in enumerate(self.items):
+            idblock, sib = item.get_data()
+            if idblock == idblock_to_update:
+                self.items[i].set_data((idblock, new_sib))
+                break
+
+    def remove_item(self, idblock_to_remove):
         """Remove an existing component"""
         for i, item in enumerate(self.items):
-            if item == item_to_remove:
-                self.items[i].close()
+            idblock, sib = item.get_data()
+            if idblock == idblock_to_remove:
+                # Close item
+                if item.showOrHide:
+                    item.close()
+                    # Update index and scroll position
+                    if self.items[self.index] == item:
+                        old_index = self.index
+                        self.index = min(self.index, len(self.items) - 2)
+                        if self.index != old_index:
+                            self.scroll_pos = max(0, self.scroll_pos - 1)
+                # Remove item from the list
                 del self.items[i]
-                return
+                # Scroll up by one
+                self._half_scroll_up_items(i)
+                break
 
     def clear_content(self):
         """Delete all components"""

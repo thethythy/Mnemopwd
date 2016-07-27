@@ -211,7 +211,7 @@ class ClientCore(Subject):
 
         # Assign updated block
         if idblock is not None:
-            self.assign_last_block(idblock)
+            yield from self.assign_last_block(idblock, 'update')
 
     @asyncio.coroutine
     def _task_delete_data(self, idblock):
@@ -225,6 +225,8 @@ class ClientCore(Subject):
             yield from asyncio.sleep(0.01, loop=self.loop)
         # Remove block
         del self.table[idblock]
+        # Notify the result to UI layer
+        yield from self.loop.run_in_executor(None, self.update, 'application.searchblock.removeresult', idblock)
 
     @asyncio.coroutine
     def _task_search_data(self, pattern):
@@ -255,11 +257,11 @@ class ClientCore(Subject):
             yield from self.loop.run_in_executor(None, self.update, 'application.searchblock.result', self.searchTable)
 
     @asyncio.coroutine
-    def _task_get_block_values(self, index):
+    def _task_get_block_values(self, idblock):
         """Return values of a block"""
-        sib = self.table[index]
+        sib = self.table[idblock]
         # Notify the result to UI layer
-        yield from self.loop.run_in_executor(None, self.update, 'application.searchblock.oneresult', (index, sib))
+        yield from self.loop.run_in_executor(None, self.update, 'application.searchblock.oneresult', (idblock, sib))
 
     # External methods
 
@@ -323,13 +325,21 @@ class ClientCore(Subject):
         if task is not None:
             asyncio.run_coroutine_threadsafe(self.queue.put(task), self.loop)
 
-    def assign_last_block(self, index):
+    @asyncio.coroutine
+    def assign_last_block(self, idblock, task):
         """Callback method for assignation of last block used"""
-        if self.lastblock:
-            self.table[index] = self.lastblock
+        # Notify the result to UI layer
+        if task == 'add':
+            yield from self.loop.run_in_executor(None, self.update, 'application.searchblock.tryoneresult',
+                                                 (idblock, self.lastblock))
+        elif task == 'update':
+            yield from self.loop.run_in_executor(None, self.update, 'application.searchblock.updateresult',
+                                                 (idblock, self.lastblock))
+        # Update table
+        self.table[idblock] = self.lastblock
         self.lastblock = None
 
-    def assign_result_search_block(self, index_sib, sib):
+    def assign_result_search_block(self, idblock, sib):
         """Callback method for assignation of a search result"""
-        self.table[index_sib] = sib
-        self.searchTable.append(index_sib)
+        self.table[idblock] = sib
+        self.searchTable.append(idblock)
