@@ -70,7 +70,7 @@ class ClientCore(Subject):
             self.loop.set_debug(Configuration.loglevel == 'DEBUG')
             logging.basicConfig(filename="client.log",
                                 level=Configuration.loglevel,
-                                format='%(asctime)s %(process)d %(levelname)s %(message)s',
+                                format='%(asctime)s %(levelname)s %(message)s',
                                 datefmt='%m/%d/%Y %I:%M:%S')
 
         # Create a task queue
@@ -163,7 +163,7 @@ class ClientCore(Subject):
             yield from asyncio.sleep(0.01, loop=self.loop)
         # Execute protocol state
         self.taskInProgress = True
-        self.loop.run_in_executor(None, self.protocol.state.do, self.protocol, None)
+        yield from self.loop.run_in_executor(None, self.protocol.data_received, None)
         # Waiting for the end of the task
         while self.taskInProgress:
             yield from asyncio.sleep(0.01, loop=self.loop)
@@ -183,7 +183,7 @@ class ClientCore(Subject):
         self.protocol.state = self.protocol.states['33R']  # Deletion
         # Execute protocol state
         self.taskInProgress = True
-        yield from self.loop.run_in_executor(None, self.protocol.state.do, self.protocol, None)
+        yield from self.loop.run_in_executor(None, self.protocol.data_received, None)
         while self.taskInProgress:
             yield from asyncio.sleep(0.01, loop=self.loop)
 
@@ -201,9 +201,9 @@ class ClientCore(Subject):
         # Execute protocol state
         self.taskInProgress = True
         if idblock is None:
-            yield from self.loop.run_in_executor(None, self.protocol.state.do, self.protocol, self.lastblock)
+            yield from self.loop.run_in_executor(None, self.protocol.data_received, self.lastblock)
         else:
-            yield from self.loop.run_in_executor(None, self.protocol.state.do, self.protocol, (idblock, self.lastblock))
+            yield from self.loop.run_in_executor(None, self.protocol.data_received, (idblock, self.lastblock))
 
         # Waiting for the end of the task
         while self.taskInProgress:
@@ -219,7 +219,7 @@ class ClientCore(Subject):
         self.protocol.state = self.protocol.states['36R']  # Delete
         # Execute protocol state
         self.taskInProgress = True
-        yield from self.loop.run_in_executor(None, self.protocol.state.do, self.protocol, idblock)
+        yield from self.loop.run_in_executor(None, self.protocol.data_received, idblock)
         # Waiting for the end of the task
         while self.taskInProgress:
             yield from asyncio.sleep(0.01, loop=self.loop)
@@ -235,7 +235,7 @@ class ClientCore(Subject):
         self.searchTable = list()  # Reset search table
         # Execute protocol state
         self.taskInProgress = True
-        yield from self.loop.run_in_executor(None, self.protocol.state.do, self.protocol, pattern)
+        yield from self.loop.run_in_executor(None, self.protocol.data_received, pattern)
         while self.taskInProgress:
             yield from asyncio.sleep(0.01, loop=self.loop)
         # Notify the result to the UI layer
@@ -249,7 +249,7 @@ class ClientCore(Subject):
         self.searchTable = list()  # Reset search table
         # Execute protocol state
         self.taskInProgress = True
-        yield from self.loop.run_in_executor(None, self.protocol.state.do, self.protocol, None)
+        yield from self.loop.run_in_executor(None, self.protocol.data_received, None)
         while self.taskInProgress:
             yield from asyncio.sleep(0.01, loop=self.loop)
         # Notify the result to UI layer

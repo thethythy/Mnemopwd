@@ -40,28 +40,28 @@ class StateS0:
 
     def do(self, handler, data):
         """Action of the state S0: get the ephemeral server public key"""
-
-        try:
-            # Test for S1C command
-            is_cd_S0C = data[:10] == b"KEYSHARING"
-            if not is_cd_S0C:
-                raise Exception('S0 protocol error')
-
-            # Test for ephemeral server public key
-            protocol_data = data[11:]
-            ephecc = ECC(pubkey=protocol_data)
+        with handler.lock:
             try:
-                assert protocol_data == ephecc.get_pubkey()
-            except AssertionError:
-                raise Exception('bad ephemeral server public key')
+                # Test for S1C command
+                is_cd_S0C = data[:10] == b"KEYSHARING"
+                if not is_cd_S0C:
+                    raise Exception('S0 protocol error')
 
-            # Notify the handler a property has changed
-            handler.loop.run_in_executor(None, handler.notify, "connection.state", "Waiting for login/password")
+                # Test for ephemeral server public key
+                protocol_data = data[11:]
+                ephecc = ECC(pubkey=protocol_data)
+                try:
+                    assert protocol_data == ephecc.get_pubkey()
+                except AssertionError:
+                    raise Exception('bad ephemeral server public key')
 
-        except Exception as exc:
-            # Schedule a call to the exception handler
-            handler.loop.call_soon_threadsafe(handler.exception_handler, exc)
+                # Notify the handler a property has changed
+                handler.loop.run_in_executor(None, handler.notify, "connection.state", "Waiting for login/password")
 
-        else:
-            handler.ephecc = ephecc  # Store the ephemeral public key
-            handler.state = handler.states['1S']  # Next state
+            except Exception as exc:
+                # Schedule a call to the exception handler
+                handler.loop.call_soon_threadsafe(handler.exception_handler, exc)
+
+            else:
+                handler.ephecc = ephecc  # Store the ephemeral public key
+                handler.state = handler.states['1S']  # Next state

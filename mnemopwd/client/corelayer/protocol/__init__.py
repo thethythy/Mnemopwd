@@ -29,9 +29,8 @@ __author__ = "Thierry Lemeunier <thierry at lemeunier dot net>"
 __date__ = "$6 février 2016 10:35:44$"
 
 __all__ = ['StateS0', 'StateS1S', 'StateS1CR', 'StateS1CA', 'StateS21R', 'StateS21A', 'StateS22R', 'StateS22A',
-           'StateS31R', 'StateS31A', 'StateS32R', 'StateS32A', 'StateS32Ab', 'StateS33R', 'StateS33A',
-           'StateS34R', 'StateS34A', 'StateS34Ab', 'StateS35R', 'StateS35A', 'StateS36R', 'StateS36A',
-           'StateS37R', 'StateS37A']
+           'StateS31R', 'StateS31A', 'StateS32R', 'StateS32A', 'StateS33R', 'StateS33A', 'StateS34R', 'StateS34A',
+           'StateS35R', 'StateS35A', 'StateS36R', 'StateS36A', 'StateS37R', 'StateS37A']
 
 from .StateS0 import StateS0
 
@@ -50,14 +49,12 @@ from .StateS31A import StateS31A
 
 from .StateS32R import StateS32R
 from .StateS32A import StateS32A
-from .StateS32Ab import StateS32Ab
 
 from .StateS33R import StateS33R
 from .StateS33A import StateS33A
 
 from .StateS34R import StateS34R
 from .StateS34A import StateS34A
-from .StateS34Ab import StateS34Ab
 
 from .StateS35R import StateS35R
 from .StateS35A import StateS35A

@@ -62,4 +62,4 @@ class StateS22A(StateSCC):
 
             else:
                 handler.state = handler.states['31R']  # Next state
-                handler.loop.run_in_executor(None, handler.state.do, handler, None)  # Future execution
+                handler.loop.run_in_executor(None, handler.data_received, None)  # Future execution

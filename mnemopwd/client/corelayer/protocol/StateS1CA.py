@@ -65,4 +65,4 @@ class StateS1CA:
                     handler.state = handler.states['22R']  # Next state is S22
                 else:
                     handler.state = handler.states['21R']  # Next state is S21
-                handler.loop.run_in_executor(None, handler.state.do, handler, None)  # Future execution
+                handler.loop.run_in_executor(None, handler.data_received, None)  # Future execution

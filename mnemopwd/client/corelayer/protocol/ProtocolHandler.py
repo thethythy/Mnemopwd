@@ -43,10 +43,10 @@ class ProtocolHandler(asyncio.Protocol):
 
     Attribute(s):
     - core: the ClientCore instance
-    - loop: the asyncio loop
+    - loop: the asynchronous input/output loop
     - states: sequence of state objects
     - state: the actual state (set in connection_made and changed by state objects)
-    - lock: reentrant lock for serializing thread execution
+    - lock: lock object for serializing thread execution
     - config: the client configuration as a list of curve names and ciphers names
     - transport: the SSL socket
     - password: the client password (set by the UI)
@@ -74,9 +74,9 @@ class ProtocolHandler(asyncio.Protocol):
                        '21R': StateS21R(), '21A': StateS21A(),
                        '22R': StateS22R(), '22A': StateS22A(),
                        '31R': StateS31R(), '31A': StateS31A(),
-                       '32R': StateS32R(), '32A': StateS32A(), '32Ab': StateS32Ab(),
+                       '32R': StateS32R(), '32A': StateS32A(),
                        '33R': StateS33R(), '33A': StateS33A(),
-                       '34R': StateS34R(), '34A': StateS34A(), '34Ab': StateS34Ab(),
+                       '34R': StateS34R(), '34A': StateS34A(),
                        '35R': StateS35R(), '35A': StateS35A(),
                        '36R': StateS36R(), '36A': StateS36A(),
                        '37R': StateS37R(), '37A': StateS37A()}
