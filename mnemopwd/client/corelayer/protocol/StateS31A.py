@@ -60,17 +60,20 @@ class StateS31A(StateSCC):
 
                     # Create the client KeyHandler
                     cypher_suite = handler.config.split(';')
-                    handler.keyH = KeyHandler(handler.ms,
-                                              cur1=cypher_suite[0], cip1=cypher_suite[1],
-                                              cur2=cypher_suite[2], cip2=cypher_suite[3],
-                                              cur3=cypher_suite[4], cip3=cypher_suite[5])
+                    handler.keyH = KeyHandler(
+                        handler.ms, cur1=cypher_suite[0], cip1=cypher_suite[1],
+                        cur2=cypher_suite[2], cip2=cypher_suite[3],
+                        cur3=cypher_suite[4], cip3=cypher_suite[5])
 
                     # Task is ended
                     handler.core.taskInProgress = False
 
                     # Notify the handler a property has changed
-                    handler.loop.run_in_executor(None, handler.notify, "application.keyhandler", handler.keyH)
-                    handler.loop.run_in_executor(None, handler.notify, "connection.state", message)
+                    handler.loop.run_in_executor(None, handler.notify,
+                                                 "application.keyhandler",
+                                                 handler.keyH)
+                    handler.loop.run_in_executor(None, handler.notify,
+                                                 "connection.state", message)
 
                 else:
                     raise Exception("S31 protocol error")

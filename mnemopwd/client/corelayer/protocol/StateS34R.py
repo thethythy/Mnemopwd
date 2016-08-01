@@ -46,14 +46,17 @@ class StateS34R(StateSCC):
                 if echallenge:
 
                     # Encrypt pattern
-                    epattern = handler.ephecc.encrypt(data.encode(), pubkey=handler.ephecc.get_pubkey())
+                    epattern = handler.ephecc.encrypt(
+                        data.encode(), pubkey=handler.ephecc.get_pubkey())
 
                     # Send SearchData request
-                    message = echallenge + b';SEARCHDATA;' + epattern
-                    handler.loop.call_soon_threadsafe(handler.transport.write, message)
+                    msg = echallenge + b';SEARCHDATA;' + epattern
+                    handler.loop.call_soon_threadsafe(handler.transport.write, msg)
 
                     # Notify the handler a property has changed
-                    handler.loop.run_in_executor(None, handler.notify, "application.state", "The server is searching...")
+                    handler.loop.run_in_executor(
+                        None, handler.notify, "application.state",
+                        "The server is searching...")
 
             except Exception as exc:
                 # Schedule a call to the exception handler

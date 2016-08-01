@@ -98,18 +98,21 @@ class Configuration:
         if not os.path.exists(keyfile):
             parser.error("invalid key file {} (it not exists)".format(keyfile))
         elif not os.path.exists(certfile):
-            parser.error("invalid certificat file {} (it not exists)".format(certfile))
+            parser.error("invalid certificat file {} (it not exists)".
+                         format(certfile))
         else:
             statinfo = os.stat(keyfile)
             if certfile == keyfile:
                 parser.error(
-                    "the certificat file ({}) and the key file ({}) must be differents".format(certfile, keyfile))
+                    "the certificat file ({}) and the key file ({}) must be differents"
+                    .format(certfile, keyfile))
             if stat.filemode(statinfo.st_mode) != '-rw-------':
                 parser.error(
-                    "invalid key file {} (it must have only read, write and excecution permissions for user)".format(
-                        keyfile))
+                    "invalid key file {} (it must have only read, write and excecution permissions for user)"
+                    .format(keyfile))
             elif statinfo.st_uid != os.getuid():
-                parser.error("invalid key file {} (the owner must be the user)".format(keyfile))
+                parser.error("invalid key file {} (the owner must be the user)".
+                             format(keyfile))
         return True
 
     @staticmethod
@@ -123,10 +126,12 @@ class Configuration:
                 parser.error("invalid database path {} (it must be a directory)".format(path))
             elif stat.filemode(statinfo.st_mode) != 'drwx------':
                 parser.error(
-                    "invalid database path {} (it must have only read, write and excecution permissions for user)".format(
-                        path))
+                    "invalid database path {} (it must have only read, write and excecution permissions for user)"
+                    .format(path))
             elif statinfo.st_uid != os.getuid():
-                parser.error("invalid database path {} (the owner must be the user)".format(path))
+                parser.error(
+                    "invalid database path {} (the owner must be the user)"
+                    .format(path))
         return True
 
     @staticmethod
@@ -137,13 +142,17 @@ class Configuration:
         else:
             statinfo = os.stat(path)
             if not os.path.isfile(path) or os.path.islink(path):
-                parser.error("invalid configuration file {} (it must be a regular file)".format(path))
+                parser.error(
+                    "invalid configuration file {} (it must be a regular file)"
+                    .format(path))
             elif stat.filemode(statinfo.st_mode) != '-rw-------':
                 parser.error(
-                    "invalid configuration file {} (it must have only read and write permissions for user)".format(
-                        path))
+                    "invalid configuration file {} (it must have only read and write permissions for user)"
+                    .format(path))
             elif statinfo.st_uid != os.getuid():
-                parser.error("invalid configuration file {} (the owner must be the user)".format(path))
+                parser.error(
+                    "invalid configuration file {} (the owner must be the user)"
+                    .format(path))
         return True
 
     @staticmethod
@@ -152,7 +161,8 @@ class Configuration:
         try:
             fileparser.read(Configuration.configfile)
         except configparser.ParsingError:
-            parser.error("parsing error of configuration file {}".format(Configuration.configfile))
+            parser.error("parsing error of configuration file {}"
+                         .format(Configuration.configfile))
         else:
             Configuration.port = int(fileparser['server']['port'])
             Configuration.host = fileparser['server']['host']
@@ -170,90 +180,113 @@ class Configuration:
     @staticmethod
     def __create_config_file__(fileparser):
         """Method to create default configuration file"""
-        fileparser['server'] = {'port': str(Configuration.port)
-                                        + " # Values allowed: " + str(Configuration.port_min)
-                                        + "..." + str(Configuration.port_max),
-                                'host': Configuration.host + " # IP server",
-                                'dbpath': Configuration.dbpath + " # Use an absolute path",
-                                'certfile': Configuration.certfile + " # Use an absolute path",
-                                'keyfile': Configuration.keyfile + " # Use an absolute path",
-                                'poolsize': str(Configuration.poolsize) + " # Number of thread",
-                                'search_mode': Configuration.search_mode + " # Values allowed: all first",
-                                'loglevel': Configuration.loglevel + " # Values allowed: DEBUG INFO WARNING ERROR CRITICAL"}
-        fileparser['daemon'] = {'pidfile': Configuration.pidfile + " # Use an absolute path",
-                                'logfile': Configuration.logfile + " # Use an absolute path",
-                                'logmaxmb': str(Configuration.logmaxmb) + " # Maximum size of log file in MBytes",
-                                'logbackups': str(Configuration.logbackups) + " # Number of backup log files"}
+        fileparser['server'] = {
+            'port': str(Configuration.port) + " # Values allowed: "
+            + str(Configuration.port_min)
+            + "..." + str(Configuration.port_max),
+            'host': Configuration.host + " # IP server",
+            'dbpath': Configuration.dbpath + " # Use an absolute path",
+            'certfile': Configuration.certfile + " # Use an absolute path",
+            'keyfile': Configuration.keyfile + " # Use an absolute path",
+            'poolsize': str(Configuration.poolsize) + " # Number of thread",
+            'search_mode': Configuration.search_mode
+            + " # Values allowed: all first",
+            'loglevel': Configuration.loglevel
+            + " # Values allowed: DEBUG INFO WARNING ERROR CRITICAL"
+        }
+        fileparser['daemon'] = {
+            'pidfile': Configuration.pidfile + " # Use an absolute path",
+            'logfile': Configuration.logfile + " # Use an absolute path",
+            'logmaxmb': str(Configuration.logmaxmb)
+            + " # Maximum size of log file in MBytes",
+            'logbackups': str(Configuration.logbackups)
+            + " # Number of backup log files"
+        }
         with open(Configuration.configfile, 'w') as configfile:
             fileparser.write(configfile)
-        os.chmod(Configuration.configfile, stat.S_IRUSR | stat.S_IWUSR | stat.S_IREAD | stat.S_IWRITE)
+        os.chmod(Configuration.configfile,
+                 stat.S_IRUSR | stat.S_IWUSR | stat.S_IREAD | stat.S_IWRITE)
 
     @staticmethod
     def configure():
-        """Configure the server: load configuration file then parse command line"""
+        """
+        Configure the server: load configuration file then parse command line
+        """
 
         # Create and configure a command line parser
-        argparser = argparse.ArgumentParser(description='MnemoPwd server v' + Configuration.version,
-                                            epilog='More informations can be found at https://github.com/thethythy/Mnemopwd',
-                                            formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+        argparser = argparse.ArgumentParser(
+            description='MnemoPwd server v' + Configuration.version,
+            epilog='More informations can be found at https://github.com/thethythy/Mnemopwd',
+            formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
         # IP server
-        argparser.add_argument('-i', '--ip', nargs='?', default=Configuration.host,
-                               metavar='ip', help='the IP address of the server',
-                               action=MyParserAction)
+        argparser.add_argument(
+            '-i', '--ip', nargs='?', default=Configuration.host, metavar='ip',
+            help='the IP address of the server', action=MyParserAction)
 
         # Port
-        argparser.add_argument('-p', '--port', type=int, nargs='?', default=Configuration.port,
-                               metavar='port', help='the server connexion port',
-                               action=MyParserAction)
+        argparser.add_argument(
+            '-p', '--port', type=int, nargs='?', default=Configuration.port,
+            metavar='port', help='the server connexion port',
+            action=MyParserAction)
 
         # Database directory
-        argparser.add_argument('-d', '--dbpath', nargs='?', default=Configuration.dbpath,
-                               metavar='path', type=str, help="the directory to store \
-                               secret data; it will be created if it does not exist; \
-                               if the directory already exists only the user must \
-                               have read, write and execution permissions",
-                               action=MyParserAction)
+        argparser.add_argument(
+            '-d', '--dbpath', nargs='?', default=Configuration.dbpath,
+            metavar='path', type=str, help="the directory to store secret data; \
+            it will be created if it does not exist; if the directory already \
+            exists only the user must have read, write and execution permissions",
+            action=MyParserAction)
 
         # Certificat file
-        argparser.add_argument('-c', '--cert', nargs='?', default=Configuration.certfile,
-                               metavar='certificat', type=str, help="the PEM X509 \
-                               certificat file", action=MyParserAction)
+        argparser.add_argument(
+            '-c', '--cert', nargs='?', default=Configuration.certfile,
+            metavar='certificat', type=str, help="the PEM X509 certificate file",
+            action=MyParserAction)
 
         # Certificat private key file
-        argparser.add_argument('-k', '--key', nargs='?', default=Configuration.keyfile,
-                               metavar='private_key', type=str, help="the private key file \
-                               to authenticate the certificat", action=MyParserAction)
+        argparser.add_argument(
+            '-k', '--key', nargs='?', default=Configuration.keyfile,
+            metavar='private_key', type=str, help="the private key file \
+            to authenticate the certificate", action=MyParserAction)
 
         # Pool executor size
-        argparser.add_argument('-s', '--poolsize', type=int, default=Configuration.poolsize,
-                               metavar='pool_size', help="the size of the pool of execution",
-                               action=MyParserAction)
+        argparser.add_argument(
+            '-s', '--poolsize', type=int, default=Configuration.poolsize,
+            metavar='pool_size', help="the size of the pool of execution",
+            action=MyParserAction)
 
         # Search mode
-        argparser.add_argument('-m', '--searchmode', type=str, default=Configuration.search_mode,
-                               metavar='search_mode', help="the search mode; 'first' for \
-                               searching only on first secret information block and 'all' \
-                               for searching on all informations", action=MyParserAction)
+        argparser.add_argument(
+            '-m', '--searchmode', type=str, default=Configuration.search_mode,
+            metavar='search_mode', help="the search mode; 'first' for \
+            searching only on first secret information block and 'all' \
+            for searching on all informations", action=MyParserAction)
 
         # Start action
-        argparser.add_argument('--start', action='store_const', const='start', dest='action',
-                               default=Configuration.action, help='start the server')
+        argparser.add_argument(
+            '--start', action='store_const', const='start', dest='action',
+            default=Configuration.action, help='start the server')
 
         # Stop action
-        argparser.add_argument('--stop', action='store_const', const='stop', dest='action',
-                               default=Configuration.action, help='stop the server')
+        argparser.add_argument(
+            '--stop', action='store_const', const='stop', dest='action',
+            default=Configuration.action, help='stop the server')
 
         # Status action
-        argparser.add_argument('--status', action='store_const', const='status', dest='action',
-                               default=Configuration.action, help='get server status')
+        argparser.add_argument(
+            '--status', action='store_const', const='status', dest='action',
+            default=Configuration.action, help='get server status')
 
         # Program version
-        argparser.add_argument('-v', '--version', action='version', version='version ' + Configuration.version)
+        argparser.add_argument(
+            '-v', '--version', action='version',
+            version='version ' + Configuration.version)
 
         # Create, configure a configuration file parser and parse
         fileparser = configparser.ConfigParser(inline_comment_prefixes='#')
-        if Configuration.__test_config_file__(argparser, Configuration.configfile):
+        if Configuration.__test_config_file__(
+                argparser, Configuration.configfile):
             # Load values from configuration file
             Configuration.__load_config_file__(argparser, fileparser)
         else:
@@ -269,12 +302,17 @@ class Configuration:
 
         # Verify private key and certificat files
         if Configuration.keyfile != 'None' and Configuration.certfile != 'None':
-            Configuration.__test_cert_key_files__(argparser, Configuration.certfile, Configuration.keyfile)
+            Configuration.__test_cert_key_files__(
+                argparser, Configuration.certfile, Configuration.keyfile)
             try:
-                X509(Configuration.certfile).check_validity_period()  # Control validity period
+                # Control validity period
+                X509(Configuration.certfile).check_validity_period()
             except Exception as e:
                 print(e)
                 exit(1)
-        elif (Configuration.keyfile != 'None' and Configuration.certfile == 'None') or \
-                (Configuration.keyfile == 'None' and Configuration.certfile != 'None'):
-            argparser.error("indicate two files (certificat file and key file) or nothing")
+        elif (Configuration.keyfile != 'None' and
+                Configuration.certfile == 'None') or \
+             (Configuration.keyfile == 'None' and
+                Configuration.certfile != 'None'):
+            argparser.error(
+                "give two files (certificate file and key file) or nothing")

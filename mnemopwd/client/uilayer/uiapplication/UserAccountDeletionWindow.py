@@ -45,7 +45,8 @@ class UserAccountDeletionWindow(TitledBorderWindow):
         TitledBorderWindow.__init__(self, parent, size_y, size_x,
                                     int(curses.LINES / 2) - int(size_y / 2),
                                     int(curses.COLS / 2) - int(size_x / 2),
-                                    "User account deletion confirmation window", modal=True)
+                                    "User account deletion confirmation window",
+                                    modal=True)
 
         self.window.addstr(5, 2, "Login")
         self.window.addstr(8, 2, "Password")
@@ -54,10 +55,12 @@ class UserAccountDeletionWindow(TitledBorderWindow):
         self.shortcuts = ['', '', 'E', 'L', 'A']
 
         # Editable components
-        self.logineditor = InputBox(self, 3, size_x - 15, 5 - 1, 12, self.shortcuts)
-        self.passeditor = InputBox(self, 3, size_x - 15, 8 - 1, 12, self.shortcuts, secret=True)
+        self.logineditor = InputBox(
+            self, 3, size_x - 15, 5 - 1, 12, self.shortcuts)
+        self.passeditor = InputBox(
+            self, 3, size_x - 15, 8 - 1, 12, self.shortcuts, secret=True)
 
-        # Actionnable components
+        # Actionable components
         posx = gap = int(((size_x - 2) - (9 + 7 + 8)) / 4) + 1
         self.deleteButton = ButtonBox(self, 11, posx, "Delete", 'E')
         posx = posx + 9 + gap

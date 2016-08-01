@@ -30,9 +30,11 @@ State S33 : Deletion
 """
 
 import logging
+
 from server.util.funcutils import singleton
 from server.clients.protocol import StateSCC
 from server.clients.DBHandler import DBHandler
+
 
 @singleton
 class StateS33(StateSCC):
@@ -43,14 +45,15 @@ class StateS33(StateSCC):
 
         try:
             # Control challenge
-            if self.control_challenge(client, data, b'S33.7') :
+            if self.control_challenge(client, data, b'S33.7'):
 
                 # Test for S33 command
                 is_cd_S33 = data[170:178] == b"DELETION"
-                if not is_cd_S33 : raise Exception('S33 protocol error')
+                if not is_cd_S33:
+                    raise Exception('S33 protocol error')
 
-                eid = data[179:348] # id encrypted
-                elogin = data[349:] # Login encrypted
+                eid = data[179:348]  # id encrypted
+                elogin = data[349:]  # Login encrypted
 
                 # Compute client id
                 login = client.ephecc.decrypt(elogin)
@@ -60,9 +63,9 @@ class StateS33(StateSCC):
                 id_from_client = client.ephecc.decrypt(eid)
 
                 # If ids are not equal
-                if id != id_from_client :
-                    message = b'ERROR;application protocol error'
-                    client.loop.call_soon_threadsafe(client.transport.write, message)
+                if id != id_from_client:
+                    msg = b'ERROR;application protocol error'
+                    client.loop.call_soon_threadsafe(client.transport.write, msg)
                     raise Exception('incorrect id')
 
                 # Test if login exists
@@ -71,25 +74,28 @@ class StateS33(StateSCC):
 
                 # If login is unknown
                 if not exist :
-                    message = b'ERROR;application protocol error'
-                    client.loop.call_soon_threadsafe(client.transport.write, message)
+                    msg = b'ERROR;application protocol error'
+                    client.loop.call_soon_threadsafe(client.transport.write, msg)
                     raise Exception('user account does not exist')
 
-                logging.info('User account deletion request from {}'.format(client.peername))
+                logging.info('User account deletion request from {}'
+                             .format(client.peername))
 
                 # If login is OK try to delete database file
                 result = DBHandler.delete(client.dbpath, filename)
 
                 # If database file has been deleted close connection with client
                 if result:
-                    client.loop.call_soon_threadsafe(client.transport.write, b'OK')
+                    client.loop.call_soon_threadsafe(
+                        client.transport.write, b'OK')
                     client.loop.call_soon_threadsafe(client.transport.close)
-                    logging.warning('User account {} deletion from {}'.format(filename, client.peername))
+                    logging.warning('User account {} deletion from {}'
+                                    .format(filename, client.peername))
 
                 # If deletion has failed for some reason
                 else:
-                    message = b'ERROR;application protocol error'
-                    client.loop.call_soon_threadsafe(client.transport.write, message)
+                    msg = b'ERROR;application protocol error'
+                    client.loop.call_soon_threadsafe(client.transport.write, msg)
                     raise Exception('deletion rejected')
 
         except Exception as exc:

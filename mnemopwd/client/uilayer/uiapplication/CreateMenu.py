@@ -38,12 +38,13 @@ class CreateMenu(BaseWindow):
     """
 
     def __init__(self, parent, btypes, y, x):
-        """Create the menu"""
+        """Create the menu according to block types"""
         # Create the window
         max_len = 0
         for btype in btypes.values():
             max_len = max(max_len, len((btype["1"])["name"]))
-        BaseWindow.__init__(self, parent, len(btypes), max_len + 3, y, x, menu=True, modal=True)
+        BaseWindow.__init__(
+            self, parent, len(btypes), max_len + 3, y, x, menu=True, modal=True)
         self.window.refresh()
 
         # Add buttons (preserving the order indicated in the json file)
@@ -53,12 +54,16 @@ class CreateMenu(BaseWindow):
             name = btype["1"]["name"]
             high = (len(btype) - 1) * 4 + 2
             if high <= (curses.LINES - 4):
-                self.items.append(MetaButtonBox(self, posy, 0, name + sfill(max_len - len(name), ' '), data=i))
+                self.items.append(MetaButtonBox(
+                    self, posy, 0,
+                    name + sfill(max_len - len(name), ' '), data=i))
                 posy += 1
             else:
-                self.parent.update_status("The type '{}' has too many fields for the actual window size".format(name))
+                self.parent.update_status(
+                    "The type '{}' has too many fields for the actual window size".format(name))
 
     def start(self, timeout=-1):
+        """See mother class"""
         while True:
             # Interaction loop
             result = BaseWindow.start(self)

@@ -30,11 +30,12 @@
 State S22 : Creation
 """
 
+import logging
+
 from server.util.funcutils import singleton
 from server.clients.protocol import StateSCC
 from server.clients.DBHandler import DBHandler
 
-import logging
 
 @singleton
 class StateS22(StateSCC):
@@ -45,14 +46,15 @@ class StateS22(StateSCC):
 
         try:
             # Control challenge
-            if self.control_challenge(client, data, b'S22.7') :
+            if self.control_challenge(client, data, b'S22.7'):
 
                 # Test for S22 command
                 is_cd_S22 = data[170:178] == b"CREATION"
-                if not is_cd_S22 : raise Exception('S22 protocol error')
+                if not is_cd_S22:
+                    raise Exception('S22 protocol error')
 
-                eid = data[179:348] # id encrypted
-                elogin = data[349:] # Login encrypted
+                eid = data[179:348]  # id encrypted
+                elogin = data[349:]  # Login encrypted
 
                 # Compute client id
                 login = client.ephecc.decrypt(elogin)
@@ -62,10 +64,10 @@ class StateS22(StateSCC):
                 id_from_client = client.ephecc.decrypt(eid)
 
                 # If ids are not equal
-                if id != id_from_client :
-                    message = b'ERROR;application protocol error'
-                    client.loop.call_soon_threadsafe(client.transport.write, message)
-                    raise Exception('incorrect id')
+                if id != id_from_client:
+                    msg = b'ERROR;application protocol error'
+                    client.loop.call_soon_threadsafe(client.transport.write, msg)
+                    raise Exception('S22 incorrect id')
 
                 # Try to create a new database
                 filename = self.compute_client_filename(id, client.ms, login)
@@ -73,14 +75,16 @@ class StateS22(StateSCC):
 
                 if result:
                     client.dbH = DBHandler(client.dbpath, filename)
-                    client.loop.call_soon_threadsafe(client.transport.write, b'OK')
-                    client.state = client.states['31'] # Next state
+                    client.loop.call_soon_threadsafe(
+                        client.transport.write, b'OK')
+                    client.state = client.states['31']  # Next state
                 else:
-                    message = b'ERROR;application protocol error'
-                    client.loop.call_soon_threadsafe(client.transport.write, message)
+                    msg = b'ERROR;application protocol error'
+                    client.loop.call_soon_threadsafe(client.transport.write, msg)
                     raise Exception('user account already used')
 
-                logging.info('User account creation from {}'.format(client.peername))
+                logging.info('User account creation from {}'
+                             .format(client.peername))
 
         except Exception as exc:
             # Schedule a callback to client exception handler

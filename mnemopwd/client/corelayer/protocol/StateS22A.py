@@ -38,7 +38,8 @@ class StateS22A(StateSCC):
     """State S22 : Creation"""
 
     def do(self, handler, data):
-        """Action of the state S22A: treat response of user account creation request"""
+        """Action of the state S22A: treat response of user account
+        creation request"""
         with handler.lock:
             try:
 
@@ -52,7 +53,9 @@ class StateS22A(StateSCC):
                 is_OK = data[:2] == b"OK"
                 if is_OK:
                     # Notify the handler a property has changed
-                    handler.loop.run_in_executor(None, handler.notify, "connection.state.login", "Connected to server")
+                    handler.loop.run_in_executor(None, handler.notify,
+                                                 "connection.state.login",
+                                                 "Connected to server")
                 else:
                     raise Exception("S22 protocol error")
 
@@ -61,5 +64,7 @@ class StateS22A(StateSCC):
                 handler.loop.call_soon_threadsafe(handler.exception_handler, exc)
 
             else:
-                handler.state = handler.states['31R']  # Next state
-                handler.loop.run_in_executor(None, handler.data_received, None)  # Future execution
+                # Next state
+                handler.state = handler.states['31R']
+                # Future execution
+                handler.loop.run_in_executor(None, handler.data_received, None)

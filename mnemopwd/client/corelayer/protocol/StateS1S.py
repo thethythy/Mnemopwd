@@ -48,11 +48,13 @@ class StateS1S:
                 ems = handler.ephecc.encrypt(ms, pubkey=handler.ephecc.get_pubkey())
 
                 # Send master secret
-                message = b'SESSION;' + ems
-                handler.loop.call_soon_threadsafe(handler.transport.write, message)
+                msg = b'SESSION;' + ems
+                handler.loop.call_soon_threadsafe(handler.transport.write, msg)
 
                 # Notify the handler a property has changed
-                handler.loop.run_in_executor(None, handler.notify, "connection.state", "Waiting session number")
+                handler.loop.run_in_executor(None, handler.notify,
+                                             "connection.state",
+                                             "Waiting session number")
 
             except Exception as exc:
                 # Schedule a call to the exception handler

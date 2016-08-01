@@ -31,6 +31,7 @@ import socket
 import ssl
 import time
 import concurrent.futures
+
 from client.util.Configuration import Configuration
 from client.util.funcutils import Subject
 from client.corelayer.protocol.ProtocolHandler import ProtocolHandler
@@ -74,7 +75,8 @@ class ClientCore(Subject):
                                 datefmt='%m/%d/%Y %I:%M:%S')
 
         # Create a task queue
-        self.queue = asyncio.Queue(maxsize=Configuration.queuesize, loop=self.loop)
+        self.queue = asyncio.Queue(
+            maxsize=Configuration.queuesize, loop=self.loop)
         self.cmdH = None  # The command handler co-routine
         self.taskInProgress = False  # Flag to indicate a task is in progress
         self.lastblock = None  # The last block or the last index used
@@ -87,10 +89,13 @@ class ClientCore(Subject):
         self.context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
         self.context.options |= ssl.OP_NO_SSLv2  # SSL v2 not allowed
         self.context.options |= ssl.OP_NO_SSLv3  # SSL v3 not allowed
-        self.context.verify_mode = ssl.CERT_OPTIONAL  # Server certificat is optional
-        self.context.check_hostname = False  # Don't check hostname because of shared certificat
+        # Server certificate is optional
+        self.context.verify_mode = ssl.CERT_OPTIONAL
+        # Don't check hostname because of shared certificate
+        self.context.check_hostname = False
         if Configuration.certfile != 'None':
-            self.context.load_verify_locations(cafile=Configuration.certfile)  # Load certificat
+            # Load certificate
+            self.context.load_verify_locations(cafile=Configuration.certfile)
         else:
             self.context.set_ciphers("AECDH-AES256-SHA")  # Cipher suite to use
 
@@ -99,7 +104,8 @@ class ClientCore(Subject):
 
         if Configuration.action == 'status':
             self._open()  # Try to open a connection to server
-            print("the server seems running at " + str(self.transport.get_extra_info('peername')))
+            print("the server seems running at " +
+                  str(self.transport.get_extra_info('peername')))
 
     def _open(self):
         """Open a new connection to the server"""
@@ -107,9 +113,9 @@ class ClientCore(Subject):
         self.table = {}
 
         # Create an asynchronous SSL socket
-        coro = self.loop.create_connection(lambda: ProtocolHandler(self),
-                                           Configuration.server, Configuration.port,
-                                           family=socket.AF_INET, ssl=self.context)
+        coro = self.loop.create_connection(
+            lambda: ProtocolHandler(self), Configuration.server,
+            Configuration.port, family=socket.AF_INET, ssl=self.context)
         # Try to open SSL socket
         try:
             if not self.loop.is_running():
@@ -120,7 +126,9 @@ class ClientCore(Subject):
 
         except asyncio.TimeoutError:
             future.cancel()
-            self.update('connection.state', 'Enable to connect to server. Retry or verify your configuration')
+            self.update(
+                'connection.state',
+                'Enable to connect to server. Retry or verify your configuration')
             raise
         except ConnectionRefusedError as e:
             if not self.loop.is_running():
@@ -128,22 +136,26 @@ class ClientCore(Subject):
                 print("Enable to connect to server. Retry or verify your configuration")
                 exit(1)
             else:
-                self.update('connection.state', 'Enable to connect to server. Retry or verify your configuration')
+                self.update(
+                    'connection.state',
+                    'Enable to connect to server. Retry or verify your configuration')
                 raise
         except ssl.SSLError as e:
             if not self.loop.is_running():
                 print(e)
-                print("There is a problem with the certificat.")
+                print("There is a problem with the certificate.")
                 exit(1)
             else:
-                self.update('connection.state', 'There is a problem with the certificat.')
+                self.update('connection.state',
+                            'There is a problem with the certificate.')
                 raise
         except Exception as e:
             if not self.loop.is_running():
                 print(e)
                 exit(1)
             else:
-                self.update('connection.state', 'An unexpected exception occurred')
+                self.update('connection.state',
+                            'An unexpected exception occurred')
                 raise
 
     @asyncio.coroutine
@@ -163,7 +175,8 @@ class ClientCore(Subject):
             yield from asyncio.sleep(0.01, loop=self.loop)
         # Execute protocol state
         self.taskInProgress = True
-        yield from self.loop.run_in_executor(None, self.protocol.data_received, None)
+        yield from self.loop.run_in_executor(
+            None, self.protocol.data_received, None)
         # Waiting for the end of the task
         while self.taskInProgress:
             yield from asyncio.sleep(0.01, loop=self.loop)
@@ -171,8 +184,10 @@ class ClientCore(Subject):
     @asyncio.coroutine
     def _task_close(self):
         """Close the connection with the server"""
-        yield from self.loop.run_in_executor(None, self.update, 'connection.state.logout', 'Connection closed')
-        self.queue = asyncio.Queue(maxsize=Configuration.queuesize, loop=self.loop)
+        yield from self.loop.run_in_executor(
+            None, self.update, 'connection.state.logout', 'Connection closed')
+        self.queue = asyncio.Queue(
+            maxsize=Configuration.queuesize, loop=self.loop)
         self.taskInProgress = False
         self.transport.close()
         self.transport = None
@@ -183,7 +198,8 @@ class ClientCore(Subject):
         self.protocol.state = self.protocol.states['33R']  # Deletion
         # Execute protocol state
         self.taskInProgress = True
-        yield from self.loop.run_in_executor(None, self.protocol.data_received, None)
+        yield from self.loop.run_in_executor(
+            None, self.protocol.data_received, None)
         while self.taskInProgress:
             yield from asyncio.sleep(0.01, loop=self.loop)
 
@@ -191,9 +207,11 @@ class ClientCore(Subject):
     def _task_add_data_or_update_data(self, idblock, sib):
         """Add a new block or update an existing block"""
         if idblock is None:
-            self.protocol.state = self.protocol.states['35R']  # Add a new block
+            # Add a new block
+            self.protocol.state = self.protocol.states['35R']
         else:
-            self.protocol.state = self.protocol.states['37R']  # Update an existing block
+            # Update an existing block
+            self.protocol.state = self.protocol.states['37R']
 
         # Remember the block
         self.lastblock = sib
@@ -201,9 +219,11 @@ class ClientCore(Subject):
         # Execute protocol state
         self.taskInProgress = True
         if idblock is None:
-            yield from self.loop.run_in_executor(None, self.protocol.data_received, self.lastblock)
+            yield from self.loop.run_in_executor(
+                None, self.protocol.data_received, self.lastblock)
         else:
-            yield from self.loop.run_in_executor(None, self.protocol.data_received, (idblock, self.lastblock))
+            yield from self.loop.run_in_executor(
+                None, self.protocol.data_received, (idblock, self.lastblock))
 
         # Waiting for the end of the task
         while self.taskInProgress:
@@ -219,14 +239,16 @@ class ClientCore(Subject):
         self.protocol.state = self.protocol.states['36R']  # Delete
         # Execute protocol state
         self.taskInProgress = True
-        yield from self.loop.run_in_executor(None, self.protocol.data_received, idblock)
+        yield from self.loop.run_in_executor(
+            None, self.protocol.data_received, idblock)
         # Waiting for the end of the task
         while self.taskInProgress:
             yield from asyncio.sleep(0.01, loop=self.loop)
         # Remove block
         del self.table[idblock]
         # Notify the result to UI layer
-        yield from self.loop.run_in_executor(None, self.update, 'application.searchblock.removeresult', idblock)
+        yield from self.loop.run_in_executor(
+            None, self.update, 'application.searchblock.removeresult', idblock)
 
     @asyncio.coroutine
     def _task_search_data(self, pattern):
@@ -235,12 +257,15 @@ class ClientCore(Subject):
         self.searchTable = list()  # Reset search table
         # Execute protocol state
         self.taskInProgress = True
-        yield from self.loop.run_in_executor(None, self.protocol.data_received, pattern)
+        yield from self.loop.run_in_executor(
+            None, self.protocol.data_received, pattern)
         while self.taskInProgress:
             yield from asyncio.sleep(0.01, loop=self.loop)
         # Notify the result to the UI layer
         if len(self.searchTable) > 0:
-            yield from self.loop.run_in_executor(None, self.update, 'application.searchblock.result', self.searchTable)
+            yield from self.loop.run_in_executor(
+                None, self.update, 'application.searchblock.result',
+                self.searchTable)
 
     @asyncio.coroutine
     def _task_export_data(self):
@@ -249,19 +274,24 @@ class ClientCore(Subject):
         self.searchTable = list()  # Reset search table
         # Execute protocol state
         self.taskInProgress = True
-        yield from self.loop.run_in_executor(None, self.protocol.data_received, None)
+        yield from self.loop.run_in_executor(
+            None, self.protocol.data_received, None)
         while self.taskInProgress:
             yield from asyncio.sleep(0.01, loop=self.loop)
         # Notify the result to UI layer
         if len(self.searchTable) > 0:
-            yield from self.loop.run_in_executor(None, self.update, 'application.searchblock.result', self.searchTable)
+            yield from self.loop.run_in_executor(
+                None, self.update, 'application.searchblock.result',
+                self.searchTable)
 
     @asyncio.coroutine
     def _task_get_block_values(self, idblock):
         """Return values of a block"""
         sib = self.table[idblock]
         # Notify the result to UI layer
-        yield from self.loop.run_in_executor(None, self.update, 'application.searchblock.oneresult', (idblock, sib))
+        yield from self.loop.run_in_executor(
+            None, self.update, 'application.searchblock.oneresult',
+            (idblock, sib))
 
     # External methods
 
@@ -269,16 +299,20 @@ class ClientCore(Subject):
     def close(self):
         """Close the connection and empty the queue"""
         if self.transport is not None:
-            self.queue = asyncio.Queue(maxsize=Configuration.queuesize, loop=self.loop)
+            self.queue = asyncio.Queue(
+                maxsize=Configuration.queuesize, loop=self.loop)
             self.taskInProgress = False
             self.transport.close()
             self.transport = None
 
     def start(self):
         """Start the main loop"""
-        self.cmdH = self.loop.create_task(self._command_handler())  # Command loop
-        self.loop.run_forever()  # Run until the end of the main loop
-        self.loop.close()        # Close the main loop
+        # Command loop
+        self.cmdH = self.loop.create_task(self._command_handler())
+        # Run until the end of the main loop
+        self.loop.run_forever()
+        # Close the main loop
+        self.loop.close()
 
     def stop(self):
         """Close the connection to the server then stop the main loop"""
@@ -303,7 +337,8 @@ class ClientCore(Subject):
 
         if key == "connection.open.credentials":
             try:
-                self._open()  # Direct execution because queue is empty at this moment
+                # Direct execution because queue is empty at this moment
+                self._open()
                 task = self._task_set_credentials(*value)
             except:
                 pass
@@ -330,11 +365,13 @@ class ClientCore(Subject):
         """Callback method for assignation of last block used"""
         # Notify the result to UI layer
         if task == 'add':
-            yield from self.loop.run_in_executor(None, self.update, 'application.searchblock.tryoneresult',
-                                                 (idblock, self.lastblock))
+            yield from self.loop.run_in_executor(
+                None, self.update, 'application.searchblock.tryoneresult',
+                (idblock, self.lastblock))
         elif task == 'update':
-            yield from self.loop.run_in_executor(None, self.update, 'application.searchblock.updateresult',
-                                                 (idblock, self.lastblock))
+            yield from self.loop.run_in_executor(
+                None, self.update, 'application.searchblock.updateresult',
+                (idblock, self.lastblock))
         # Update table
         self.table[idblock] = self.lastblock
         self.lastblock = None

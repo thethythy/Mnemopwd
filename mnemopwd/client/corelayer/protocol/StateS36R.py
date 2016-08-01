@@ -45,13 +45,13 @@ class StateS36R(StateSCC):
                 echallenge = self.compute_challenge(handler, b'S36.4')
                 if echallenge:
                     # Send DeleteData request
-                    message = echallenge + b';DELETEDATA;' + (str(data)).encode()
-                    handler.loop.call_soon_threadsafe(handler.transport.write, message)
+                    msg = echallenge + b';DELETEDATA;' + (str(data)).encode()
+                    handler.loop.call_soon_threadsafe(handler.transport.write, msg)
 
                     # Notify the handler a property has changed
-                    handler.loop.run_in_executor(None, handler.notify,
-                                                 'application.state',
-                                                 'Information block removing request send to server')
+                    handler.loop.run_in_executor(
+                        None, handler.notify, 'application.state',
+                        'Information block removing request send to server')
 
             except Exception as exc:
                 # Schedule a call to the exception handler

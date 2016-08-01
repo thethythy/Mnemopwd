@@ -6,7 +6,7 @@
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
-# 1. Redistributions of source code must retain the above copyright notice, this 
+# 1. Redistributions of source code must retain the above copyright notice, this
 # list of conditions and the following disclaimer.
 #
 # 2. Redistributions in binary form must reproduce the above copyright notice,
@@ -30,30 +30,34 @@
 State S1S : Session
 """
 
-from server.util.funcutils import singleton
-from pyelliptic import Cipher
 import os
 
+from pyelliptic import Cipher
+from server.util.funcutils import singleton
+
+
 @singleton
-class StateS1S():
+class StateS1S:
     """State S1S : Session"""
         
     def do(self, client, data):
-        """Action of the state S1S: establish a session number and a challenge request"""
+        """Action of the state S1S: establish a session number and
+        a challenge request"""
         
         try:
             # Test for S1S command
             is_cd_S1S = data[:7] == b"SESSION"
-            if not is_cd_S1S : raise Exception('S1S protocol error')
+            if not is_cd_S1S:
+                raise Exception('S1S protocol error')
                 
-            ems = data[8:209] # Master secret encrypted
-            ms = client.ephecc.decrypt(ems) # Decrypt master secret
+            ems = data[8:209]  # Master secret encrypted
+            ms = client.ephecc.decrypt(ems)  # Decrypt master secret
             
-            session = (os.urandom(256))[64:128] # Random session value
+            session = (os.urandom(256))[64:128]  # Random session value
             
             iv = Cipher.gen_IV('aes-256-cbc')
             ctx = Cipher(ms, iv, 1, 'aes-256-cbc')
-            esession = ctx.ciphering(session) # Encrypt session number
+            esession = ctx.ciphering(session)  # Encrypt session number
             
             # Send challenge request
             message = b'CHALLENGER;' + iv + b';' + esession
@@ -64,7 +68,6 @@ class StateS1S():
             client.loop.call_soon_threadsafe(client.exception_handler, exc)
             
         else:
-            client.ms = ms # Store master secret
-            client.session = session # Store session number
-            client.state = client.states['1C'] # Next state
-
+            client.ms = ms  # Store master secret
+            client.session = session  # Store session number
+            client.state = client.states['1C']  # Next state

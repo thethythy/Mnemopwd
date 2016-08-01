@@ -38,13 +38,14 @@ Server part of Mnemopwd application.
 Must be run by a script according to the OS of the server node.
 """
 
+
 class Server:
     """
     Server module of the application
     
-    Attribut(s):
+    Attribute(s):
     - loop : an i/o asynchronous loop (see the official python asyncio module)
-    - server : a SSL/TLS asynchronous socket server (see the official python ssl module)
+    - server : a SSL/TLS asynchronous socket server (see the python ssl module)
     
     Method(s):
     - start : start the server
@@ -55,11 +56,11 @@ class Server:
     
     def __init__(self):
         """Initialization"""
-        logging.basicConfig(filename=Configuration.logfile, \
-                            level=Configuration.loglevel, \
-                            format='%(asctime)s %(process)d %(levelname)s %(message)s', \
+        logging.basicConfig(filename=Configuration.logfile,
+                            level=Configuration.loglevel,
+                            format='%(asctime)s %(levelname)s %(message)s',
                             datefmt='%m/%d/%Y %I:%M:%S')
-        logging.info("-----------------------------------------------------------")
+        logging.info("--------------------------------------------------------")
         
         # Create an i/o asynchronous loop
         self.loop = asyncio.get_event_loop()
@@ -71,33 +72,35 @@ class Server:
         
         # Create a SSL context
         context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
-        context.options |= ssl.OP_NO_SSLv2 # SSL v2 not allowed
-        context.options |= ssl.OP_NO_SSLv3 # SSL v3 not allowed
-        context.options |= ssl.OP_SINGLE_DH_USE # Change DH key at every session
-        context.options |= ssl.OP_CIPHER_SERVER_PREFERENCE # Use server's cipher ordering
-        context.verify_mode = ssl.CERT_OPTIONAL # Client certificat is optional
-        context.check_hostname = False # Don't check hostname
+        context.options |= ssl.OP_NO_SSLv2  # SSL v2 not allowed
+        context.options |= ssl.OP_NO_SSLv3  # SSL v3 not allowed
+        context.options |= ssl.OP_SINGLE_DH_USE  # Change DH key at each session
+        context.options |= ssl.OP_CIPHER_SERVER_PREFERENCE  # server order
+        context.verify_mode = ssl.CERT_OPTIONAL  # Optional client certificate
+        context.check_hostname = False  # Don't check hostname
         if ssl.HAS_ECDH: 
-            context.options |= ssl.OP_SINGLE_ECDH_USE # Change ECDH key at every session
-            context.set_ecdh_curve('sect409k1') # Why not ?
-        if Configuration.certfile == 'None' and Configuration.keyfile == 'None' :
-            context.set_ciphers('AECDH-AES256-SHA') # Use only ECDH-anon
-        elif Configuration.certfile != 'None' and Configuration.keyfile != 'None' :
-            context.load_cert_chain(certfile=Configuration.certfile, \
+            context.options |= ssl.OP_SINGLE_ECDH_USE  # ECDH key per session
+            context.set_ecdh_curve('sect409k1')  # Why not ?
+        if Configuration.certfile == 'None' and Configuration.keyfile == 'None':
+            context.set_ciphers('AECDH-AES256-SHA')  # Use only ECDH-anon
+        elif Configuration.certfile != 'None' and \
+                Configuration.keyfile != 'None':
+            context.load_cert_chain(certfile=Configuration.certfile,
                                     keyfile=Configuration.keyfile)
         
         # Create an asynchronous SSL server
-        coro = self.loop.create_server(lambda: ClientHandler(self.loop, Configuration.dbpath), \
-                                       Configuration.host, Configuration.port, \
-                                       family=socket.AF_INET, backlog=100, ssl=context, \
-                                       reuse_address=False)
+        coro = self.loop.create_server(
+            lambda: ClientHandler(self.loop, Configuration.dbpath),
+            Configuration.host, Configuration.port, family=socket.AF_INET,
+            backlog=100, ssl=context, reuse_address=False)
         self.server = self.loop.run_until_complete(coro)
         
     # Extern methods
     
     def start(self):
         """Start the main loop"""
-        logging.info("Server started at {}".format(self.server.sockets[0].getsockname()))
+        logging.info("Server started at {}"
+                     .format(self.server.sockets[0].getsockname()))
         try:
             self.loop.run_forever()
         except (KeyboardInterrupt, SystemExit):
@@ -111,4 +114,3 @@ class Server:
             self.loop.run_until_complete(self.server.wait_closed())
         self.loop.close()
         logging.info("Server closed")
-    

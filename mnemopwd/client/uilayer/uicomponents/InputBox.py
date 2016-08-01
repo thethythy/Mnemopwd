@@ -42,7 +42,8 @@ class InputBox(Component):
     - secret: is it a secret text?
     """
 
-    def __init__(self, parent, h, w, y, x, shortcuts=None, secret=False, show=True, option=False):
+    def __init__(self, parent, h, w, y, x, shortcuts=None, secret=False,
+                 show=True, option=False):
         """Create a input text box"""
         Component.__init__(self, parent, h, w, y, x)
         if show:
@@ -55,7 +56,6 @@ class InputBox(Component):
             self.editor = SecretTextEditor(self.editorbox)
         self.value = None
         self.shortcuts = shortcuts
-        self.secret = secret
         self.option = option
         self.showOrHide = show
 
@@ -67,8 +67,8 @@ class InputBox(Component):
         """This component is editable"""
         return True
 
-    def is_actionnable(self):
-        """Return True by default (actionnable)"""
+    def is_actionable(self):
+        """Return True by default (actionable)"""
         return False
 
     def focus_on(self):
@@ -83,16 +83,14 @@ class InputBox(Component):
         self.editorbox.clrtoeol()
         self.editorbox.refresh()
 
-    def enclose(self, y, x):
-        """See mother class"""
-        return self.editorbox.enclose(y, x)
-
     def clear(self):
+        """Clean up the editor content"""
         self.value = None
         self.cursor_x = 0
         self.focus_off()
 
     def show(self):
+        """Show the editor"""
         self.showOrHide = True
         if self.value is not None:
             self.editor.populate(self.value)
@@ -101,11 +99,13 @@ class InputBox(Component):
         self.window.refresh()
 
     def hide(self):
+        """Hide the editor"""
         self.showOrHide = False
         self.window.clear()
         self.window.refresh()
 
     def redraw(self):
+        """Redraw the editor"""
         if self.showOrHide:
             if self.value is not None:
                 self.editor.populate(self.value)
@@ -114,8 +114,9 @@ class InputBox(Component):
             self.window.refresh()
 
     def _controller_(self, ch):
-        if ch in [curses.KEY_UP, curses.KEY_DOWN, curses.ascii.TAB, curses.ascii.CR,
-                  curses.ascii.ESC, curses.KEY_MOUSE]:
+        """Control if the character is a control key"""
+        if ch in [curses.KEY_UP, curses.KEY_DOWN, curses.ascii.TAB,
+                  curses.ascii.CR, curses.ascii.ESC, curses.KEY_MOUSE]:
             curses.ungetch(ch)
             return curses.ascii.NL
         elif ch in [curses.ascii.DEL]:
@@ -128,6 +129,7 @@ class InputBox(Component):
             return ch
 
     def edit(self):
+        """Start editing operation"""
         try:
             curses.curs_set(2)
         except curses.error:

@@ -6,7 +6,7 @@
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
-# 1. Redistributions of source code must retain the above copyright notice, this 
+# 1. Redistributions of source code must retain the above copyright notice, this
 # list of conditions and the following disclaimer.
 #
 # 2. Redistributions in binary form must reproduce the above copyright notice,
@@ -29,18 +29,19 @@
 A class to control access to database files
 """
 
-import shelve
 import threading
+
 
 class DBAccess:
     """
     A class to serialize database file access
     """
     
-    locks = dict() # A dictionary of reentrant locks
+    locks = dict()  # A dictionary of Lock instances
     
     @staticmethod
     def getLock(dbfile):
+        """Return  Lock object on the database file"""
         try:
             return DBAccess.locks[dbfile]
         except KeyError:
@@ -49,6 +50,7 @@ class DBAccess:
     
     @staticmethod
     def delLock(dbfile):
+        """Delete Lock instance on the database file"""
         try:
             del DBAccess.locks[dbfile]
         except:

@@ -38,7 +38,8 @@ class StateS33A(StateSCC):
     """State S33 : Deletion"""
 
     def do(self, handler, data):
-        """Action of the state S33A: treat response of user account deletion request"""
+        """Action of the state S33A: treat response of user account
+        deletion request"""
         with handler.lock:
             try:
 
@@ -52,7 +53,9 @@ class StateS33A(StateSCC):
                 is_OK = data[:2] == b"OK"
                 if is_OK:
                     # Notify the handler a property has changed
-                    handler.loop.run_in_executor(None, handler.notify, "connection.state.logout", "User account deleted")
+                    handler.loop.run_in_executor(None, handler.notify,
+                                                 "connection.state.logout",
+                                                 "User account deleted")
                     # Task is ended
                     handler.core.taskInProgress = False
                 else:

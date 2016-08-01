@@ -28,35 +28,36 @@
 """
 State S32 : exportation operation
 """
-
+import logging
 import pickle
+
 from server.util.funcutils import singleton
 from server.clients.protocol import StateSCC
-from server.util.Configuration import Configuration
 
-import logging
 
 @singleton
 class StateS32(StateSCC):
     """State S32 : export all secret information blocks"""
 
     def do(self, client, data):
-        """Action of the state S32: return a sequence of all secret information blocks"""
+        """Action of the state S32: return a sequence of all secret
+        information blocks"""
 
         try:
             # Control challenge
-            if self.control_challenge(client, data, b'S32.4') :
+            if self.control_challenge(client, data, b'S32.4'):
 
                 # Test for S32 command
                 is_cd_S32 = data[170:181] == b"EXPORTATION"
-                if not is_cd_S32 : raise Exception('S32 protocol error')
+                if not is_cd_S32:
+                    raise Exception('S32 protocol error')
 
                 # Get all sibs
                 tabsibs = client.dbH.get_data(client.keyH)
 
                 # Send number of blocks
-                message = b'OK;' + str(len(tabsibs)).encode()
-                client.loop.call_soon_threadsafe(client.transport.write, message)
+                msg = b'OK;' + str(len(tabsibs)).encode()
+                client.loop.call_soon_threadsafe(client.transport.write, msg)
 
                 # Send sib one by one
                 for i, sib in tabsibs:
@@ -64,12 +65,13 @@ class StateS32(StateSCC):
                     psib = pickle.dumps(sib)
                     lpsib = str(len(psib)).encode()
                     # Send message
-                    message = b';SIB;' + si + b';' + lpsib + b';' + psib
-                    client.loop.call_soon_threadsafe(client.transport.write, message)
+                    msg = b';SIB;' + si + b';' + lpsib + b';' + psib
+                    client.loop.call_soon_threadsafe(client.transport.write, msg)
 
-                client.state = client.states['3'] # New client state
+                client.state = client.states['3']  # New client state
 
-                logging.info('Exporting [{} blocks] to {}'.format(len(tabsibs), client.peername))
+                logging.info('Exporting [{} blocks] to {}'
+                             .format(len(tabsibs), client.peername))
 
         except Exception as exc:
             # Schedule a callback to client exception handler

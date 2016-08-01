@@ -39,7 +39,8 @@ class StateS1CA:
     """State S1CA : Session"""
 
     def do(self, handler, data):
-        """Action of the state S1CA: wait server response of the client challenge answer"""
+        """Action of the state S1CA: wait server response of the client
+        challenge answer"""
         with handler.lock:
             try:
                 # Test if challenge is rejected
@@ -52,7 +53,9 @@ class StateS1CA:
                 is_OK = data[:2] == b"OK"
                 if is_OK:
                     # Notify the handler a property has changed
-                    handler.loop.run_in_executor(None, handler.notify, "connection.state", "Session started")
+                    handler.loop.run_in_executor(None, handler.notify,
+                                                 "connection.state",
+                                                 "Session started")
                 else:
                     raise Exception("S1 protocol error")
 
@@ -65,4 +68,5 @@ class StateS1CA:
                     handler.state = handler.states['22R']  # Next state is S22
                 else:
                     handler.state = handler.states['21R']  # Next state is S21
-                handler.loop.run_in_executor(None, handler.data_received, None)  # Future execution
+                # Future execution
+                handler.loop.run_in_executor(None, handler.data_received, None)

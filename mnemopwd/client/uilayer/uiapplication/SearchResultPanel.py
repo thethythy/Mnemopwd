@@ -48,9 +48,11 @@ class SearchResultPanel(BaseWindow):
         if show is True:
             idblock, sib = self.items[self.index].get_data()
             atuple = int(sib['info1'].decode()), sib
-            self.parent.update_window("application.editionblock.seteditors", atuple)
+            self.parent.update_window(
+                "application.editionblock.seteditors", atuple)
         else:
-            self.parent.update_window("application.editionblock.cleareditors", None)
+            self.parent.update_window(
+                "application.editionblock.cleareditors", None)
 
     def _scroll_items(self, d):
         """Scroll up or scroll down items"""
@@ -82,7 +84,8 @@ class SearchResultPanel(BaseWindow):
         label = sib['info2'].decode()[:self.w - 4]
         nbitems = len(self.items)
         show = (nbitems + 1) <= self.h
-        item = MetaButtonBox(self, nbitems, 0, label, show=show, data=(idblock, sib))
+        item = MetaButtonBox(
+            self, nbitems, 0, label, show=show, data=(idblock, sib))
         self.items.append(item)
 
     def update_item(self, idblock_to_update, new_sib):
@@ -167,7 +170,8 @@ class SearchResultPanel(BaseWindow):
                     self._update_application(False)
                     return 1
                 # Down by one
-                if (self.index + 1) < nbitems and (self.scroll_pos + 1) == self.h:
+                if (self.index + 1) < nbitems and \
+                   (self.scroll_pos + 1) == self.h:
                     self._scroll_items(1)
                 # Normal behaviour
                 self.scroll_pos = min(self.h - 1, self.scroll_pos + 1)

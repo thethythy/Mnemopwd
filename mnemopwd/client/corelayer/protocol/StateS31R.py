@@ -46,14 +46,17 @@ class StateS31R(StateSCC):
                 if echallenge:
 
                     # Encrypt config
-                    econfig = handler.ephecc.encrypt(handler.config, pubkey=handler.ephecc.get_pubkey())
+                    econfig = handler.ephecc.encrypt(
+                        handler.config, pubkey=handler.ephecc.get_pubkey())
 
                     # Send configuration request
-                    message = echallenge + b';CONFIGURATION;' + econfig
-                    handler.loop.call_soon_threadsafe(handler.transport.write, message)
+                    msg = echallenge + b';CONFIGURATION;' + econfig
+                    handler.loop.call_soon_threadsafe(handler.transport.write, msg)
 
                     # Notify the handler a property has changed
-                    handler.loop.run_in_executor(None, handler.notify, "connection.state", "Configuration request")
+                    handler.loop.run_in_executor(None, handler.notify,
+                                                 "connection.state",
+                                                 "Configuration request")
 
             except Exception as exc:
                 # Schedule a call to the exception handler

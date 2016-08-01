@@ -27,27 +27,29 @@
 
 import asyncio
 import threading
+
 from client.corelayer.protocol import *
 from client.util.Configuration import Configuration
 from client.util.funcutils import is_none
 
 """
-Handler of the secure protocol connection with the server
+Protocolar handler of the secure connection with the server
 """
 
 
 class ProtocolHandler(asyncio.Protocol):
     """
-    The secure protocol handler in communication with the server.
-    The first state is S0. The state objects are responsible of choosing the next state.
+    The secure protocol handler used to communicate with the server.
+    The first state is S0. Some state objects are responsible of choosing
+    the next state.
 
     Attribute(s):
     - core: the ClientCore instance
     - loop: the asynchronous input/output loop
     - states: sequence of state objects
-    - state: the actual state (set in connection_made and changed by state objects)
+    - state: the actual state (set in connection_made and changed by states)
     - lock: lock object for serializing thread execution
-    - config: the client configuration as a list of curve names and ciphers names
+    - config: the client configuration as a list of curve and cipher names
     - transport: the SSL socket
     - password: the client password (set by the UI)
     - login: the client login (set by the UI)
@@ -60,11 +62,12 @@ class ProtocolHandler(asyncio.Protocol):
     - connection_made: method called when the connection with the server is made
     - data_received: method called each time a new data is received
     - connection_lost: method called when the connection is lost or closed
-    - exception_handler: method called when an exception is raised by a state object
+    - exception_handler: method called when an exception is raised by a state
     - notify: notify ClientCore a property has changed
     """
 
     def __init__(self, core):
+        """Object initialization"""
         self.core = core
         self.loop = core.loop
         self.password = self.login = 'None'
@@ -81,9 +84,11 @@ class ProtocolHandler(asyncio.Protocol):
                        '36R': StateS36R(), '36A': StateS36A(),
                        '37R': StateS37R(), '37A': StateS37A()}
         # The client configuration
-        self.config = is_none(Configuration.curve1) + ";" + is_none(Configuration.cipher1) + ";" + \
-                      is_none(Configuration.curve2) + ";" + is_none(Configuration.cipher2) + ";" + \
-                      is_none(Configuration.curve3) + ";" + is_none(Configuration.cipher3)
+        self.config = is_none(Configuration.curve1) + ";" + \
+            is_none(Configuration.cipher1) + ";" + \
+            is_none(Configuration.curve2) + ";" + \
+            is_none(Configuration.cipher2) + ";" + \
+            is_none(Configuration.curve3) + ";" + is_none(Configuration.cipher3)
         # Lock object for serializing thread execution
         self.lock = threading.Lock()
 
@@ -95,16 +100,20 @@ class ProtocolHandler(asyncio.Protocol):
     def data_received(self, data):
         # Wait for actual execution before scheduling a new execution
         with self.lock:
-            self.loop.run_in_executor(None, self.state.do, self, data)  # Future execution
+            self.loop.run_in_executor(None, self.state.do, self,
+                                      data)  # Future execution
 
     def connection_lost(self, exc):
         if exc:
-            self.loop.run_in_executor(None, self.notify, 'connection.state.error', str(exc).capitalize())
+            self.loop.run_in_executor(None, self.notify,
+                                      'connection.state.error',
+                                      str(exc).capitalize())
         asyncio.run_coroutine_threadsafe(self.core.close(), self.loop)
 
     def exception_handler(self, exc):
         """Exception handler for actions executed by the executor"""
-        self.loop.run_in_executor(None, self.notify, 'connection.state.error', str(exc).capitalize())
+        self.loop.run_in_executor(None, self.notify, 'connection.state.error',
+                                  str(exc).capitalize())
         asyncio.run_coroutine_threadsafe(self.core.close(), self.loop)
 
     def notify(self, key, value):

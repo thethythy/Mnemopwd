@@ -42,7 +42,8 @@ class StateSCC:
         try:
             # Compute challenge then encrypt it
             challenge = hmac_sha256(handler.ms, handler.session + var)
-            echallenge = handler.ephecc.encrypt(challenge, pubkey=handler.ephecc.get_pubkey())
+            echallenge = handler.ephecc.encrypt(
+                challenge, pubkey=handler.ephecc.get_pubkey())
             
         except Exception as exc:
             # Schedule a callback to client exception handler

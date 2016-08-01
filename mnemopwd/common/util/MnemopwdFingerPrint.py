@@ -27,64 +27,68 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from pathlib import Path
-import importlib
-import inspect
 import hashlib
 
-class MnemopwdFingerPrint() :
 
-    path_list = ['serverctl.py', 'clientctl.py', 'common', 'pyelliptic', 'client', 'server']
+class MnemopwdFingerPrint:
+    """Mechanism to control code has not been modified"""
+
+    path_list = ['serverctl.py', 'clientctl.py', 'common', 'pyelliptic',
+                 'client', 'server']
     module_list = []
 
-    def create_module_list(self) :
+    def create_module_list(self):
+        """Create a sorted module list"""
         self.module_list = []
         self._create_module_list(self.path_list)
         self.module_list.sort()
 
-    def _create_module_list(self, plist) :
+    def _create_module_list(self, plist):
         """Get module names from the path list given"""
-        for path in plist :
-            p = Path(path)
-            if p.is_dir() and p.name != '__pycache__' :
-                for child in p.iterdir() :
+        for path in plist:
+            ap = Path(path)
+            if ap.is_dir() and ap.name != '__pycache__':
+                for child in ap.iterdir():
                     if child.is_dir() and child.name != '__pycache__':
                         self._create_module_list([str(child)])
                     elif child.suffix == '.py':
                         self.module_list.append(str(child))
-            elif Path(path).exists() :
+            elif Path(path).exists():
                 self.module_list.append(path)
 
-    def compute_fingerprint(self) :
+    def compute_fingerprint(self):
         """Compute fingerprint"""
         h = hashlib.sha256()
-        for name in self.module_list :
-            with open(name, mode='rb') as file: source = file.read() # Get the source code
-            h.update(source) # Feed hash engine with each source string
-        return h.hexdigest() # Get hash in hexadecimal format
+        for name in self.module_list:
+            with open(name, mode='rb') as hfile:
+                source = hfile.read()  # Get the source code
+            h.update(source)  # Feed hash engine with each source string
+        return h.hexdigest()  # Get hash in hexadecimal format
 
-    def control_fingerprint(self) :
+    def control_fingerprint(self):
         """Control the fingerprint"""
         self.module_list = []
         self.create_module_list()
-        fingerprint = self.compute_fingerprint()
+        the_fingerprint = self.compute_fingerprint()
         try:
-            with open("fingerprint", 'rb') as file :
-                fingerprint_from_file = (file.read()).decode()
-                if fingerprint_from_file != fingerprint :
+            with open("fingerprint", 'rb') as hfile:
+                fingerprint_from_file = (hfile.read()).decode()
+                if fingerprint_from_file != the_fingerprint:
                     print("it seems source code has been modified, so server can not be launched")
                     exit(1)
-        except FileNotFoundError :
+        except FileNotFoundError:
             print("it seems source code has been modified, so server can not be launched")
             exit(1)
 
-if __name__ == "__main__" :
+if __name__ == "__main__":
     # Control the execution path
-    if not Path("serverctl.py").exists() :
+    if not Path("serverctl.py").exists():
         print("This script must be launched from the Mnemopwd's directory")
         exit(1)
     # Delete fingerprint file
     p = Path("fingerprint")
-    if p.exists() : p.unlink()
+    if p.exists():
+        p.unlink()
     # Compute fingerprint
     mnemofg = MnemopwdFingerPrint()
     mnemofg.create_module_list()

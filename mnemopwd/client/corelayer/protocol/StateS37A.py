@@ -52,8 +52,9 @@ class StateS37A(StateSCC):
                 if is_OK:
 
                     # Notify the handler a property has changed
-                    handler.loop.run_in_executor(None, handler.notify,
-                                                 "application.state", "Information updated by server")
+                    handler.loop.run_in_executor(
+                        None, handler.notify, "application.state",
+                        "Information updated by server")
 
                     # Indicate the actual task is done
                     handler.core.taskInProgress = False

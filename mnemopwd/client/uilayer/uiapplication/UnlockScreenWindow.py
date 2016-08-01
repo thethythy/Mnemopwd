@@ -54,10 +54,12 @@ class UnlockScreenWindow(TitledBorderWindow):
         self.shortcuts = ['', '', 'U', 'L', 'A']
 
         # Editable components
-        self.logineditor = InputBox(self, 3, size_x - 15, 5 - 1, 12, self.shortcuts)
-        self.passeditor = InputBox(self, 3, size_x - 15, 8 - 1, 12, self.shortcuts, secret=True)
+        self.logineditor = InputBox(
+            self, 3, size_x - 15, 5 - 1, 12, self.shortcuts)
+        self.passeditor = InputBox(
+            self, 3, size_x - 15, 8 - 1, 12, self.shortcuts, secret=True)
 
-        # Actionnable components
+        # Actionable components
         posx = gap = int(((size_x - 2) - (9 + 7 + 8)) / 4) + 1
         self.unlockButton = ButtonBox(self, 11, posx, "Unlock", 'U')
         posx = posx + 9 + gap
@@ -66,7 +68,8 @@ class UnlockScreenWindow(TitledBorderWindow):
         self.cancelButton = ButtonBox(self, 11, posx, "Cancel", 'A')
 
         # Ordered list of components
-        self.items = [self.logineditor, self.passeditor, self.unlockButton, self.clearButton, self.cancelButton]
+        self.items = [self.logineditor, self.passeditor, self.unlockButton,
+                      self.clearButton, self.cancelButton]
 
         self.window.refresh()
 

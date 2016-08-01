@@ -6,7 +6,7 @@
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
-# 1. Redistributions of source code must retain the above copyright notice, this 
+# 1. Redistributions of source code must retain the above copyright notice, this
 # list of conditions and the following disclaimer.
 #
 # 2. Redistributions in binary form must reproduce the above copyright notice,
@@ -30,18 +30,19 @@
 State SO : KeySharing
 """
 
-from server.util.funcutils import singleton
 from pyelliptic import ECC
+from server.util.funcutils import singleton
+
 
 @singleton
-class StateS0():
+class StateS0:
     """State S0 : KeySharing"""
         
     def do(self, client, data):
         """Action of the state S0: send an ephemeral server public key"""
         
         try:
-            ephecc = ECC() # Create an ephemeral keypair
+            ephecc = ECC()  # Create an ephemeral keypair
             # Send the message
             message = b'KEYSHARING;' + ephecc.get_pubkey()
             client.loop.call_soon_threadsafe(client.transport.write, message)
@@ -51,5 +52,5 @@ class StateS0():
             client.loop.call_soon_threadsafe(client.exception_handler, exc)
         
         else:
-            client.ephecc = ephecc # Store the ephemeral keypair
-            client.state = client.states['1S'] # Next state
+            client.ephecc = ephecc  # Store the ephemeral keypair
+            client.state = client.states['1S']  # Next state

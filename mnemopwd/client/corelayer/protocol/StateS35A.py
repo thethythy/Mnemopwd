@@ -55,13 +55,16 @@ class StateS35A(StateSCC):
                     index = data[3:]
                     try:
                         index = int(index.decode())
-                        asyncio.run_coroutine_threadsafe(handler.core.assign_last_block(index, 'add'), handler.loop)
+                        asyncio.run_coroutine_threadsafe(
+                            handler.core.assign_last_block(index, 'add'),
+                            handler.loop)
                     except:
                         raise Exception('S35 protocol error')
 
                     # Notify the handler a property has changed
-                    handler.loop.run_in_executor(None, handler.notify, 'application.state',
-                                                 'New information saved by server')
+                    handler.loop.run_in_executor(
+                        None, handler.notify, 'application.state',
+                        'New information saved by server')
 
                     # Indicate the actual task is done
                     handler.core.taskInProgress = False

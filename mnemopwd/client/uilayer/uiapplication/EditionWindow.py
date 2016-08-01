@@ -56,7 +56,8 @@ class EditionWindow(TitledOnBorderWindow):
         self.deleteButton = ButtonBox(self, posy, posx, "Delete", 'E')
 
         self._shortcuts = ['S', 'L', 'A', 'E']
-        self._items = self.items = [self.saveButton, self.clearButton, self.cancelButton, self.deleteButton]
+        self._items = self.items = [self.saveButton, self.clearButton,
+                                    self.cancelButton, self.deleteButton]
 
         # Separator
         self.window.hline(h - 3, 1, curses.ACS_HLINE, w - 2)
@@ -101,13 +102,14 @@ class EditionWindow(TitledOnBorderWindow):
                 # Other field
                 else:
                     info_comp["l_pos_y"] = label_posy
-                    info_comp["l_name"] = info["name"] + sfill(max_len - len(info["name"]), ' ')
+                    info_comp["l_name"] = info["name"] +\
+                        sfill(max_len - len(info["name"]), ' ')
                     optional = False
                     if info["option"] == "True":
                         optional = True
-                    info_comp["c_object"] = InputBox(self, 3, self.w - 5 - max_len,
-                                                     label_posy - 1, 2 + max_len + 1,
-                                                     shortcuts, show=False, option=optional)
+                    info_comp["c_object"] = InputBox(
+                        self, 3, self.w - 5 - max_len, label_posy - 1,
+                        2 + max_len + 1, shortcuts, show=False, option=optional)
 
                 label_posy += 3
                 infos_comp[k] = info_comp  # Add with others components
@@ -138,7 +140,9 @@ class EditionWindow(TitledOnBorderWindow):
                 self.window.addstr(info_comp["l_pos_y"], 2, info_comp["l_name"])
                 # Show component
                 if i == 1:
-                    self.window.addstr(info_comp["c_pos_y"], info_comp["c_pos_x"], info_comp["c_object"])
+                    self.window.addstr(
+                        info_comp["c_pos_y"], info_comp["c_pos_x"],
+                        info_comp["c_object"])
                 else:
                     info_comp["c_object"].show()
                     items.append(info_comp["c_object"])
@@ -168,7 +172,8 @@ class EditionWindow(TitledOnBorderWindow):
             infos_comp = self.cpb[self.number_type]
             for i in range(1, len(infos_comp) + 1):
                 info_comp = infos_comp[i]
-                self.window.addstr(info_comp["l_pos_y"], 2, sfill(self.w - 3, ' '))
+                self.window.addstr(info_comp["l_pos_y"], 2,
+                                   sfill(self.w - 3, ' '))
                 if i > 1:
                     info_comp["c_object"].clear()
                     info_comp["c_object"].hide()
@@ -187,9 +192,11 @@ class EditionWindow(TitledOnBorderWindow):
         """Try to create or update an information block"""
         complete = True
         sib = SecretInfoBlock(self.keyH)
-        sib['info1'] = (str(self.number_type)).encode()  # Add number_type for restoring purpose
+        # Add number_type for restoring purpose
+        sib['info1'] = (str(self.number_type)).encode()
+        # Add the block type name
         sib.nbInfo += 1
-        sib['info2'] = self.cpb[self.number_type][1]["c_object"]  # Add the block type name
+        sib['info2'] = self.cpb[self.number_type][1]["c_object"]
         for index, item in enumerate(self.items):
             if item.is_editable():
                 if not item.option and item.value is None:
@@ -210,7 +217,8 @@ class EditionWindow(TitledOnBorderWindow):
         timer = Configuration.lock * 60 * 1000  # Timer in ms
 
         while True:
-            result = TitledOnBorderWindow.start(self, timeout=100)  # Default controller
+            # Start default controller
+            result = TitledOnBorderWindow.start(self, timeout=100)
 
             # Lock screen ?
             if result == 'timeout' and timer > 0:

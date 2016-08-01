@@ -29,57 +29,65 @@
 State S31 : configuration operation
 """
 
+import logging
+
 from server.util.funcutils import singleton
 from server.clients.protocol import StateSCC
 
-import logging
 
 @singleton
 class StateS31(StateSCC):
     """State S31 : configuration of the cryptographic handler"""
 
     def do(self, client, data):
-        """Action of the state S31: obtain (and eventually change) cryptographic configuration"""
+        """Action of the state S31: obtain (and eventually change)
+        cryptographic configuration"""
 
         try:
             # Control challenge
-            if self.control_challenge(client, data, b'S31.6') :
+            if self.control_challenge(client, data, b'S31.6'):
 
                 # Test for S31 command
                 is_cd_S31 = data[170:183] == b"CONFIGURATION"
-                if not is_cd_S31 : raise Exception('S31 protocol error')
+                if not is_cd_S31:
+                    raise Exception('S31 protocol error')
 
                 econfig = data[184:]    # Encrypted configuration string
-                config = client.ephecc.decrypt(econfig) # Decrypt configuration string
+                config = client.ephecc.decrypt(econfig)  # Decrypting
 
                 # Try to configure client cryptographic handler
                 result = client.configure_crypto(config.decode())
 
-                if result == False:
-                    message = b'ERROR;application protocol error'
-                    client.loop.call_soon_threadsafe(client.transport.write, message)
-                    raise Exception('wrong configuration {}'.format(config.decode()))
+                if result is False:
+                    msg = b'ERROR;application protocol error'
+                    client.loop.call_soon_threadsafe(client.transport.write, msg)
+                    raise Exception('S31 wrong configuration {}'
+                                    .format(config.decode()))
 
                 else:
 
                     if result == 1:
                         # Send result value
-                        message = b'OK;' + b'1'
-                        client.loop.call_soon_threadsafe(client.transport.write, message)
+                        msg = b'OK;' + b'1'
+                        client.loop.call_soon_threadsafe(
+                            client.transport.write, msg)
 
                     if result == 2:
-                        if client.update_crypto() : # Re-do all secret information encryption
+                        if client.update_crypto():  # Re-do encryption
                             # Send result value
-                            message = b'OK;' + b'2'
-                            client.loop.call_soon_threadsafe(client.transport.write, message)
+                            msg = b'OK;' + b'2'
+                            client.loop.call_soon_threadsafe(
+                                client.transport.write, msg)
                         else:
-                            message = b'ERROR;application protocol error'
-                            client.loop.call_soon_threadsafe(client.transport.write, message)
+                            msg = b'ERROR;application protocol error'
+                            client.loop.call_soon_threadsafe(
+                                client.transport.write, msg)
                             raise Exception('S31 operation aborted')
 
-                    client.state = client.states['3'] # New client state
+                    client.state = client.states['3']  # New client state
 
-                    logging.info('Configuration done from {}'.format(client.peername))
+                    logging.info('Configuration done from {}'
+                                 .format(client.peername))
 
         except Exception as exc:
             # Schedule a callback to client exception handler

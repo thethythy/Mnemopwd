@@ -123,12 +123,14 @@ class Daemon(object):
 
     def start_logging(self):
         """Configure the logging module"""
-        handler = RotatingFileHandler(Configuration.logfile,
-                                      maxBytes=Configuration.logmaxmb * 1024 * 1024,
-                                      backupCount=Configuration.logbackups)
+        handler = RotatingFileHandler(
+            Configuration.logfile,
+            maxBytes=Configuration.logmaxmb * 1024 * 1024,
+            backupCount=Configuration.logbackups)
         log = logging.getLogger()
         log.setLevel(Configuration.loglevel)
-        handler.setFormatter(logging.Formatter("%(asctime)s %(process)d %(levelname)s %(message)s"))
+        handler.setFormatter(
+            logging.Formatter("%(asctime)s %(levelname)s %(message)s"))
         log.addHandler(handler)
 
     def check_pid(self, status=False):

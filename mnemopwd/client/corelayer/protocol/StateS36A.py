@@ -51,8 +51,9 @@ class StateS36A(StateSCC):
                 is_OK = data[:2] == b"OK"
                 if is_OK:
                     # Notify the handler a property has changed
-                    handler.loop.run_in_executor(None, handler.notify,
-                                                 'application.state', 'Information block deleted by server')
+                    handler.loop.run_in_executor(
+                        None, handler.notify, 'application.state',
+                        'Information block deleted by server')
                     # Indicate the actual task is done
                     handler.core.taskInProgress = False
                 else:

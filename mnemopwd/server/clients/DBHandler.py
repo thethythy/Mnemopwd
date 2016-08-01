@@ -6,7 +6,7 @@
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
-# 1. Redistributions of source code must retain the above copyright notice, this 
+# 1. Redistributions of source code must retain the above copyright notice, this
 # list of conditions and the following disclaimer.
 #
 # 2. Redistributions in binary form must reproduce the above copyright notice,
@@ -29,11 +29,12 @@
 """
 Database Handler
 
-A database is a shelf object: a persistent dictonary stored in a database file
+A database is a shelf object: a persistent dictionary stored in a database file
 (see module shelve for more explanations).
 
-Each shelf have at least two entries : 'nbsibs' for the number of sibs stored (must be
-incremented or decremented) and 'index' for the last index used (must only be incremented)
+Each shelf have at least two entries : 'nbsibs' for the number of sibs stored
+(must be incremented or decremented) and 'index' for the last index used
+(must only be incremented)
 
 An example of a shelve: 
     {
@@ -44,7 +45,6 @@ An example of a shelve:
         '4' : a sib (it means that a sib has been deleted before this entry)
         '5' : a sib
     }
-
 """
 
 import os
@@ -55,21 +55,22 @@ import re
 from server.util.Configuration import Configuration
 from server.clients.DBAccess import DBAccess
 
+
 class DBHandler:
     """
     Database handler
     
-    Attribut(s):
-    - path: a string for the database directory (instance attribut)
-    - filename: a string for the database file name (instance attribut)
-    - database: a string for the path + database file (instance attribut)
+    Attribute(s):
+    - path: a string for the database directory (instance attribute)
+    - filename: a string for the database file name (instance attribute)
+    - database: a string for the path + database file (instance attribute)
     
     Method(s):
     - new: a static method for database file creation
     - exist: a static method for testing if a database file already exist
     - delete: a static method for deleting a database file
     - add_data: a method for adding a secret information block in database
-    - search_data: a method for searching secret information blocks matching a pattern
+    - search_data: search secret information blocks matching a pattern
     - get_data: a method for getting all secret information blocks
     - update_data: a method for updating a secret information block in database
     - delete_data: a method for deleting a secret information block in database
@@ -81,7 +82,7 @@ class DBHandler:
         """Set attributs"""
         self.path = path                # Client database path
         self.filename = filename        # Client database filename
-        self.database = self.path + '/' + self.filename # Client database
+        self.database = self.path + '/' + self.filename  # Client database
         
     def __getitem__(self, index):
         """Get an item. Raise KeyError exception if index does not exist"""
@@ -107,7 +108,7 @@ class DBHandler:
     @staticmethod
     def new(path, filename):
         """Try to create a new db. Return a boolean."""
-        if DBHandler.exist(path, filename) :
+        if DBHandler.exist(path, filename):
             return False
         else:
             # Create a new database file with good permissions
@@ -115,7 +116,7 @@ class DBHandler:
             with shelve.open(dbfile, flag='n') as db:
                 db['nbsibs'] = 0  # Number of secret information blocks
                 db['index'] = 0   # Last entry index
-            os.chmod(dbfile + '.db', \
+            os.chmod(dbfile + '.db',
                      stat.S_IRUSR | stat.S_IWUSR | stat.S_IREAD | stat.S_IWRITE)
             return True
     
@@ -132,7 +133,8 @@ class DBHandler:
         with DBAccess.getLock(dbfile):
             os.unlink(dbfile + '.db')
             result = not os.path.exists(dbfile + '.db')
-            if result: DBAccess.delLock(dbfile)
+            if result:
+                DBAccess.delLock(dbfile)
         return result
         
     def add_data(self, sib):
@@ -146,25 +148,26 @@ class DBHandler:
         return index                  # Return the index of the block
         
     def search_data(self, keyH, pattern):
-        """Search secret information matching the pattern. Return a list of found sibs."""
+        """Search secret information matching the pattern.
+        Return a list of found sibs."""
         tabsibs = []             # Table of sibs
         nbsibs = self['nbsibs']  # Number of sibs
         if nbsibs > 0: 
-            for i in range(1, self['index'] + 1): # For all sibs
+            for i in range(1, self['index'] + 1):  # For all sibs
                 try:
-                    sib = self[str(i)]  # Get sib (can raise a KeyError exception)
+                    sib = self[str(i)]  # Get sib
                 except KeyError:
                     continue  # Try next key
                 sib.keyH = keyH  # Set actual KeyHandler
-                if sib.nbInfo > 0 :
-                    if Configuration.search_mode == 'first' :
-                        if re.search(pattern, sib['info1'].decode()) is not None :
-                            tabsibs.append((i,sib)) # Pattern matching so add sib in table
+                if sib.nbInfo > 0:
+                    if Configuration.search_mode == 'first':
+                        if re.search(pattern, sib['info1'].decode()) is not None:
+                            tabsibs.append((i, sib))  # Matching so add sib
                     else:
-                        for j in range(1, sib.nbInfo + 1) : # For all info in sib
-                            if re.search(pattern, sib['info' + str(j)].decode()) is not None :
-                                tabsibs.append((i,sib)) # Pattern matching so add sib in table
-                                break # One info match so stop loop now
+                        for j in range(1, sib.nbInfo + 1):  # For all info
+                            if re.search(pattern, sib['info' + str(j)].decode()) is not None:
+                                tabsibs.append((i, sib))  # Matching so add sib
+                                break  # One info match so stop loop now
         return tabsibs
     
     def get_data(self, keyH):
@@ -172,19 +175,22 @@ class DBHandler:
         tabsibs = []             # Table of sibs
         nbsibs = self['nbsibs']  # Number of sibs
         if nbsibs > 0: 
-            for i in range(1, self['index'] + 1): # For all sibs
-                try: sib = self[str(i)]  # Get sib (can raise a KeyError exception)
-                except KeyError: continue  # Try next key
+            for i in range(1, self['index'] + 1):  # For all sibs
+                try:
+                    sib = self[str(i)]  # Get sib
+                except KeyError:
+                    continue  # Try next key
                 sib.keyH = keyH  # Set actual KeyHandler
-                if sib.nbInfo > 0 : tabsibs.append((i,sib))
+                if sib.nbInfo > 0:
+                    tabsibs.append((i, sib))
         return tabsibs
     
     def update_data(self, index, sib):
         """Update a secret information block. Return a boolean."""
         try:
-            index = int(index)      # Conversion in int (can raise a ValueError exception)
+            index = int(index)      # Conversion to int
             index = str(index)      # index as a string type
-            oldsib = self[index]    # Get actual sib (can raise a KeyError exception)
+            oldsib = self[index]    # Get actual sib (test if index is OK)
             self[index] = sib       # Set updated sib
             return True
         except ValueError:
@@ -195,14 +201,13 @@ class DBHandler:
     def delete_data(self, index):
         """Delete a secret information block. Return a boolean."""
         try:
-            index = int(index)      # Conversion in int (can raise a ValueError exception)
-            index = str(index)      # index as a string type
-            del self[index]                 # Delete entry at index (can raise a KeyError exception)
-            nbsibs = self['nbsibs'] - 1     # Decrement the number of block
-            self['nbsibs'] = nbsibs         # Store the new number of block
+            index = int(index)  # Conversion in int
+            index = str(index)  # index as a string type
+            del self[index]  # Delete entry at index
+            nbsibs = self['nbsibs'] - 1  # Decrement the number of block
+            self['nbsibs'] = nbsibs      # Store the new number of block
             return True
         except ValueError:
             return False
         except KeyError:
             return False
-    

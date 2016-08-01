@@ -118,7 +118,8 @@ class Configuration:
         try:
             fileparser.read(Configuration.configfile)
         except configparser.ParsingError:
-            parser.error("parsing error of configuration file {}".format(Configuration.configfile))
+            parser.error("parsing error of configuration file {}".
+                         format(Configuration.configfile))
         else:
             Configuration.server = fileparser['server']['server']
             Configuration.port = int(fileparser['server']['port'])
@@ -136,66 +137,82 @@ class Configuration:
     @staticmethod
     def __create_config_file__(fileparser):
         """Method to create default configuration file"""
-        fileparser['server'] = {'server': Configuration.server + " # Server IP",
-                                'port': str(Configuration.port) +
-                                        " # Values allowed: " + str(Configuration.port_min) +
-                                        ".." + str(Configuration.port_max),
-                                'certfile': Configuration.certfile + " # Use an absolute path",
-                                'timeout': str(Configuration.timeout) + " # Timeout on connection request"}
-        fileparser['client'] = {'curve1': Configuration.curve1 + " # Values allowed: ...",
-                                'cipher1': Configuration.cipher1 + " # Values allowed: ...",
-                                'curve2': Configuration.curve2 + " # Values allowed: None ...",
-                                'cipher2': Configuration.cipher2 + " # Values allowed: None ...",
-                                'curve3': Configuration.curve3 + " # Values allowed: None ...",
-                                'cipher3': Configuration.cipher3 + " # Values allowed: None ...",
-                                'lock': str(Configuration.lock) + " # Values allowed: 0 or a positive integer"}
+        fileparser['server'] = {
+            'server': Configuration.server + " # Server IP",
+            'port': str(Configuration.port) +
+                    " # Values allowed: " + str(Configuration.port_min) +
+                    ".." + str(Configuration.port_max),
+            'certfile': Configuration.certfile + " # Use an absolute path",
+            'timeout': str(Configuration.timeout) + " # Timeout on connection request"
+        }
+        fileparser['client'] = {
+            'curve1': Configuration.curve1 + " # Values allowed: ...",
+            'cipher1': Configuration.cipher1 + " # Values allowed: ...",
+            'curve2': Configuration.curve2 + " # Values allowed: None ...",
+            'cipher2': Configuration.cipher2 + " # Values allowed: None ...",
+            'curve3': Configuration.curve3 + " # Values allowed: None ...",
+            'cipher3': Configuration.cipher3 + " # Values allowed: None ...",
+            'lock': str(Configuration.lock) +
+                    " # Values allowed: 0 or a positive integer"
+        }
         with open(Configuration.configfile, 'w') as configfile:
             fileparser.write(configfile)
-        os.chmod(Configuration.configfile, stat.S_IRUSR | stat.S_IWUSR | stat.S_IREAD | stat.S_IWRITE)
+        os.chmod(Configuration.configfile,
+                 stat.S_IRUSR | stat.S_IWUSR | stat.S_IREAD | stat.S_IWRITE)
 
     @staticmethod
     def configure():
-        """Configure the server: load configuration file then parse command line"""
+        """Configure the server: load configuration file then parse
+        command line"""
 
         # Create and configure a command line parser
-        argparser = argparse.ArgumentParser(description='MnemoPwd client v' + Configuration.version,
-                                            epilog='More informations can be found at https://github.com/thethythy/Mnemopwd', \
-                                            formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+        argparser = argparse.ArgumentParser(
+            description='MnemoPwd client v' + Configuration.version,
+            epilog='More informations can be found at https://github.com/thethythy/Mnemopwd',
+            formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
         # IP server
-        argparser.add_argument('-i', '--ip', nargs='?', default=Configuration.server,
-                               metavar='ip', help='the IP address of the server',
-                               action=MyParserAction)
+        argparser.add_argument(
+            '-i', '--ip', nargs='?', default=Configuration.server, metavar='ip',
+            help='the IP address of the server', action=MyParserAction)
 
         # Port
-        argparser.add_argument('-p', '--port', type=int, nargs='?', default=Configuration.port,
-                               metavar='port', help='the server connexion port',
-                               action=MyParserAction)
+        argparser.add_argument(
+            '-p', '--port', type=int, nargs='?', default=Configuration.port,
+            metavar='port', help='the server connexion port',
+            action=MyParserAction)
 
         # Certificat file
-        argparser.add_argument('-c', '--cert', nargs='?', default=Configuration.certfile,
-                               metavar='certificat', type=str, help="the server PEM X509 certificat file",
-                               action=MyParserAction)
+        argparser.add_argument(
+            '-c', '--cert', nargs='?', default=Configuration.certfile,
+            metavar='certificat', type=str, action=MyParserAction,
+            help="the server PEM X509 certificat file")
 
         # Lock screen timeout
-        argparser.add_argument('-l', '--lock', type=int, nargs='?', default=Configuration.lock, metavar='minute(s)',
-                               help="the time before lock the screen (0 for no automatic lock scren)",
-                               action=MyParserAction)
+        argparser.add_argument(
+            '-l', '--lock', type=int, nargs='?', default=Configuration.lock,
+            metavar='minute(s)', action=MyParserAction,
+            help="the time before lock the screen (0 for no automatic lock scren)")
 
         # Start action
-        argparser.add_argument('--start', action='store_const', const='start', dest='action',
-                               default=Configuration.action, help='start the client')
+        argparser.add_argument(
+            '--start', action='store_const', const='start', dest='action',
+            default=Configuration.action, help='start the client')
 
         # Status action
-        argparser.add_argument('--status', action='store_const', const='status', dest='action',
-                               default=Configuration.action, help='get server status')
+        argparser.add_argument(
+            '--status', action='store_const', const='status', dest='action',
+            default=Configuration.action, help='get server status')
 
         # Program version
-        argparser.add_argument('-v', '--version', action='version', version='version ' + Configuration.version)
+        argparser.add_argument(
+            '-v', '--version', action='version',
+            version='version ' + Configuration.version)
 
         # Create, configure a configuration file parser and parse
         fileparser = configparser.ConfigParser(inline_comment_prefixes='#')
-        if Configuration.__test_config_file__(argparser, Configuration.configfile):
+        if Configuration.__test_config_file__(argparser,
+                                              Configuration.configfile):
             # Load values from configuration file
             Configuration.__load_config_file__(argparser, fileparser)
             Configuration.first_execution = False
@@ -212,7 +229,8 @@ class Configuration:
         if Configuration.certfile != 'None':
             Configuration.__test_cert_file__(argparser, Configuration.certfile)
             try:
-                X509(Configuration.certfile).check_validity_period()  # Control validity period
+                # Control validity period
+                X509(Configuration.certfile).check_validity_period()
             except Exception as e:
                 print(e)
                 exit(1)

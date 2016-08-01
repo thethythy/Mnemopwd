@@ -25,24 +25,31 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import socket
+
 # ---------------------------------------------------------
 # Singleton class
 
+
 def singleton(the_class):
-    instances = {} # Dictionary of singleton objects
+    """Notation for singleton class"""
+    instances = {}  # Dictionary of singleton objects
+
     def get_instance():
+        """Function returned at definition of a singleton class"""
         if the_class not in instances:
             # Create a singleton object and store it
             instances[the_class] = the_class()
         return instances[the_class]
+
     return get_instance
 
 # ----------------------------------------------------------
 # IP address
 
-import socket
 
 def getIPAddress():
+    """Get IP address"""
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     s.connect(('123.123.123.123', 80))
     ip = s.getsockname()[0]

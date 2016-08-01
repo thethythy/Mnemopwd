@@ -26,32 +26,32 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 """
-
-The class SecretInfoBlock stores secret informations.
+The class SecretInfoBlock stores secret information.
 
 A secret information is a cypher text encrypted with the ECIES scheme.
 
-Each secret information is stored in a dictionnary. The key of each entry
-is a string with the forme 'infoX' where 'X' is a integer. The 'X' value
-depends on the maximum number of secret informations stored by the object.
+Each secret information is stored in a dictionary. The key of each entry
+is a string with the form 'infoX' where 'X' is a integer. The 'X' value
+depends on the maximum number of secret information stored by the object.
 
 Global integrity is controlled by a hmac (512 bits) performed before storing and
-controlled after loading. This treatment is done by server part of the application.
-
+controlled after loading. This treatment is done by server part of
+the application.
 """
 
 import logging
 from common.InfoBlock import InfoBlock
 from pyelliptic import hash
 
+
 class SecretInfoBlock(InfoBlock):
     """
-    Dictionnary of secret informations.
+    Dictionary of secret information.
     It is a subclass of InfoBlock.
     
     Property(ies): none
     
-    Attribut(s):
+    Attribute(s):
     - keyH: a KeyHandler object (never saved)
     
     Method(s):
@@ -63,24 +63,27 @@ class SecretInfoBlock(InfoBlock):
     # --------------
 
     def __init__(self, keyH=None, nbInfo=1):
-        """Object initialization. By default, the number of secret informations is set to one."""
+        """Object initialization.
+        By default, the number of secret information is set to one."""
         InfoBlock.__init__(self, nbInfo)
         self.keyH = keyH
     
     def __sorted_state__(self, state):
         """Return a bytes string from a sorted list of the state"""
-        state_list = list(state['_infos'].items())        # Get the secret informations
-        state_list.append(('_nbInfo', state['_nbInfo']))  # Get the number of secret informations
-        state_list.sort()                                 # Sort the list
-        return str(state_list).encode()                   # Transform the list to a bytes string
+        # Get the secret information
+        state_list = list(state['_infos'].items())
+        # Get the number of secret information
+        state_list.append(('_nbInfo', state['_nbInfo']))
+        state_list.sort()  # Sort the list
+        return str(state_list).encode()  # Transform the list to a bytes string
 
     def __getstate__(self):
         """Returns the object's state after computing the integrity value"""
         state = self.__dict__.copy()
-        del state["keyH"]               # Delete KeyHandler object reference
+        del state["keyH"]  # Delete KeyHandler object reference
         try:
-            del state["fingerprint"]    # Delete old fingerprint entry
-        except:
+            del state["fingerprint"]  # Delete old fingerprint entry
+        except KeyError:
             pass
         # Compute hmac with the key handler
         message = self.__sorted_state__(state) + self.keyH.config.encode()
@@ -93,7 +96,7 @@ class SecretInfoBlock(InfoBlock):
         
     def __getitem__(self, index):
         """Decrypt value after being restored from a block"""
-        self._verify_index_(index) # Verify if the index parameter is valid
+        self._verify_index_(index)  # Verify if the index parameter is valid
         cleartext1 = self.keyH.decrypt(2, self.infos[index])
         cleartext2 = self.keyH.decrypt(1, cleartext1)
         cleartext = self.keyH.decrypt(0, cleartext2)
@@ -101,7 +104,7 @@ class SecretInfoBlock(InfoBlock):
     
     def __setitem__(self, index, value):
         """Encrypt value before being stored in a block"""
-        self._verify_index_(index) # Verify if the index parameter is valid
+        self._verify_index_(index)  # Verify if the index parameter is valid
         ciphertext1 = self.keyH.encrypt(0, value)
         ciphertext2 = self.keyH.encrypt(1, ciphertext1)
         ciphertext = self.keyH.encrypt(2, ciphertext2)
@@ -127,7 +130,7 @@ class SecretInfoBlock(InfoBlock):
         
         # The hmac must be equal to the fingerprint 
         condition = hash.equals(fingerprint, hmac)
-        if not condition :
+        if not condition:
             logging.critical("Intergrity checking fails on a SecretInfoBlock object")
         assert condition
         

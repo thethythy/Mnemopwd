@@ -25,8 +25,8 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-"""Simple text editing widget (copy of the official file but with character > 127 
-and without insert mode)"""
+"""Simple text editing widget (copy of the official file but with
+character > 127 and without insert mode)"""
 
 import curses
 import curses.ascii
@@ -36,19 +36,19 @@ class TextEditor:
     """Editing widget using the interior of a window object.
      Supports the following key bindings:
 
-    Ctrl-A      Go to left edge of window.
-    Ctrl-B      Cursor left, wrapping to previous line if appropriate.
-    Ctrl-D      Delete character under cursor.
-    Ctrl-E      Go to right edge (stripspaces off) or end of line (stripspaces on).
-    Ctrl-F      Cursor right, wrapping to next line when appropriate.
-    Ctrl-G      Terminate, returning the window contents.
-    Ctrl-H      Delete character backward.
-    Ctrl-J      Terminate if the window is 1 line, otherwise insert newline.
-    Ctrl-K      If line is blank, delete it, otherwise clear to end of line.
-    Ctrl-L      Refresh screen.
-    Ctrl-N      Cursor down; move down one line.
-    Ctrl-O      Insert a blank line at cursor location.
-    Ctrl-P      Cursor up; move up one line.
+    Ctrl-A   Go to left edge of window.
+    Ctrl-B   Cursor left, wrapping to previous line if appropriate.
+    Ctrl-D   Delete character under cursor.
+    Ctrl-E   Go to right edge (stripspaces off) or end of line (stripspaces on).
+    Ctrl-F   Cursor right, wrapping to next line when appropriate.
+    Ctrl-G   Terminate, returning the window contents.
+    Ctrl-H   Delete character backward.
+    Ctrl-J   Terminate if the window is 1 line, otherwise insert newline.
+    Ctrl-K   If line is blank, delete it, otherwise clear to end of line.
+    Ctrl-L   Refresh screen.
+    Ctrl-N   Cursor down; move down one line.
+    Ctrl-O   Insert a blank line at cursor location.
+    Ctrl-P   Cursor up; move up one line.
 
     Move operations do nothing if the cursor is at an edge where the movement
     is not possible.  The following synonyms are supported where possible:
@@ -97,7 +97,8 @@ class TextEditor:
         (y, x) = self.win.getyx()
         if ch == curses.ascii.SOH:                             # ^a
             self.win.move(y, 0)
-        elif ch in (curses.ascii.STX, curses.KEY_LEFT, curses.ascii.BS, curses.KEY_BACKSPACE):
+        elif ch in (curses.ascii.STX, curses.KEY_LEFT, curses.ascii.BS,
+                    curses.KEY_BACKSPACE):
             if x > 0:
                 self.win.move(y, x-1)
             elif y == 0:

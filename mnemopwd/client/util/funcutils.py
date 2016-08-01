@@ -30,9 +30,11 @@
 
 
 def singleton(the_class):
+    """Annotation to define a singleton class"""
     instances = {}  # Dictionary of singleton objects
 
     def get_instance():
+        """This function replaces the class constructor"""
         if the_class not in instances:
             # Create a singleton object and store it
             instances[the_class] = the_class()
@@ -50,7 +52,7 @@ class Subject:
     """
 
     def __init__(self):
-        """Initiliaze the attribut self.observers = []"""
+        """Initialize the attribute self.observers = []"""
         self.observers = []  # List of observers
 
     def add_observer(self, obs):

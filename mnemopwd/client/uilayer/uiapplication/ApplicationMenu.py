@@ -52,21 +52,26 @@ class ApplicationMenu(BaseWindow):
             name = 'Logout' + sfill(19 - 6, ' ')
         else:
             name = 'Login' + sfill(19 - 5, ' ')
-        self.items.append(MetaButtonBox(self, 0, 0, name, shortcut='L', data=self.ITEM1))
+        self.items.append(MetaButtonBox(
+            self, 0, 0, name, shortcut='L', data=self.ITEM1))
 
         # Create user account button
-        self.items.append(MetaButtonBox(self, 1, 0, 'Create user account', shortcut='N', data=self.ITEM2))
+        self.items.append(MetaButtonBox(
+            self, 1, 0, 'Create user account', shortcut='N', data=self.ITEM2))
 
         # Delete user account button
-        self.items.append(MetaButtonBox(self, 2, 0, 'Delete user account', shortcut='E', data=self.ITEM3))
+        self.items.append(MetaButtonBox(
+            self, 2, 0, 'Delete user account', shortcut='E', data=self.ITEM3))
 
         # Lock screen
         name = 'Lock screen' + sfill(19 - 11, ' ')
-        self.items.append(MetaButtonBox(self, 3, 0, name, shortcut='K', data=self.ITEM4))
+        self.items.append(MetaButtonBox(
+            self, 3, 0, name, shortcut='K', data=self.ITEM4))
 
         # Quit button
         name = 'Quit' + sfill(19 - 4, ' ')
-        self.items.append(MetaButtonBox(self, 4, 0, name, shortcut='U', data=self.ITEM5))
+        self.items.append(MetaButtonBox(
+            self, 4, 0, name, shortcut='U', data=self.ITEM5))
 
         # Ordered list of shortcut keys
         self.shortcuts = ['L', 'N', 'E', 'K', 'U']

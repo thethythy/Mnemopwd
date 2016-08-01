@@ -25,13 +25,6 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-__author__ = "Thierry Lemeunier <thierry at lemeunier dot net>"
-__date__ = "$6 oct. 2015 9:25:12$"
-
-__all__ = ['StateSCC', 'StateS0',  'StateS1C' , 'StateS1S', 'StateS2', 'StateS3', \
-           'StateS21', 'StateS22', 'StateS31', 'StateS32', 'StateS33', 'StateS34', \
-           'StateS35', 'StateS36', 'StateS37']
-           
 from .StateS0 import StateS0
 from .StateS1S import StateS1S
 from .StateS1C import StateS1C
@@ -47,3 +40,11 @@ from .StateS34 import StateS34
 from .StateS35 import StateS35
 from .StateS36 import StateS36
 from .StateS37 import StateS37
+
+__author__ = "Thierry Lemeunier <thierry at lemeunier dot net>"
+__date__ = "$6 oct. 2015 9:25:12$"
+__version__ = "1.0"
+
+__all__ = ['StateSCC', 'StateS0',  'StateS1C', 'StateS1S', 'StateS2',
+           'StateS3', 'StateS21', 'StateS22', 'StateS31', 'StateS32',
+           'StateS33', 'StateS34', 'StateS35', 'StateS36', 'StateS37']

@@ -45,15 +45,16 @@ class StateS37R(StateSCC):
                 # Challenge creation
                 echallenge = self.compute_challenge(handler, b"S37.5")
                 if echallenge:
-
                     # Send UpdateData request
-                    index, sib = data
-                    message = echallenge + b';UPDATEDATA;' + (str(index)).encode() + b';' + pickle.dumps(sib)
-                    handler.loop.call_soon_threadsafe(handler.transport.write, message)
+                    idx, sib = data
+                    msg = echallenge + b';UPDATEDATA;' + (str(idx)).encode() + \
+                        b';' + pickle.dumps(sib)
+                    handler.loop.call_soon_threadsafe(handler.transport.write, msg)
 
                     # Notify the handler a property has changed
-                    handler.loop.run_in_executor(None, handler.notify,
-                        "application.state", "Update request send to server")
+                    handler.loop.run_in_executor(
+                        None, handler.notify, "application.state",
+                        "Update request send to server")
 
             except Exception as exc:
                 # Schedule a call to the exception handler

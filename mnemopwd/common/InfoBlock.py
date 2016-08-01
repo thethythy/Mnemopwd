@@ -26,32 +26,35 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 """
-The class InfoBlock stores informations.
+The class InfoBlock stores information.
 """
 
 import logging
 import re
 
+
 class InfoBlock:
     """
-    Dictionnary of informations
+    Dictionary of information
     
     Property(ies):
-    - infos : a dictionary like {"infoX" : "cyper text",...} where 'X' is an integer <= nbInfo
-    - nbInfo : integer indicating the maximum of secet informations stored
+    - infos : a dictionary like {"infoX" : "cypher text",...}
+              where 'X' is an integer <= nbInfo
+    - nbInfo : integer indicating the maximum of secret information stored
     
-    Attribut(s):
-    - _infos : do not directly access to this attribut but use infos property
-    - _nbInfo : do not directly access to this attribut but use nbInfo property
+    Attribute(s):
+    - _infos : do not directly access to this attribute but use infos property
+    - _nbInfo : do not directly access to this attribute but use nbInfo property
     
     Method(s): none
     
     """
 
     def __init__(self, nbInfo=1):
-        """Object initialization. By default, the number of secret informations is set to one."""
+        """Object initialization.
+        By default, the number of secret information is set to one."""
         self._infos = {}        # Empty dict
-        self._nbInfo = nbInfo   # Number of secret informations
+        self._nbInfo = nbInfo   # Number of secret information
 
     # Properties
     # ----------
@@ -60,14 +63,17 @@ class InfoBlock:
 
     @property
     def infos(self):
+        """Return the dictionary"""
         return self._infos
     
     @infos.setter
     def infos(self, value):
+        """Do nothing"""
         logging.warning("It is not permit to change the value of 'infos' property")
     
     @infos.deleter
     def infos(self):
+        """Do nothing"""
         logging.warning("It is not permit to delete the 'infos' property")
 
     # Property nbInfo
@@ -80,20 +86,26 @@ class InfoBlock:
     @nbInfo.setter
     def nbInfo(self, nbInfo):
         """"Setter method of the nbInfo property.
-        Attention : if the new size is inferior to the old size, last entries are deleted.
-        Attention : the parameter must be an integer > 0 ; if not it raises AssertionError exception"""
-        assert isinstance(nbInfo, int) and nbInfo > 0   # Verify the validity of the parameter
-        if nbInfo < self._nbInfo :
-            logging.critical("The size of an InfoBlock object has decrased (%s/%s). Next informations are deleted :", nbInfo, self._nbInfo)
-        while nbInfo < self._nbInfo :
+        Attention : if the new size is inferior to the old size, last entries
+        are deleted.
+        Attention : the parameter must be an integer > 0 ;
+        if not it raises AssertionError exception"""
+        # Verify the validity of the parameter
+        assert isinstance(nbInfo, int) and nbInfo > 0
+        if nbInfo < self._nbInfo:
+            logging.critical(
+                "The size of an InfoBlock object has decrased (%s/%s). Next information are deleted :",
+                nbInfo, self._nbInfo)
+        while nbInfo < self._nbInfo:
             infoX = "info" + str(self._nbInfo) 
             logging.critical("%s : %s", infoX, self._infos[infoX])
             del self._infos[infoX]  # Delete entry with key > nbInfo
             self._nbInfo -= 1
-        self._nbInfo = nbInfo   # Change the number of informations
+        self._nbInfo = nbInfo   # Change the number of information
         
     @nbInfo.deleter
     def nbInfo(self):
+        """Do nothing"""
         logging.warning("It is not permit to delete the 'nbInfo' property")
 
     # Intern methods
@@ -104,39 +116,43 @@ class InfoBlock:
         return self.__dict__
     
     def __setstate__(self, state):
-        """Restores the objet's state"""
+        """Restores the object's state"""
         self.__dict__.update(state)
 
     def _verify_index_(self, index):
         """Verifies if the index parameter is a valid index format"""
-        if not isinstance(index, str) :
+        if not isinstance(index, str):
             logging.error("In an InfoBlock object index parameter %s must be a string", str(index))
             raise TypeError("index parameter must be a string")
         index_regex = "^info[1-" + str(self.nbInfo) + "]$"
-        if re.search(index_regex, index) is None :
+        if re.search(index_regex, index) is None:
             logging.error("In an InfoBlock object index parameter %s is not correct", index)
             raise KeyError("index parameter is not correct")
     
     def __getitem__(self, index):
-        """Returns the value corresponding to the index if it exists and it is valid otherwise raises a KeyError exception"""
-        self._verify_index_(index) # Verify if the index parameter is valid
+        """Returns the value corresponding to the index if it exists and
+        it is valid otherwise raises a KeyError exception"""
+        self._verify_index_(index)  # Verify if the index parameter is valid
         return self.infos[index]
     
     def __setitem__(self, index, value):
-        """Stores the value at the index given if the index is valid otherwise raises a KeyError exception"""
-        self._verify_index_(index) # Verify if the index parameter is valid
+        """Stores the value at the index given if the index is valid otherwise
+        raises a KeyError exception"""
+        self._verify_index_(index)  # Verify if the index parameter is valid
         self.infos[index] = value
 
     def __delitem__(self, index):
-        """Deletes the entry corresponding to the index if it exists otherwise raises a KeyError exception"""
-        self._verify_index_(index) # Verify if the index parameter is valid
+        """Deletes the entry corresponding to the index if it exists otherwise
+        raises a KeyError exception"""
+        self._verify_index_(index)  # Verify if the index parameter is valid
         del self.infos[index]
 
     def __contains__(self, value):
         """Tests if the value exists at least in one entry.
-        Warning : it is not the usual behaviour (that works usually on keys not on values)"""
-        for key in self.infos :
-            if self[key] == value :
+        Warning : it is not the usual behaviour (that works usually on keys
+        not on values)"""
+        for key in self.infos:
+            if self[key] == value:
                 return True
         return False
     
@@ -145,7 +161,7 @@ class InfoBlock:
         It raises an AssertionError exception if it is not the case"""
         size = len(self.infos)
         condition = 0 <= size <= self.nbInfo
-        if not(condition) :
+        if not condition:
             logging.critical("The size of an InfoBlock object is not correct : %s / %s", str(size), self.nbInfo)
         assert condition 
         return size

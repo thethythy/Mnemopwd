@@ -55,11 +55,14 @@ class UserAccountWindow(TitledBorderWindow):
         self.shortcuts = ['', '', '', 'T', 'L', 'A']
 
         # Editable components
-        self.logineditor = InputBox(self, 3, size_x - 21, 5 - 1, 18, self.shortcuts)
-        self.pass1editor = InputBox(self, 3, size_x - 21, 8 - 1, 18, self.shortcuts, secret=True)
-        self.pass2editor = InputBox(self, 3, size_x - 21, 11 - 1, 18, self.shortcuts, secret=True)
+        self.logineditor = InputBox(
+            self, 3, size_x - 21, 5 - 1, 18, self.shortcuts)
+        self.pass1editor = InputBox(
+            self, 3, size_x - 21, 8 - 1, 18, self.shortcuts, secret=True)
+        self.pass2editor = InputBox(
+            self, 3, size_x - 21, 11 - 1, 18, self.shortcuts, secret=True)
 
-        # Actionnable components
+        # Actionable components
         posx = gap = int(((size_x - 2) - (8 + 7 + 8)) / 4) + 1
         self.createButton = ButtonBox(self, 14, posx, "Create", 'T')
         posx = posx + 8 + gap
@@ -68,8 +71,8 @@ class UserAccountWindow(TitledBorderWindow):
         self.cancelButton = ButtonBox(self, 14, posx, "Cancel", 'A')
 
         # Ordered list of components
-        self.items = [self.logineditor, self.pass1editor, self.pass2editor, self.createButton,
-                      self.clearButton, self.cancelButton]
+        self.items = [self.logineditor, self.pass1editor, self.pass2editor,
+                      self.createButton, self.clearButton, self.cancelButton]
 
         self.window.refresh()
 

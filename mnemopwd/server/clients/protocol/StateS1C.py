@@ -30,13 +30,14 @@
 State S1C : Challenge
 """
 
-from server.util.funcutils import singleton
-from pyelliptic import hmac_sha256
-
 import logging
 
+from pyelliptic import hmac_sha256
+from server.util.funcutils import singleton
+
+
 @singleton
-class StateS1C():
+class StateS1C:
     """State S1C : control challenge answer"""
 
     def do(self, client, data):
@@ -45,21 +46,22 @@ class StateS1C():
         try:
             # Test for S1C command
             is_cd_S1C = data[:10] == b"CHALLENGEA"
-            if not is_cd_S1C : raise Exception('S1C protocol error')
+            if not is_cd_S1C:
+                raise Exception('S1C protocol error')
 
-            echallenge = data[11:] # Encrypted challenge
-            challenge = client.ephecc.decrypt(echallenge) # Decrypting challenge
+            echallenge = data[11:]  # Encrypted challenge
+            challenge = client.ephecc.decrypt(echallenge)  # Decrypting
 
             # Compute challenge
             challenge_bis = hmac_sha256(client.ms, client.session + b'S1.12')
 
-            if challenge == challenge_bis :
-                 # Send challenge accepted
+            if challenge == challenge_bis:
+                # Send challenge accepted
                 client.loop.call_soon_threadsafe(client.transport.write, b'OK')
             else:
                 # Send challenge rejected
-                message = b'ERROR;application protocol error'
-                client.loop.call_soon_threadsafe(client.transport.write, message)
+                msg = b'ERROR;application protocol error'
+                client.loop.call_soon_threadsafe(client.transport.write, msg)
                 raise Exception("challenge rejected")
 
             logging.info('Session opened with {}'.format(client.peername))
@@ -69,4 +71,4 @@ class StateS1C():
             client.loop.call_soon_threadsafe(client.exception_handler, exc)
 
         else:
-            client.state = client.states['2'] # Next state
+            client.state = client.states['2']  # Next state

@@ -6,7 +6,7 @@
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
-# 1. Redistributions of source code must retain the above copyright notice, this 
+# 1. Redistributions of source code must retain the above copyright notice, this
 # list of conditions and the following disclaimer.
 #
 # 2. Redistributions in binary form must reproduce the above copyright notice,
@@ -31,8 +31,10 @@ State SCC : Challenge Controller
 
 import hashlib
 import base64
+
 from pyelliptic import hmac_sha512
 from pyelliptic import hmac_sha256
+
 
 class StateSCC():
     """Challenge controller and others useful methods"""
@@ -41,16 +43,16 @@ class StateSCC():
         """Action of the state SCC: control the challenge answer"""
         
         try:
-            echallenge = data[:169] # Encrypted challenge
-            challenge = client.ephecc.decrypt(echallenge) # Decrypting challenge
+            echallenge = data[:169]  # Encrypted challenge
+            challenge = client.ephecc.decrypt(echallenge)  # Decrypting
             
             # Compute challenge
             challenge_bis = hmac_sha256(client.ms, client.session + var)
             
-            if challenge != challenge_bis :
+            if challenge != challenge_bis:
                 # Send challenge rejected
-                message = b'ERROR;application protocol error'
-                client.loop.call_soon_threadsafe(client.transport.write, message)
+                msg = b'ERROR;application protocol error'
+                client.loop.call_soon_threadsafe(client.transport.write, msg)
                 raise Exception(var.decode() + " challenge rejected")
             
         except Exception as exc:
@@ -78,5 +80,4 @@ class StateSCC():
         # Filename construction
         filename = (base64.b32encode(hlogin))[:52] + (base64.b32encode(id))[:52]
     
-        return filename.decode() # Return client database filename (a string)
-
+        return filename.decode()  # Return client database filename (a string)

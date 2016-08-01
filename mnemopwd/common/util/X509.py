@@ -28,18 +28,18 @@
 import ssl
 import time
 import calendar
-import binascii
 
-from .asn1tinydecoder import asn1_node_root, asn1_node_first_child, asn1_node_next, \
-                             asn1_get_value_of_type
+from .asn1tinydecoder import asn1_node_root, asn1_node_first_child,\
+                             asn1_node_next, asn1_get_value_of_type
 
 """
-A simple X509 class to control the certificat validity period.
+A simple X509 class to control the certificate validity period.
 
-It uses the ASN.1 decoder developed by Jens Getreu :
+It uses the ASN.1 decoder developed by Jens Getreu:
 http://www.getreu.net/public/downloads/software/ASN1_decoder
 
-An extract of the ASN.1 syntax is the following (see https://tools.ietf.org/html/rfc5280):
+An extract of the ASN.1 syntax is the following
+(see https://tools.ietf.org/html/rfc5280):
 
 Certificate  ::=  SEQUENCE  {
                     tbsCertificate       TBSCertificate,
@@ -84,10 +84,11 @@ Time ::= CHOICE {
                     generalTime    GeneralizedTime  }
 """
 
-class X509():
+
+class X509:
     """
-    A simple class to represent a X509 certificat.
-    The certificat is encoding according the DER format.
+    A simple class to represent a X509 certificate.
+    The certificate is encoding according the DER format.
     """
 
     def __init__(self, filename):
@@ -102,28 +103,32 @@ class X509():
         """
         
         # Navigate to the 'Validity' sequence
-        i = asn1_node_root(self.der) # Certificate
-        i = asn1_node_first_child(self.der, i) # tbsCertificate
-        i = asn1_node_first_child(self.der, i) # version
-        i = asn1_node_next(self.der,i) # serialNumber
-        i = asn1_node_next(self.der,i) # signature
-        i = asn1_node_next(self.der,i) # issuer
-        i = asn1_node_next(self.der,i) # validity
+        i = asn1_node_root(self.der)  # Certificate
+        i = asn1_node_first_child(self.der, i)  # tbsCertificate
+        i = asn1_node_first_child(self.der, i)  # version
+        i = asn1_node_next(self.der, i)  # serialNumber
+        i = asn1_node_next(self.der, i)  # signature
+        i = asn1_node_next(self.der, i)  # issuer
+        i = asn1_node_next(self.der, i)  # validity
         
         # Get the validity period
-        i = asn1_node_first_child(self.der, i) # notBefore
-        bytestr = asn1_get_value_of_type(self.der,i,'UTCTime')
-        not_valid_before = time.strptime(bytestr.decode('ASCII', 'strict'),'%y%m%d%H%M%SZ')
+        i = asn1_node_first_child(self.der, i)  # notBefore
+        bytestr = asn1_get_value_of_type(self.der, i, 'UTCTime')
+        not_valid_before = time.strptime(
+            bytestr.decode('ASCII', 'strict'), '%y%m%d%H%M%SZ')
 
-        i = asn1_node_next(self.der,i) # notAfter
-        bytestr = asn1_get_value_of_type(self.der,i,'UTCTime')
-        not_valid_after = time.strptime(bytestr.decode('ASCII', 'strict'),'%y%m%d%H%M%SZ')
+        i = asn1_node_next(self.der, i)  # notAfter
+        bytestr = asn1_get_value_of_type(self.der, i, 'UTCTime')
+        not_valid_after = time.strptime(
+            bytestr.decode('ASCII', 'strict'), '%y%m%d%H%M%SZ')
 
         # Control the validity period
-        if calendar.timegm(not_valid_before) > calendar.timegm(time.gmtime()) :
+        if calendar.timegm(not_valid_before) > calendar.timegm(time.gmtime()):
             str_not_valid_before = time.strftime("%d %b %Y %H:%M:%S", not_valid_before)
-            raise Exception("The certifcat '{}' has an invalid period of validty : not before {}".format(self.certfile, str_not_valid_before))
+            raise Exception("The certifcat '{}' has an invalid period of validty : not before {}"
+                            .format(self.certfile, str_not_valid_before))
 
-        if calendar.timegm(not_valid_after) < calendar.timegm(time.gmtime()) :
+        if calendar.timegm(not_valid_after) < calendar.timegm(time.gmtime()):
             str_not_valid_after = time.strftime("%d %b %Y %H:%M:%S", not_valid_after)
-            raise Exception("The certifcat '{}' has an invalid period of validty : not after {}".format(self.certfile, str_not_valid_after))
+            raise Exception("The certifcat '{}' has an invalid period of validty : not after {}"
+                            .format(self.certfile, str_not_valid_after))

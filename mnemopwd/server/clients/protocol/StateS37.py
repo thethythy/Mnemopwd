@@ -29,10 +29,12 @@
 State S37 : update data operation
 """
 
-from server.util.funcutils import singleton
-from server.clients.protocol import StateSCC
 import pickle
 import logging
+
+from server.util.funcutils import singleton
+from server.clients.protocol import StateSCC
+
 
 @singleton
 class StateS37(StateSCC):
@@ -43,11 +45,12 @@ class StateS37(StateSCC):
 
         try:
             # Control challenge
-            if self.control_challenge(client, data, b'S37.5') :
+            if self.control_challenge(client, data, b'S37.5'):
 
                 # Test for S37 command
                 is_cd_S37 = data[170:180] == b"UPDATEDATA"
-                if not is_cd_S37 : raise Exception('S37 protocol error')
+                if not is_cd_S37:
+                    raise Exception('S37 protocol error')
 
                 protocol_data = data[181:].split(b';', maxsplit=1)
 
@@ -56,13 +59,13 @@ class StateS37(StateSCC):
 
                 try:
                     sib = pickle.loads(bsib) # sib object
-                    sib.control_integrity(client.keyH) # Configure and check integrity
+                    sib.control_integrity(client.keyH)  # Configure + integrity
 
                 except AssertionError:
                     # Send an error message
-                    message = b'ERROR;application protocol error'
-                    client.loop.call_soon_threadsafe(client.transport.write, message)
-                    raise Exception('data rejected')
+                    msg = b'ERROR;application protocol error'
+                    client.loop.call_soon_threadsafe(client.transport.write, msg)
+                    raise Exception('S37 data rejected')
 
                 else:
                     # Update a secret information block
@@ -70,12 +73,14 @@ class StateS37(StateSCC):
 
                     if result:
                         # Send 'OK' message
-                        client.loop.call_soon_threadsafe(client.transport.write, b'OK')
-                        client.state = client.states['3'] # New client state
+                        client.loop.call_soon_threadsafe(
+                            client.transport.write, b'OK')
+                        client.state = client.states['3']  # New client state
                     else:
-                        message = b'ERROR;application protocol error'
-                        client.loop.call_soon_threadsafe(client.transport.write, message)
-                        raise Exception('index rejected')
+                        msg = b'ERROR;application protocol error'
+                        client.loop.call_soon_threadsafe(
+                            client.transport.write, msg)
+                        raise Exception('S37 index rejected')
 
                     logging.info('Update block from {}'.format(client.peername))
 

@@ -69,11 +69,13 @@ class MainWindow(BaseWindow):
         self.items = [self.applicationButton, self.newButton, self.searchButton]
 
         # Edition window
-        self.editscr = EditionWindow(self, curses.LINES - 4, int(curses.COLS * 2/3),
-                                     2, int(curses.COLS * 1/3), "Edition", Configuration.btypes)
+        self.editscr = EditionWindow(
+            self, curses.LINES - 4, int(curses.COLS * 2/3), 2,
+            int(curses.COLS * 1/3), "Edition", Configuration.btypes)
 
         # Search window
-        self.searchscr = SearchWindow(self, curses.LINES - 4, int(curses.COLS * 1/3), 2, 0, "Search")
+        self.searchscr = SearchWindow(
+            self, curses.LINES - 4, int(curses.COLS * 1/3), 2, 0, "Search")
 
         # Status window
         self.statscr = curses.newwin(2, curses.COLS, curses.LINES - 2, 0)
@@ -97,10 +99,14 @@ class MainWindow(BaseWindow):
         if self.connected:
             self.uifacade.clear_content()
             self.window.timeout(-1)
-            self.window.addstr(int(curses.LINES / 2), int(curses.COLS / 2 - 13), "Hit a key to unlock screen")
+            self.window.addstr(
+                int(curses.LINES / 2), int(curses.COLS / 2 - 13),
+                "Hit a key to unlock screen")
             self.window.getch()
             while UnlockScreenWindow(self).start() is False:
-                self.window.addstr(int(curses.LINES / 2), int(curses.COLS / 2 - 13), "Hit a key to unlock screen")
+                self.window.addstr(
+                    int(curses.LINES / 2), int(curses.COLS / 2 - 13),
+                    "Hit a key to unlock screen")
                 self.window.getch()
             self.redraw()
 
@@ -140,7 +146,8 @@ class MainWindow(BaseWindow):
     def _handle_block(self, number, idblock):
         """Start block edition"""
         # Change status message
-        message = "Edit '" + ((Configuration.btypes[str(number)])["1"])["name"] + "' information block"
+        message = "Edit '" + ((Configuration.btypes[str(number)])["1"])["name"]\
+                  + "' information block"
         self.update_status(message)
 
         # Prepare edition window
@@ -166,9 +173,11 @@ class MainWindow(BaseWindow):
     def start(self, timeout=-1):
         """See mother class"""
         if Configuration.first_execution:
-            self._set_credentials()  # Propose to create a user account
+            # Propose to create a user account
+            self._set_credentials()
         else:
-            self._get_credentials()  # Propose to connect to an existing user account
+            # Propose to connect to an existing user account
+            self._get_credentials()
 
         # Automatic lock screen
         counter = 0
@@ -195,15 +204,18 @@ class MainWindow(BaseWindow):
                     if not self.connected:
                         self._get_credentials()  # Try a connection
                     else:
-                        self.uifacade.inform("connection.close", None)  # Disconnection
+                        # Disconnection
+                        self.uifacade.inform("connection.close", None)
                 if result == ApplicationMenu.ITEM2:  # Create user account
                     if not self.connected:
-                        self._set_credentials()  # Try to create a new user account
+                        # Try to create a new user account
+                        self._set_credentials()
                     else:
                         self.update_status('You must be disconnected to create a new user account')
                 if result == ApplicationMenu.ITEM3:  # Delete user account
                     if self.connected:
-                        self._delete_user_account()  # Try to delete user account
+                        # Try to delete user account
+                        self._delete_user_account()
                     else:
                         self.update_status('You must be connected to a user account to delete it')
                 if result == ApplicationMenu.ITEM4:  # Lock screen
@@ -211,7 +223,8 @@ class MainWindow(BaseWindow):
                         self.lock_screen()
                 if result == ApplicationMenu.ITEM5:  # Quit application
                     if self.connected:
-                        self.uifacade.inform("connection.close", None)  # Disconnection
+                        # Disconnection
+                        self.uifacade.inform("connection.close", None)
                         time.sleep(0.1)  # Waiting for task execution
                     break
 
@@ -245,31 +258,42 @@ class MainWindow(BaseWindow):
 
     def update_window(self, key, value):
         """Update the main window content"""
-        if key == "connection.state.login":  # Normal login
+        if key == "connection.state.login":
+            # Normal login
             self.connected = True
             self.update_status(value)
-        if key == "connection.state.logout":  # Normal logout
+        if key == "connection.state.logout":
+            # Normal logout
             self._post_close(value)
-        if key == "connection.state.error":  # Exception
+        if key == "connection.state.error":
+            # Exception
             self._post_close(value)
             curses.flash()
-        if key == "application.keyhandler":  # KeyHandler object assignation
+        if key == "application.keyhandler":
+            # KeyHandler object assignation
             self.editscr.set_keyhandler(value)
-        if key == "application.searchblock.result":  # Search or importation result
+        if key == "application.searchblock.result":
+            # Search or importation result
             self.searchscr.post_search(value)
-        if key == "application.searchblock.oneresult":  # Add one result
+        if key == "application.searchblock.oneresult":
+            # Add one result
             self.searchscr.add_a_result(*value)
-        if key == "application.searchblock.tryoneresult":  # Try to add a new block to panel result
+        if key == "application.searchblock.tryoneresult":
+            # Try to add a new block to panel result
             self.searchscr.try_add_a_result(*value)
-        if key == "application.searchblock.updateresult":  # Update one result
+        if key == "application.searchblock.updateresult":
+            # Update one result
             self.searchscr.update_a_result(*value)
-        if key == "application.searchblock.removeresult":  # Remove one result
+        if key == "application.searchblock.removeresult":
+            # Remove one result
             self.searchscr.remove_a_result(value)
-        if key == "application.editionblock.seteditors":  # Set edition window
+        if key == "application.editionblock.seteditors":
+            # Set edition window
             number_type, sib = value
             self.editscr.set_type(number_type)
             self.editscr.set_infos(number_type, sib)
-        if key == "application.editionblock.cleareditors":  # Clear edition window
+        if key == "application.editionblock.cleareditors":
+            # Clear edition window
             self.editscr.clear_content()
 
     def update_load_bar(self, actual, maxi):
@@ -278,17 +302,17 @@ class MainWindow(BaseWindow):
         actual_len = int(actual * max_len / maxi)
         percent = str(math.floor(actual_len * 100 / max_len))
         message = sfill(actual_len, '█')
-        currenty, currentx = curses.getsyx()  # Save current cursor position
+        currenty, currentx = curses.getsyx()
         self.statscr.move(1, 7)
         self.statscr.clrtoeol()
         self.statscr.addstr(1, 8, percent + " %")  # Show percentage
         self.statscr.addstr(1, 14, message)  # Show load bar
         self.statscr.refresh()
-        curses.setsyx(currenty, currentx)   # Set cursor position to saved position
+        curses.setsyx(currenty, currentx)
 
     def update_status(self, value):
         """Update the status window content"""
-        currenty, currentx = curses.getsyx() # Save current cursor position
+        currenty, currentx = curses.getsyx()
         self.statscr.move(1, 1)
         self.statscr.clrtoeol()
         if self.connected:
@@ -299,7 +323,7 @@ class MainWindow(BaseWindow):
         self.statscr.addch(1, 6, curses.ACS_VLINE)
         self.statscr.addstr(1, 8, value)
         self.statscr.refresh()
-        curses.setsyx(currenty, currentx)   # Set cursor position to saved position
+        curses.setsyx(currenty, currentx)
 
     def redraw(self):
         """See mother class"""

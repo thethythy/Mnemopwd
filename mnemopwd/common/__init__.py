@@ -25,3 +25,5 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+__author__ = "Thierry Lemeunier <thierry at lemeunier dot net>"
+__version__ = "1.0"

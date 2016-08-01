@@ -35,14 +35,13 @@ class BaseWindow(Component):
     """
     A window without border and without title. It can contain other components.
 
-    KEY_TAB, KEY_LEFT, KEY_RIGHT, KEY_UP and KEY_DOWN: navigate between components
-    KEY_MOUSE: select an editable component or execute an actionnable component
-    ENTER: exit an editable component or execute an actionnable component
-    shortcuts (Ctrl + key): execute an actionnable component
+    KEY_TAB, KEY_LEFT, KEY_RIGHT, KEY_UP, KEY_DOWN: navigate between components
+    ENTER: exit an editable component or execute an actionable component
+    shortcuts (Ctrl + key): execute an actionable component
     ESC: close the window
     other keys: start edition of an editable component
 
-    Attributs:
+    Attribute(s):
     - h: the window height
     - w: the window width
     - window: the curses window
@@ -99,7 +98,7 @@ class BaseWindow(Component):
                 self.items[self.index].focus_on()
 
             # Next actionable component or edit editable component
-            elif c in [curses.KEY_LEFT] and self.items[self.index].is_actionnable():
+            elif c in [curses.KEY_LEFT] and self.items[self.index].is_actionable():
                 if self.menu:
                     curses.ungetch(curses.KEY_LEFT)
                     return False
@@ -107,7 +106,8 @@ class BaseWindow(Component):
                     curses.ungetch(curses.KEY_UP)
 
             # Previous actionable component or edit editable component
-            elif c in [curses.KEY_RIGHT] and self.items[self.index].is_actionnable():
+            elif c in [curses.KEY_RIGHT] and \
+                    self.items[self.index].is_actionable():
                 if self.menu:
                     curses.ungetch(curses.KEY_RIGHT)
                     return False
@@ -127,7 +127,8 @@ class BaseWindow(Component):
             elif curses.ascii.isctrl(c):
                 c += 64  # Add 64 to get upper key
                 for number, shortcut in enumerate(self.shortcuts):
-                    if shortcut == chr(c) and self.items[number].is_actionnable():
+                    if shortcut == chr(c) and \
+                            self.items[number].is_actionable():
                         self.items[self.index].focus_off()
                         self.index = number
                         self.items[self.index].focus_on()

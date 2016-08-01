@@ -6,7 +6,7 @@
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
-# 1. Redistributions of source code must retain the above copyright notice, this 
+# 1. Redistributions of source code must retain the above copyright notice, this
 # list of conditions and the following disclaimer.
 #
 # 2. Redistributions in binary form must reproduce the above copyright notice,
@@ -44,22 +44,20 @@ class ButtonBox(Component):
         """See mother class"""
         self.window.addstr(0, 0, self.label, curses.A_BLINK | curses.A_REVERSE)
         if self.shortcut:
-            self.window.addstr(0, self.label.upper().find(self.shortcut), self.shortcut,
-                               curses.A_UNDERLINE | curses.A_BLINK | curses.A_REVERSE)
+            self.window.addstr(
+                0, self.label.upper().find(self.shortcut), self.shortcut,
+                curses.A_UNDERLINE | curses.A_BLINK | curses.A_REVERSE)
         self.window.refresh()
         
     def focus_off(self):
         """See mother class"""
         self.window.addstr(0, 0, self.label, curses.A_REVERSE)
         if self.shortcut:
-            self.window.addstr(0, self.label.upper().find(self.shortcut), self.shortcut,
-                               curses.A_UNDERLINE | curses.A_REVERSE)
+            self.window.addstr(
+                0, self.label.upper().find(self.shortcut), self.shortcut,
+                curses.A_UNDERLINE | curses.A_REVERSE)
         self.window.refresh()
-        
-    def enclose(self, y, x):
-        """See mother class"""
-        return self.window.enclose(y, x)
-        
+
     def move(self, y, x, focus=False):
         """See mother class"""
         self.y = y
@@ -68,10 +66,12 @@ class ButtonBox(Component):
         self._create(focus)
 
     def show(self):
+        """Show the button"""
         self.showOrHide = True
         self.focus_off()
 
     def hide(self):
+        """Hide the button"""
         self.showOrHide = False
         self.window.clear()
         self.window.refresh()
@@ -85,15 +85,11 @@ class ButtonBox(Component):
         """See mother class"""
         if self.showOrHide:
             self.focus_off()
-        
-    def set_label(self, label, focus=False):
-        """Set the label of the button"""
-        self.window.erase()
-        self.label = ' ' + label + ' '
-        self._create(focus)
 
     def _create(self, focus):
-        self.window = self.parent.window.derwin(1, len(self.label) + 1, self.y, self.x)
+        """Create the button"""
+        self.window = self.parent.window.derwin(
+            1, len(self.label) + 1, self.y, self.x)
         if self.showOrHide:
             if focus:
                 self.focus_on()

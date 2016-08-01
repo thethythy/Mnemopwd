@@ -34,7 +34,8 @@ class MetaButtonBox(ButtonBox):
     def __init__(self, parent, y, x, label, shortcut=None, show=True, data=None):
         """Object initialization"""
         if show:
-            ButtonBox.__init__(self, parent, y, x, label, shortcut=shortcut, show=show)
+            ButtonBox.__init__(
+                self, parent, y, x, label, shortcut=shortcut, show=show)
         else:
             self.label = ' ' + label + ' '
             self.parent = parent
@@ -51,6 +52,7 @@ class MetaButtonBox(ButtonBox):
         self.x = x
 
     def show(self):
+        """See mother class"""
         self.showOrHide = True
         self._create(False)
 

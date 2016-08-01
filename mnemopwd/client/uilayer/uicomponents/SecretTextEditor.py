@@ -31,15 +31,16 @@ import curses
 import time
 from client.uilayer.uicomponents.TextEditor import TextEditor
 
+
 class SecretTextEditor(TextEditor):
     """A secret text editor"""
     def __init__(self, win):
         TextEditor.__init__(self, win)
-        self.maxy = 0   # A SecretInputBox works with only one line
-        self.stext = "" # The secret text
+        self.maxy = 0    # A SecretInputBox works with only one line
+        self.stext = ""  # The secret text
 
     def edit(self, validate=None):
-        "Edit in the widget window and collect the results."
+        """Edit in the widget window and collect the results."""
         while 1:
             ch = self.win.getch()
             if validate:
@@ -54,14 +55,15 @@ class SecretTextEditor(TextEditor):
             if ch in (curses.ascii.BS, curses.KEY_BACKSPACE, curses.ascii.EOT):
                 self.stext = self.stext[:x] + self.stext[x+1:]
             else:
-                time.sleep(0.125) # Wait 1/5 second before mask key
+                time.sleep(0.125)  # Wait 1/5 second before mask key
                 if ch < 128:
-                    self.stext = self.stext + (self.win.instr(0, x-1, 1)).decode()
+                    self.stext = self.stext + \
+                                 (self.win.instr(0, x - 1, 1)).decode()
                 elif ch < 256:
-                    self.stext = self.stext + (self.win.instr(0, x-1, 2)).decode()
+                    self.stext = self.stext + \
+                                 (self.win.instr(0, x - 1, 2)).decode()
                 if x > 0:
-                    self.win.addstr(y, x-1, '♦') # Mask key
+                    self.win.addstr(y, x - 1, '♦')  # Mask key
                 self.win.move(y, x)
         
         return self.stext
-

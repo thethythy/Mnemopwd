@@ -30,11 +30,12 @@
 State S21 : Login
 """
 
+import logging
+
 from server.util.funcutils import singleton
 from server.clients.protocol import StateSCC
 from server.clients.DBHandler import DBHandler
 
-import logging
 
 @singleton
 class StateS21(StateSCC):
@@ -45,14 +46,15 @@ class StateS21(StateSCC):
 
         try:
             # Control challenge
-            if self.control_challenge(client, data, b'S21.7') :
+            if self.control_challenge(client, data, b'S21.7'):
 
                 # Test for S21 command
                 is_cd_S21 = data[170:175] == b"LOGIN"
-                if not is_cd_S21 : raise Exception('S21 protocol error')
+                if not is_cd_S21:
+                    raise Exception('S21 protocol error')
 
-                eid = data[176:345]   # id encrypted
-                elogin = data[346:] # Login encrypted
+                eid = data[176:345]  # id encrypted
+                elogin = data[346:]  # Login encrypted
 
                 # Compute client id
                 login = client.ephecc.decrypt(elogin)
@@ -62,25 +64,26 @@ class StateS21(StateSCC):
                 id_from_client = client.ephecc.decrypt(eid)
 
                 # If ids are not equal
-                if id != id_from_client :
-                    message = b'ERROR;application protocol error'
-                    client.loop.call_soon_threadsafe(client.transport.write, message)
-                    raise Exception('incorrect id')
+                if id != id_from_client:
+                    msg = b'ERROR;application protocol error'
+                    client.loop.call_soon_threadsafe(client.transport.write, msg)
+                    raise Exception('S21: incorrect id')
 
                 # Test if login exists
                 filename = self.compute_client_filename(id, client.ms, login)
                 exist = DBHandler.exist(client.dbpath, filename)
 
                 # If login is OK and ids are equal
-                if id == id_from_client and exist :
+                if id == id_from_client and exist:
                     client.dbH = DBHandler(client.dbpath, filename)
-                    client.loop.call_soon_threadsafe(client.transport.write, b'OK')
+                    client.loop.call_soon_threadsafe(
+                        client.transport.write, b'OK')
                     client.state = client.states['31']
 
                 # If login is unknown
-                elif id == id_from_client and not exist :
-                    message = b'ERROR;application protocol error'
-                    client.loop.call_soon_threadsafe(client.transport.write, message)
+                elif id == id_from_client and not exist:
+                    msg = b'ERROR;application protocol error'
+                    client.loop.call_soon_threadsafe(client.transport.write, msg)
                     raise Exception('user account does not exist')
 
                 logging.info('Login from {}'.format(client.peername))

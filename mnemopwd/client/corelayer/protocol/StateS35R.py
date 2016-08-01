@@ -47,12 +47,13 @@ class StateS35R(StateSCC):
                 if echallenge:
 
                     # Send AddData request
-                    message = echallenge + b';ADDDATA;' + pickle.dumps(data)
-                    handler.loop.call_soon_threadsafe(handler.transport.write, message)
+                    msg = echallenge + b';ADDDATA;' + pickle.dumps(data)
+                    handler.loop.call_soon_threadsafe(handler.transport.write, msg)
 
                     # Notify the handler a property has changed
-                    handler.loop.run_in_executor(None, handler.notify,
-                                                 'application.state', 'New information send to server')
+                    handler.loop.run_in_executor(
+                        None, handler.notify, 'application.state',
+                        'New information send to server')
 
             except Exception as exc:
                 # Schedule a call to the exception handler

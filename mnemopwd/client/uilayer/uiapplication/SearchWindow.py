@@ -43,13 +43,15 @@ class SearchWindow(TitledOnBorderWindow):
 
     def __init__(self, parent, h, w, y, x, title):
         """Create the window"""
-        TitledOnBorderWindow.__init__(self, parent, h, w, y, x, title, modal=True, menu=True)
+        TitledOnBorderWindow.__init__(
+            self, parent, h, w, y, x, title, modal=True, menu=True)
 
         # Pattern editor
         self.patternEditor = InputBox(self, 3, w - 4, 1, 2, show=False)
 
         # Result panel
-        self.resultPanel = SearchResultPanel(self, h - 3 - 2, w - 4, 4, 2, modal=True, menu=True)
+        self.resultPanel = SearchResultPanel(
+            self, h - 3 - 2, w - 4, 4, 2, modal=True, menu=True)
         self.nbResult = self.nbMaxResult = 0
 
         self.shortcuts = []
@@ -97,7 +99,8 @@ class SearchWindow(TitledOnBorderWindow):
         self.nbMaxResult = len(table_result)
         # Populate result panel
         for index in table_result:
-            self.parent.uifacade.inform("application.searchblock.blockvalues", index)
+            self.parent.uifacade.inform(
+                "application.searchblock.blockvalues", index)
 
     def add_a_result(self, idblock, sib):
         """Add a search result in the panel"""
@@ -144,7 +147,8 @@ class SearchWindow(TitledOnBorderWindow):
         timer = Configuration.lock * 60 * 1000  # Timer in ms
 
         while True:
-            result = TitledOnBorderWindow.start(self, 100)  # Default controller (timeout of 100 ms)
+            # Start default controller (timeout of 100 ms)
+            result = TitledOnBorderWindow.start(self, 100)
 
             # Lock screen ?
             if result == 'timeout' and timer > 0:
@@ -171,12 +175,14 @@ class SearchWindow(TitledOnBorderWindow):
                     curses.ungetch(curses.ascii.ESC)  # Quit window
                 elif isinstance(result, Component):
                     idblock, sib = result.get_data()
-                    return int(sib['info1'].decode()), idblock  # Return number_type, idblock
+                    # Return number_type, idblock
+                    return int(sib['info1'].decode()), idblock
 
             # Quit window or Escape
             elif result == 1 or result == -1 or result is False:
                 self.index = 0  # For focusing on first item at the return
                 self.update_status("")  # Clear status bar
                 if self.nbResult == 0:
-                    self.patternEditor.hide()  # Hide pattern editor if there is no result
+                    # Hide pattern editor if there is no result
+                    self.patternEditor.hide()
                 return False, False

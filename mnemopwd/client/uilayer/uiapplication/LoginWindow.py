@@ -54,10 +54,12 @@ class LoginWindow(TitledBorderWindow):
         self.shortcuts = ['', '', 'N', 'L', 'A']
 
         # Editable components
-        self.logineditor = InputBox(self, 3, size_x - 15, 5 - 1, 12, self.shortcuts)
-        self.passeditor = InputBox(self, 3, size_x - 15, 8 - 1, 12, self.shortcuts, secret=True)
+        self.logineditor = InputBox(
+            self, 3, size_x - 15, 5 - 1, 12, self.shortcuts)
+        self.passeditor = InputBox(
+            self, 3, size_x - 15, 8 - 1, 12, self.shortcuts, secret=True)
 
-        # Actionnable components
+        # Actionable components
         posx = gap = int(((size_x - 2) - (9 + 7 + 8)) / 4) + 1
         self.connectButton = ButtonBox(self, 11, posx, "Connect", 'N')
         posx = posx + 9 + gap
@@ -72,6 +74,7 @@ class LoginWindow(TitledBorderWindow):
         self.window.refresh()
 
     def start(self, timeout=-1):
+        """See mother class"""
         while True:
             result = TitledBorderWindow.start(self)  # Default controller
 
@@ -81,7 +84,7 @@ class LoginWindow(TitledBorderWindow):
                 self.index = (self.index + 1) % len(self.items)
 
             # Cancel login window
-            elif result == False or result == self.cancelButton:
+            elif result is False or result == self.cancelButton:
                 self.close()
                 return False, False
 

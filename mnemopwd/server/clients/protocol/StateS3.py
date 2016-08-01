@@ -6,7 +6,7 @@
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
-# 1. Redistributions of source code must retain the above copyright notice, this 
+# 1. Redistributions of source code must retain the above copyright notice, this
 # list of conditions and the following disclaimer.
 #
 # 2. Redistributions in binary form must reproduce the above copyright notice,
@@ -32,8 +32,9 @@ State S3 : administration or data operations
 
 from server.util.funcutils import singleton
 
+
 @singleton
-class StateS3():
+class StateS3:
     """State S3 : select substate (S31, S32, S33, S34, S35, S36 or S37) """
         
     def do(self, client, data):
@@ -47,24 +48,26 @@ class StateS3():
         is_cd_S36 = data[170:180] == b"DELETEDATA"      # Test for S36 substate
         is_cd_S37 = data[170:180] == b"UPDATEDATA"      # Test for S37 substate
         
-        if is_cd_S31 :
-            client.state = client.states['31'] # S31 is the new state
-        if is_cd_S32 :
-            client.state = client.states['32'] # S32 is the new state
-        if is_cd_S33 :
-            client.state = client.states['33'] # S33 is the new state
-        if is_cd_S34 :
-            client.state = client.states['34'] # S34 is the new state
-        if is_cd_S35 :
-            client.state = client.states['35'] # S36 is the new state
-        if is_cd_S36 :
-            client.state = client.states['36'] # S36 is the new state
-        if is_cd_S37 :
-            client.state = client.states['37'] # S38 is the new state
+        if is_cd_S31:
+            client.state = client.states['31']  # S31 is the new state
+        if is_cd_S32:
+            client.state = client.states['32']  # S32 is the new state
+        if is_cd_S33:
+            client.state = client.states['33']  # S33 is the new state
+        if is_cd_S34:
+            client.state = client.states['34']  # S34 is the new state
+        if is_cd_S35:
+            client.state = client.states['35']  # S36 is the new state
+        if is_cd_S36:
+            client.state = client.states['36']  # S36 is the new state
+        if is_cd_S37:
+            client.state = client.states['37']  # S38 is the new state
             
-        if is_cd_S31 or is_cd_S32 or is_cd_S33 or is_cd_S34 or is_cd_S35 or is_cd_S36 or is_cd_S37 :
+        if is_cd_S31 or is_cd_S32 or is_cd_S33 or is_cd_S34 or is_cd_S35 or \
+                is_cd_S36 or is_cd_S37:
             # Schedule an execuction of the new state
             client.loop.run_in_executor(None, client.state.do, client, data)
         else:
             # Schedule a callback to client exception handler
-            client.loop.call_soon_threadsafe(client.exception_handler, Exception('S3 protocol error'))
+            client.loop.call_soon_threadsafe(
+                client.exception_handler, Exception('S3 protocol error'))

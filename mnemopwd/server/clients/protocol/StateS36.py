@@ -29,10 +29,11 @@
 State S36 : delete data operation
 """
 
+import logging
+
 from server.util.funcutils import singleton
 from server.clients.protocol import StateSCC
 
-import logging
 
 @singleton
 class StateS36(StateSCC):
@@ -43,24 +44,26 @@ class StateS36(StateSCC):
 
         try:
             # Control challenge
-            if self.control_challenge(client, data, b'S36.4') :
+            if self.control_challenge(client, data, b'S36.4'):
 
                 # Test for S36 command
                 is_cd_S36 = data[170:180] == b"DELETEDATA"
-                if not is_cd_S36 : raise Exception('S36 protocol error')
+                if not is_cd_S36:
+                    raise Exception('S36 protocol error')
 
-                index = data[181:].decode() # sib index
+                index = data[181:].decode()  # sib index
 
                 # Delete a secret information block
                 result = client.dbH.delete_data(index)
 
                 if result:
                     # Send 'OK' message
-                    client.loop.call_soon_threadsafe(client.transport.write, b'OK')
-                    client.state = client.states['3'] # New client state
+                    client.loop.call_soon_threadsafe(
+                        client.transport.write, b'OK')
+                    client.state = client.states['3']  # New client state
                 else:
-                    message = b'ERROR;application protocol error'
-                    client.loop.call_soon_threadsafe(client.transport.write, message)
+                    msg = b'ERROR;application protocol error'
+                    client.loop.call_soon_threadsafe(client.transport.write, msg)
                     raise Exception('index rejected')
 
                 logging.info('Delete block from {}'.format(client.peername))

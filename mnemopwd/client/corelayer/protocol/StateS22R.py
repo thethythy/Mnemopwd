@@ -46,18 +46,22 @@ class StateS22R(StateSCC):
                 if echallenge:
 
                     # Encrypt login
-                    elogin = handler.ephecc.encrypt(handler.login, pubkey=handler.ephecc.get_pubkey())
+                    elogin = handler.ephecc.encrypt(
+                        handler.login, pubkey=handler.ephecc.get_pubkey())
 
                     # Compute then encrypt id
                     id = self.compute_client_id(handler.ms, handler.login)
-                    eid = handler.ephecc.encrypt(id, pubkey=handler.ephecc.get_pubkey())
+                    eid = handler.ephecc.encrypt(
+                        id, pubkey=handler.ephecc.get_pubkey())
 
                     # Send login request
-                    message = echallenge + b';CREATION;' + eid + b';' + elogin
-                    handler.loop.call_soon_threadsafe(handler.transport.write, message)
+                    msg = echallenge + b';CREATION;' + eid + b';' + elogin
+                    handler.loop.call_soon_threadsafe(handler.transport.write, msg)
 
                     # Notify the handler a property has changed
-                    handler.loop.run_in_executor(None, handler.notify, "connection.state", "User account creation request")
+                    handler.loop.run_in_executor(
+                        None, handler.notify, "connection.state",
+                        "User account creation request")
 
             except Exception as exc:
                 # Schedule a call to the exception handler

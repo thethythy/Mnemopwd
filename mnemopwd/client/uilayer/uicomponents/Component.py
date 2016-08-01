@@ -6,7 +6,7 @@
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
-# 1. Redistributions of source code must retain the above copyright notice, this 
+# 1. Redistributions of source code must retain the above copyright notice, this
 # list of conditions and the following disclaimer.
 #
 # 2. Redistributions in binary form must reproduce the above copyright notice,
@@ -59,8 +59,8 @@ class Component:
         """Return False by default (not editable)"""
         return False
         
-    def is_actionnable(self):
-        """Return True by default (actionnable)"""
+    def is_actionable(self):
+        """Return True by default (actionable)"""
         return True
     
     def focus_on(self):
@@ -70,11 +70,7 @@ class Component:
     def focus_off(self):
         """This component has lost the focus"""
         pass
-        
-    def enclose(self, y, x):
-        """Does this component enclose the (y,x) coordinate"""
-        return False
-        
+
     def move(self, y, x, focus=False):
         """Move the component to a new location"""
         pass

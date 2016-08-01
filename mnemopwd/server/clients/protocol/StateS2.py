@@ -6,7 +6,7 @@
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
-# 1. Redistributions of source code must retain the above copyright notice, this 
+# 1. Redistributions of source code must retain the above copyright notice, this
 # list of conditions and the following disclaimer.
 #
 # 2. Redistributions in binary form must reproduce the above copyright notice,
@@ -32,24 +32,27 @@ State S2 : Login or CountCreation
 
 from server.util.funcutils import singleton
 
+
 @singleton
-class StateS2():
-    """State S2 : select Login substate (S21) or CountCreation substate (S22) """
+class StateS2:
+    """State S2 : select Login substate (S21) or
+    CountCreation substate (S22)"""
         
     def do(self, client, data):
         """Action of the state S2: select substate S21 or S22"""
         
-        is_cd_S21 = data[170:175] == b"LOGIN" # Test for S21 substate
-        is_cd_S22 = data[170:178] == b"CREATION" # Test for S22 substate
+        is_cd_S21 = data[170:175] == b"LOGIN"  # Test for S21 substate
+        is_cd_S22 = data[170:178] == b"CREATION"  # Test for S22 substate
         
-        if is_cd_S21 :
-            client.state = client.states['21'] # S21 is the new state
-        if is_cd_S22 :
-            client.state = client.states['22'] # S22 is the new state
+        if is_cd_S21:
+            client.state = client.states['21']  # S21 is the new state
+        if is_cd_S22:
+            client.state = client.states['22']  # S22 is the new state
 
-        if is_cd_S21 or is_cd_S22 :
-            # Schedule an execuction of the new state
+        if is_cd_S21 or is_cd_S22:
+            # Schedule an execution of the new state
             client.loop.run_in_executor(None, client.state.do, client, data)
         else:
             # Schedule a callback to client exception handler
-            client.loop.call_soon_threadsafe(client.exception_handler, Exception('S2 protocol error'))
+            client.loop.call_soon_threadsafe(
+                client.exception_handler, Exception('S2 protocol error'))

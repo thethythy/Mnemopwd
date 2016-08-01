@@ -29,10 +29,12 @@
 State S35 : add data operation
 """
 
-from server.util.funcutils import singleton
-from server.clients.protocol import StateSCC
 import pickle
 import logging
+
+from server.util.funcutils import singleton
+from server.clients.protocol import StateSCC
+
 
 @singleton
 class StateS35(StateSCC):
@@ -43,31 +45,32 @@ class StateS35(StateSCC):
 
         try:
             # Control challenge
-            if self.control_challenge(client, data, b'S35.6') :
+            if self.control_challenge(client, data, b'S35.6'):
 
                 # Test for S35 command
                 is_cd_S35 = data[170:177] == b"ADDDATA"
-                if not is_cd_S35 : raise Exception('S35 protocol error')
+                if not is_cd_S35:
+                    raise Exception('S35 protocol error')
 
-                bsib = data[178:] # One secret information block in pickle format
+                bsib = data[178:]  # A secret information block in pickle format
 
                 try:
-                    sib = pickle.loads(bsib) # One secret information block object
-                    sib.control_integrity(client.keyH) # Configure and check integrity
+                    sib = pickle.loads(bsib)  # A secret information block
+                    sib.control_integrity(client.keyH)  # Configure + integrity
 
                 except AssertionError:
                     # Send an error message
-                    message = b'ERROR;application protocol error'
-                    client.loop.call_soon_threadsafe(client.transport.write, message)
+                    msg = b'ERROR;application protocol error'
+                    client.loop.call_soon_threadsafe(client.transport.write, msg)
                     raise Exception('data rejected')
 
                 else:
                     # Add a secret information block
                     index = client.dbH.add_data(sib)
                     # Send index value
-                    message = b'OK;' + (str(index)).encode()
-                    client.loop.call_soon_threadsafe(client.transport.write, message)
-                    client.state = client.states['3'] # New client state
+                    msg = b'OK;' + (str(index)).encode()
+                    client.loop.call_soon_threadsafe(client.transport.write, msg)
+                    client.state = client.states['3']  # New client state
 
                     logging.info('New block from {}'.format(client.peername))
 

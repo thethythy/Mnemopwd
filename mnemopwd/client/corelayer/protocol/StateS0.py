@@ -56,7 +56,9 @@ class StateS0:
                     raise Exception('bad ephemeral server public key')
 
                 # Notify the handler a property has changed
-                handler.loop.run_in_executor(None, handler.notify, "connection.state", "Waiting for login/password")
+                handler.loop.run_in_executor(None, handler.notify,
+                                             "connection.state",
+                                             "Waiting for login/password")
 
             except Exception as exc:
                 # Schedule a call to the exception handler

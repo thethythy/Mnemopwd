@@ -63,18 +63,22 @@ class StateS34A(StateSCC):
                         # Are there SIB to treat ?
                         if nbblock > 0:
                             handler.nbSIB = nbblock  # Number of SIB to treat
-                            handler.nbSIBDone = 0  # Number of SIB already treated
+                            handler.nbSIBDone = 0  # Number of SIB treated
 
                             # Check if the first SIB is already received
                             try:
                                 if len(tab_data[1]) > 0:
-                                    handler.loop.run_in_executor(None, handler.data_received, b';' + tab_data[1])
+                                    handler.loop.run_in_executor(
+                                        None, handler.data_received,
+                                        b';' + tab_data[1])
                             except IndexError:
                                 pass
 
                         else:
                             handler.core.taskInProgress = False
-                            handler.loop.run_in_executor(None, handler.notify, "application.state", "No information found")
+                            handler.loop.run_in_executor(
+                                None, handler.notify, "application.state",
+                                "No information found")
 
                     except:
                         raise Exception("S34A protocol error")
@@ -99,7 +103,9 @@ class StateS34A(StateSCC):
                         # Check if two SIB are received in the same packet
                         if len_sib < len(psib):
                             psib = tab_data[2][:len_sib]
-                            handler.loop.run_in_executor(None, handler.data_received, tab_data[2][len_sib:])
+                            handler.loop.run_in_executor(None,
+                                                         handler.data_received,
+                                                         tab_data[2][len_sib:])
 
                         if len_sib == len(psib):
                             sib = pickle.loads(psib)
@@ -108,18 +114,21 @@ class StateS34A(StateSCC):
                             handler.nbSIBDone += 1
 
                             # Notify the UI layer
-                            handler.loop.run_in_executor(None, handler.notify, "application.state.loadbar",
-                                                         (handler.nbSIBDone, handler.nbSIB))
+                            handler.loop.run_in_executor(
+                                None, handler.notify, "application.state.loadbar",
+                                (handler.nbSIBDone, handler.nbSIB))
 
                             # Indicate the task is done
                             if handler.nbSIBDone == handler.nbSIB:
                                 handler.core.taskInProgress = False
 
                         else:
-                            self.buffer = data  # Push data in a buffer for a next treatment
+                            self.buffer = data  # Push data for a next treatment
 
                     except:
-                        message = "S34A protocol error " + str(handler.nbSIBDone) + "/" + str(handler.nbSIB) + " blocks"
+                        message = "S34A protocol error " + \
+                                  str(handler.nbSIBDone) + \
+                                  "/" + str(handler.nbSIB) + " blocks"
                         raise Exception(message)
 
                 # Save data not treated

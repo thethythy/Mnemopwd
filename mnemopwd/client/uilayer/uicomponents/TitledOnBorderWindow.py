@@ -29,9 +29,10 @@ import curses
 
 from client.uilayer.uicomponents.BaseWindow import BaseWindow
 
+
 class TitledOnBorderWindow(BaseWindow):
     """
-    A window with a border and a title on border. It can contain other components.
+    A window with a border and a title on border. Subclass of BaseWindow.
     """
 
     def __init__(self, parent, h, w, y, x, title, modal=False, menu=False):

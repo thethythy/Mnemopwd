@@ -51,8 +51,8 @@ class StateS1CR:
 
                 # Get esession number
                 blocksize = OpenSSL.get_cipher('aes-256-cbc').get_blocksize()
-                iv = data[11:11+blocksize]
-                esession = data[12+blocksize:]
+                iv = data[11:11 + blocksize]
+                esession = data[12 + blocksize:]
 
                 # Decrypt session number
                 ctx = Cipher(handler.ms, iv, 0, 'aes-256-cbc')
@@ -62,14 +62,17 @@ class StateS1CR:
                 challenge = hmac_sha256(handler.ms, session + b'S1.12')
 
                 # Encrypt challenge answer
-                echallenge = handler.ephecc.encrypt(challenge, pubkey=handler.ephecc.get_pubkey())
+                echallenge = handler.ephecc.encrypt(
+                    challenge, pubkey=handler.ephecc.get_pubkey())
 
                 # Send challenge answer
-                message = b'CHALLENGEA;' + echallenge
-                handler.loop.call_soon_threadsafe(handler.transport.write, message)
+                msg = b'CHALLENGEA;' + echallenge
+                handler.loop.call_soon_threadsafe(handler.transport.write, msg)
 
                 # Notify the handler a property has changed
-                handler.loop.run_in_executor(None, handler.notify, "connection.state", "Sending challenge answer")
+                handler.loop.run_in_executor(None, handler.notify,
+                                             "connection.state",
+                                             "Sending challenge answer")
 
             except Exception as exc:
                 # Schedule a call to the exception handler
