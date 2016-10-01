@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2015, Thierry Lemeunier <thierry at lemeunier dot net>
+# Copyright (c) 2015, 2016, Thierry Lemeunier <thierry at lemeunier dot net>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -32,6 +32,7 @@ Class to create and handle keys to encrypt, decrypt and check integrity
 import hashlib
 import logging
 
+from common.util.funcutils import memory_reset
 from pyelliptic import OpenSSL, ECC
 
 
@@ -56,7 +57,8 @@ class KeyHandler:
         # Compute ikey
         ho = hashlib.sha512()
         ho.update(msecret)
-        self.ikey = ho.digest()  # The key for integrity operations
+        #self.ikey = bytearray(ho.digest())  # The key for integrity operations
+        self.ikey = ho.digest()  # The key for integrity operations TODO
         
         # Create ECC objects
         self.config = cur1 + ";" + cip1 + ";" + \
@@ -73,10 +75,17 @@ class KeyHandler:
             'ecc': self._compute_ecc_(cur2, msecret, 'second'),
             'cipher': cip2
         })
-        # The thrid stage ECC
+        # The third stage ECC
         self.eccs.append({
             'ecc': self._compute_ecc_(cur3, msecret, 'third'),
             'cipher': cip3})
+
+        logging.info('KeyHandler created')  # TODO
+
+    def __del__(self):
+        """Object destructor"""
+        #memory_reset(self.ikey, 0)  # TODO
+        logging.info('KeyHandler deleted')  # TODO
 
     def _get_ecc_(self, index):
         """Returns the tuple (ECC_object, 'cipher_name').
@@ -84,87 +93,6 @@ class KeyHandler:
         assert 0 <= index < 3
         return (self.eccs[index])['ecc'], (self.eccs[index])['cipher']
 
-    @staticmethod
-    def _compute_keypair_(cur, secret):
-        """
-        Computes a keypair from a secret number.
-        If secret >= cur.order then secret is truncated until it becomes false
-        """
-        try:
-            # Create a BIGNUM structure from the secret number
-            bn_secret = OpenSSL.BN_bin2bn(secret, len(secret), 0)
-                     
-            # Create a keypair structure from a curve name
-            ec_key = OpenSSL.EC_KEY_new_by_curve_name(OpenSSL.get_curve(cur))
-            if ec_key == 0:
-                raise Exception(
-                    "EC_KEY_new_by_curve_name fails with %s".format(cur))
-            
-            # Get the group of the curve
-            ec_group = OpenSSL.EC_KEY_get0_group(ec_key)
-            
-            # Create a new point structure on the curve to store pubkey
-            ec_point = OpenSSL.EC_POINT_new(ec_group)
-            
-            # Create a new context structure for next treatments
-            bn_ctx = OpenSSL.BN_CTX_new()
-            
-            # Control that secret < order
-            bn_order = OpenSSL.BN_new()  # BIGNUM structure to store order
-            OpenSSL.EC_GROUP_get_order(ec_group, bn_order, bn_ctx)  # Get order
-            warning = True
-            # Decrease secret while secret >= order
-            while OpenSSL.BN_cmp(bn_secret, bn_order) >= 0:
-                if warning:
-                    logging.warning("Decrease secret because it is > of order of the curve %s", cur)
-                    warning = False
-                # Decrease the size by 8 bits
-                new_number_bits = (OpenSSL.BN_num_bytes(bn_secret) - 1) * 8
-                OpenSSL.BN_mask_bits(bn_secret, new_number_bits)  # Truncate
-            
-            # Compute the public key
-            if OpenSSL.EC_POINT_mul(
-                    ec_group, ec_point, bn_secret, 0, 0, bn_ctx) == 0:
-                raise Exception(
-                    "EC_KEY_new_by_curve_name fails with %s".format(cur))
-            
-            # Verify the keypair
-            if OpenSSL.EC_KEY_set_public_key(ec_key, ec_point) == 0:
-                raise Exception("EC_KEY_set_public_key fails")
-            if OpenSSL.EC_KEY_set_private_key(ec_key, bn_secret) == 0:
-                raise Exception("EC_KEY_set_private_key fails")
-            if OpenSSL.EC_KEY_check_key(ec_key) == 0:
-                raise Exception("EC_KEY_check_key fails")
-            
-            # Get public key affine coordinates
-            pub_key_x = OpenSSL.BN_new()
-            pub_key_y = OpenSSL.BN_new()
-            if OpenSSL.EC_POINT_get_affine_coordinates_GFp(
-                    ec_group, ec_point, pub_key_x, pub_key_y, 0) == 0:
-                raise Exception("EC_POINT_get_affine_coordinates_GFp fails")
-            
-            # Allocate memories to return keypair
-            privkey = OpenSSL.malloc(0, OpenSSL.BN_num_bytes(bn_secret))
-            pubkeyx = OpenSSL.malloc(0, OpenSSL.BN_num_bytes(pub_key_x))
-            pubkeyy = OpenSSL.malloc(0, OpenSSL.BN_num_bytes(pub_key_y))
-            OpenSSL.BN_bn2bin(bn_secret, privkey)
-            privkey = privkey.raw
-            OpenSSL.BN_bn2bin(pub_key_x, pubkeyx)
-            pubkeyx = pubkeyx.raw
-            OpenSSL.BN_bn2bin(pub_key_y, pubkeyy)
-            pubkeyy = pubkeyy.raw
-
-            return pubkeyx, pubkeyy, privkey
-
-        finally:
-            OpenSSL.BN_free(pub_key_x)
-            OpenSSL.BN_free(pub_key_y)
-            OpenSSL.BN_free(bn_order)
-            OpenSSL.BN_CTX_free(bn_ctx)
-            OpenSSL.EC_POINT_free(ec_point)
-            OpenSSL.EC_KEY_free(ec_key)
-            OpenSSL.BN_free(bn_secret)
-    
     def _compute_ecc_(self, curve, secret, stagename):
         """Creates a new ECC object"""
         if curve == '':
@@ -173,10 +101,10 @@ class KeyHandler:
             ho = hashlib.sha512()
             ho.update(secret)
             ho.update("the %s stage ecc secret".format(stagename).encode())
-            pubx, puby, priv = KeyHandler._compute_keypair_(curve, ho.digest())
+            pubx, puby, priv = ECC.compute_keypair(ho.digest(), curve)
             return ECC(
                 pubkey_x=pubx, pubkey_y=puby, raw_privkey=priv, curve=curve)
-    
+
     # Extern Methods
     # --------------
 

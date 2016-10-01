@@ -104,9 +104,9 @@ class _OpenSSL:
         self.BN_cmp.restype = ctypes.c_int
         self.BN_cmp.argtypes = [ctypes.c_void_p, ctypes.c_void_p]
 
-        self.BN_mask_bits = self._lib.BN_mask_bits
-        self.BN_mask_bits.restype = ctypes.c_int
-        self.BN_mask_bits.argtypes = [ctypes.c_void_p, ctypes.c_int]
+        self.BN_rshift = self._lib.BN_rshift
+        self.BN_rshift.restype = ctypes.c_int
+        self.BN_rshift.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_int]
 
         self.EC_GROUP_get_order = self._lib.EC_GROUP_get_order
         self.EC_GROUP_get_order.restype = ctypes.c_int
@@ -386,7 +386,7 @@ class _OpenSSL:
                                                     ctypes.c_void_p, ctypes.c_int,
                                                     ctypes.c_int, ctypes.c_int,
                                                     ctypes.c_void_p]
-        
+
         self._set_ciphers()
         self._set_curves()
 
@@ -535,7 +535,7 @@ class _OpenSSL:
         return buffer
 
     def get_error(self):
-        return OpenSSL.ERR_error_string(OpenSSL.ERR_get_error(), None)
+        return str(OpenSSL.ERR_error_string(OpenSSL.ERR_get_error(), None))
 
 libname = ctypes.util.find_library('crypto')
 if libname is None:

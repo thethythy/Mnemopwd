@@ -100,6 +100,87 @@ class ECC:
             self.privkey = privkey
 
     @staticmethod
+    def compute_keypair(secret, curve='sect283r1'):
+        """Computes a keypair from a secret number.
+        If secret >= curve.order then secret is truncated until it becomes false"""
+        try:
+            # If secret is negative, it becomes positive
+            if (secret[0] & 0x80) == 0x80:
+                secret = bytes([secret[0] & 0x7F]) + secret[1:]
+            
+            # Create a BIGNUM structure (see OpenSSL documentation) from the secret number
+            bn_secret = OpenSSL.BN_bin2bn(secret, len(secret), 0)
+                     
+            # Create a keypair structure (see OpenSSL documentation) from a curve name
+            ec_key = OpenSSL.EC_KEY_new_by_curve_name(OpenSSL.get_curve(curve))
+            if ec_key == 0:
+                raise Exception("[OpenSSL] EC_KEY_new_by_curve_name FAIL " + OpenSSL.get_error())
+            
+            # Get the group of the curve
+            ec_group = OpenSSL.EC_KEY_get0_group(ec_key)
+            
+            # Create a new point structure (see OpenSSL documentation) on the curve to store pubkey
+            ec_point = OpenSSL.EC_POINT_new(ec_group)
+            
+            # Create a new context structure (see OpenSSL documentation) for next treatments
+            bn_ctx = OpenSSL.BN_CTX_new()
+            
+            # Control that secret < order
+            bn_order = OpenSSL.BN_new() # Create a BIGNUM structure to store order
+            OpenSSL.EC_GROUP_get_order(ec_group, bn_order, bn_ctx); # Get the order
+            while OpenSSL.BN_cmp(bn_secret, bn_order) >= 0 : # If secret >= order
+                OpenSSL.BN_rshift(bn_secret, bn_secret, 8) # Right shift of 8 bits
+            
+            # Compute the public key
+            if OpenSSL.EC_POINT_mul(ec_group, ec_point, bn_secret, 0, 0, bn_ctx) == 0:
+                raise Exception("[OpenSSL] EC_KEY_new_by_curve_name FAIL " + OpenSSL.get_error())
+            
+            # Verify the keypair
+            if OpenSSL.EC_KEY_set_public_key(ec_key, ec_point) == 0:
+                raise Exception("[OpenSSL] EC_KEY_set_public_key FAIL" + OpenSSL.get_error())
+            if OpenSSL.EC_KEY_set_private_key(ec_key, bn_secret) == 0:
+                raise Exception("[OpenSSL] EC_KEY_set_private_key FAIL" + OpenSSL.get_error())
+            if OpenSSL.EC_KEY_check_key(ec_key) == 0:
+                raise Exception("[OpenSSL] EC_KEY_check_key FAIL " + OpenSSL.get_error())
+            
+            # Get public key affine coordinates
+            pub_key_x = OpenSSL.BN_new()
+            pub_key_y = OpenSSL.BN_new()
+            if OpenSSL.EC_POINT_get_affine_coordinates_GFp(ec_group, ec_point, pub_key_x, pub_key_y, 0) == 0:
+                raise Exception("[OpenSSL] EC_POINT_get_affine_coordinates_GFp FAIL " + OpenSSL.get_error())
+            
+            # Allocate memories to return keypair
+            privkey = OpenSSL.malloc(0, OpenSSL.BN_num_bytes(bn_secret))
+            pubkeyx = OpenSSL.malloc(0, OpenSSL.BN_num_bytes(pub_key_x))
+            pubkeyy = OpenSSL.malloc(0, OpenSSL.BN_num_bytes(pub_key_y))
+            OpenSSL.BN_bn2bin(bn_secret, privkey)
+            privkey = privkey.raw
+            OpenSSL.BN_bn2bin(pub_key_x, pubkeyx)
+            pubkeyx = pubkeyx.raw
+            OpenSSL.BN_bn2bin(pub_key_y, pubkeyy)
+            pubkeyy = pubkeyy.raw
+            
+            # Adjust pubkeyx and pubkeyx size
+            field_size = OpenSSL.EC_GROUP_get_degree(ec_group)
+            secret_len = int((field_size + 7) / 8)
+
+            if len(pubkeyx) < secret_len:
+                pubkeyx = pubkeyx.rjust(secret_len, b'\0')
+            if len(pubkeyy) < secret_len:
+                pubkeyy = pubkeyy.rjust(secret_len, b'\0')
+
+            return pubkeyx, pubkeyy, privkey
+
+        finally:
+            OpenSSL.BN_free(pub_key_x)
+            OpenSSL.BN_free(pub_key_y)
+            OpenSSL.BN_free(bn_order)
+            OpenSSL.BN_CTX_free(bn_ctx)
+            OpenSSL.EC_POINT_free(ec_point)
+            OpenSSL.EC_KEY_free(ec_key)
+            OpenSSL.BN_free(bn_secret)
+
+    @staticmethod
     def get_curves():
         """
         static method, returns the list of all the curves available
@@ -272,7 +353,6 @@ class ECC:
 
     def raw_get_ecdh_key(self, pubkey_x, pubkey_y):
         try:
-            ecdh_keybuffer = OpenSSL.malloc(0, 32)
             other_key = OpenSSL.EC_KEY_new_by_curve_name(self.curve)
             if other_key == 0:
                 raise Exception("[OpenSSL] EC_KEY_new_by_curve_name FAIL ... " + OpenSSL.get_error())
@@ -307,10 +387,15 @@ class ECC:
                 raise Exception("[OpenSSL] EC_KEY_set_private_key FAIL ... " + OpenSSL.get_error())
 
             OpenSSL.ECDH_set_method(own_key, OpenSSL.ECDH_OpenSSL())
-            ecdh_keylen = OpenSSL.ECDH_compute_key(
-                ecdh_keybuffer, 32, other_pub_key, own_key, 0)
 
-            if ecdh_keylen != 32:
+            field_size = OpenSSL.EC_GROUP_get_degree(OpenSSL.EC_KEY_get0_group(own_key))
+            secret_len = int((field_size + 7) / 8)
+            ecdh_keybuffer = OpenSSL.malloc(0, secret_len)
+
+            ecdh_keylen = OpenSSL.ECDH_compute_key(
+                ecdh_keybuffer, secret_len, other_pub_key, own_key, 0)
+
+            if ecdh_keylen != secret_len:
                 raise Exception("[OpenSSL] ECDH keylen FAIL ... " + OpenSSL.get_error())
 
             return ecdh_keybuffer.raw
@@ -522,7 +607,12 @@ class ECC:
         blocksize = OpenSSL.get_cipher(ciphername).get_blocksize()
         iv = data[:blocksize]
         i = blocksize
-        coord_len = len(self.pubkey_x) * 2 + 1
+        own_key = OpenSSL.EC_KEY_new_by_curve_name(self.curve)
+        if own_key == 0:
+            raise Exception("[OpenSSL] EC_KEY_new_by_curve_name FAIL ... " + OpenSSL.get_error())
+        field_size = OpenSSL.EC_GROUP_get_degree(OpenSSL.EC_KEY_get0_group(own_key))
+        secret_len = int((field_size + 7) / 8)
+        coord_len = secret_len * 2 + 1
         pubkey_x, pubkey_y = ECC._decode_pubkey(data[i:i + coord_len])
         i += coord_len
         ciphertext = data[i:len(data) - 32]

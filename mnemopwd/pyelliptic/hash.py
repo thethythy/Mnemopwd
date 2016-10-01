@@ -30,7 +30,7 @@
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from .openssl import OpenSSL
-import sys 
+
 
 # For python3
 def _equals_bytes(a, b):
