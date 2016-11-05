@@ -62,6 +62,7 @@ Server configuration
 The server use ``~/.mnemopwds`` as configuration file. This file is automatically created
 at the first launch if it does not already exist. You can edit this file, for example,
 to indicate a private key file and a certificate file. You can change the following options:
+
 - Host IP (by default it is the address in the local network);
 - Log level;
 - Private key file and certificate file (none by default);
@@ -82,6 +83,7 @@ Client configuration
 The client use ``~/.mnemopwdc`` as configuration file. This file is automatically created
 at the first launch if it does not already exist. You can edit this file, for example,
 to indicate a shared certificate file. You can change the following options:
+
 - Shared certificate file (none by default);
 - Server IP;
 - Server port;
