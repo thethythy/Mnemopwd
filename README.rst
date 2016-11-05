@@ -119,7 +119,7 @@ Start a client
 
    ``mnemopwdc -h``          --> get a help screen
 
-   ``mnemopwdc``             --> start the client
+   ``mnemopwdc``             --> start the client (you may indicate the server ip address)
 
    ``mnemopwdc --status``    --> get a status message
 
