@@ -29,7 +29,7 @@
 
 import curses
 import time
-from client.uilayer.uicomponents.TextEditor import TextEditor
+from .TextEditor import TextEditor
 
 
 class SecretTextEditor(TextEditor):

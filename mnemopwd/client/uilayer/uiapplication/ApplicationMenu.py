@@ -25,9 +25,9 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from client.uilayer.uicomponents.BaseWindow import BaseWindow
-from client.uilayer.uicomponents.MetaButtonBox import MetaButtonBox
-from client.util.funcutils import sfill
+from ..uicomponents.BaseWindow import BaseWindow
+from ..uicomponents.MetaButtonBox import MetaButtonBox
+from ...util.funcutils import sfill
 
 
 class ApplicationMenu(BaseWindow):

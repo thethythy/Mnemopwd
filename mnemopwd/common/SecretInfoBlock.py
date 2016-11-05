@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2015, Thierry Lemeunier <thierry at lemeunier dot net>
+# Copyright (c) 2015-2016, Thierry Lemeunier <thierry at lemeunier dot net>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -40,8 +40,8 @@ the application.
 """
 
 import logging
-from common.InfoBlock import InfoBlock
-from pyelliptic import hash
+from .InfoBlock import InfoBlock
+from ..pyelliptic import hash
 
 
 class SecretInfoBlock(InfoBlock):

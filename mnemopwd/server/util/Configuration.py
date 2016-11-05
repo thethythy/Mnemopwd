@@ -40,7 +40,8 @@ import os.path
 import os
 import stat
 
-from common.util.X509 import X509
+import mnemopwd
+from ...common.util.X509 import X509
 from .funcutils import getIPAddress
 
 
@@ -83,7 +84,7 @@ class Configuration:
     logmaxmb = 1  # Default logfile volume (1 => 1 MBytes)
     logbackups = 20  # Default backup logfile
     loglevel = 'INFO'  # Default logging level
-    version = '1.0'  # Server version
+    version = mnemopwd.__version__  # Server version
     host = getIPAddress()  # Default host
     port = 62230  # Default port
     port_min = 49152  # Minimum port value

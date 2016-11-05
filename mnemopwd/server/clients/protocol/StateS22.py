@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2015, Thierry Lemeunier <thierry at lemeunier dot net>
+# Copyright (c) 2015-2016, Thierry Lemeunier <thierry at lemeunier dot net>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -32,9 +32,9 @@ State S22 : Creation
 
 import logging
 
-from server.util.funcutils import singleton
-from server.clients.protocol import StateSCC
-from server.clients.DBHandler import DBHandler
+from ...util.funcutils import singleton
+from .StateSCC import StateSCC
+from ..DBHandler import DBHandler
 
 
 @singleton
@@ -81,7 +81,7 @@ class StateS22(StateSCC):
                 else:
                     msg = b'ERROR;application protocol error'
                     client.loop.call_soon_threadsafe(client.transport.write, msg)
-                    raise Exception('user account already used')
+                    raise Exception('S22: user account already used')
 
                 logging.info('User account creation from {}'
                              .format(client.peername))

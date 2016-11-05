@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2015, Thierry Lemeunier <thierry at lemeunier dot net>
+# Copyright (c) 2015-2016, Thierry Lemeunier <thierry at lemeunier dot net>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -52,8 +52,8 @@ import os.path
 import stat
 import shelve
 import re
-from server.util.Configuration import Configuration
-from server.clients.DBAccess import DBAccess
+from ..util.Configuration import Configuration
+from .DBAccess import DBAccess
 
 
 class DBHandler:
@@ -79,7 +79,7 @@ class DBHandler:
     # Intern methods
     
     def __init__(self, path, filename):
-        """Set attributs"""
+        """Set attributes"""
         self.path = path                # Client database path
         self.filename = filename        # Client database filename
         self.database = self.path + '/' + self.filename  # Client database
@@ -152,14 +152,14 @@ class DBHandler:
         Return a list of found sibs."""
         tabsibs = []             # Table of sibs
         nbsibs = self['nbsibs']  # Number of sibs
-        if nbsibs > 0: 
+        if nbsibs > 0:
             for i in range(1, self['index'] + 1):  # For all sibs
                 try:
                     sib = self[str(i)]  # Get sib
                 except KeyError:
                     continue  # Try next key
-                sib.keyH = keyH  # Set actual KeyHandler
                 if sib.nbInfo > 0:
+                    sib.keyH = keyH  # Set actual KeyHandler
                     if Configuration.search_mode == 'first':
                         if re.search(pattern, sib['info1'].decode()) is not None:
                             tabsibs.append((i, sib))  # Matching so add sib
@@ -180,8 +180,8 @@ class DBHandler:
                     sib = self[str(i)]  # Get sib
                 except KeyError:
                     continue  # Try next key
-                sib.keyH = keyH  # Set actual KeyHandler
                 if sib.nbInfo > 0:
+                    sib.keyH = keyH  # Set actual KeyHandler
                     tabsibs.append((i, sib))
         return tabsibs
     

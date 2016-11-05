@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2015, Thierry Lemeunier <thierry at lemeunier dot net>
+# Copyright (c) 2015-2016, Thierry Lemeunier <thierry at lemeunier dot net>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -30,7 +30,7 @@
 State S3 : administration or data operations
 """
 
-from server.util.funcutils import singleton
+from ...util.funcutils import singleton
 
 
 @singleton
@@ -65,7 +65,7 @@ class StateS3:
             
         if is_cd_S31 or is_cd_S32 or is_cd_S33 or is_cd_S34 or is_cd_S35 or \
                 is_cd_S36 or is_cd_S37:
-            # Schedule an execuction of the new state
+            # Schedule an execution of the new state
             client.loop.run_in_executor(None, client.state.do, client, data)
         else:
             # Schedule a callback to client exception handler

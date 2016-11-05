@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2015, Thierry Lemeunier <thierry at lemeunier dot net>
+# Copyright (c) 2015-2016, Thierry Lemeunier <thierry at lemeunier dot net>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -32,8 +32,8 @@ State S35 : add data operation
 import pickle
 import logging
 
-from server.util.funcutils import singleton
-from server.clients.protocol import StateSCC
+from ...util.funcutils import singleton
+from .StateSCC import StateSCC
 
 
 @singleton
@@ -62,7 +62,7 @@ class StateS35(StateSCC):
                     # Send an error message
                     msg = b'ERROR;application protocol error'
                     client.loop.call_soon_threadsafe(client.transport.write, msg)
-                    raise Exception('data rejected')
+                    raise Exception('S35 data rejected')
 
                 else:
                     # Add a secret information block

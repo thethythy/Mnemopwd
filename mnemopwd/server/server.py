@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2015, Thierry Lemeunier <thierry at lemeunier dot net>
+# Copyright (c) 2015-2016, Thierry Lemeunier <thierry at lemeunier dot net>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -30,8 +30,8 @@ import asyncio
 import socket
 import ssl
 import concurrent.futures
-from server.util.Configuration import Configuration
-from server.clients.ClientHandler import ClientHandler
+from .util.Configuration import Configuration
+from .clients.ClientHandler import ClientHandler
 
 """
 Server part of Mnemopwd application.

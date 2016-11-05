@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2015, Thierry Lemeunier <thierry at lemeunier dot net>
+# Copyright (c) 2015-2016, Thierry Lemeunier <thierry at lemeunier dot net>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -32,8 +32,8 @@ State S1S : Session
 
 import os
 
-from pyelliptic import Cipher
-from server.util.funcutils import singleton
+from ....pyelliptic import Cipher
+from ...util.funcutils import singleton
 
 
 @singleton
@@ -50,9 +50,8 @@ class StateS1S:
             if not is_cd_S1S:
                 raise Exception('S1S protocol error')
                 
-            ems = data[8:209]  # Master secret encrypted
+            ems = data[8:]  # Master secret encrypted
             ms = client.ephecc.decrypt(ems)  # Decrypt master secret
-            
             session = (os.urandom(256))[64:128]  # Random session value
             
             iv = Cipher.gen_IV('aes-256-cbc')

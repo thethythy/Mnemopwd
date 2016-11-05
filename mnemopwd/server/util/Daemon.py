@@ -40,7 +40,7 @@ import sys
 import time
 import datetime
 
-from server.util.Configuration import Configuration
+from ...server.util.Configuration import Configuration
 
 
 class Daemon(object):

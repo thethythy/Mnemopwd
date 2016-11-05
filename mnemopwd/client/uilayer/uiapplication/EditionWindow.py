@@ -27,12 +27,12 @@
 
 import curses
 
-from client.util.Configuration import Configuration
-from client.uilayer.uicomponents.TitledOnBorderWindow import TitledOnBorderWindow
-from client.uilayer.uicomponents.ButtonBox import ButtonBox
-from client.uilayer.uicomponents.InputBox import InputBox
-from client.util.funcutils import sfill
-from common.SecretInfoBlock import SecretInfoBlock
+from ...util.Configuration import Configuration
+from ..uicomponents.TitledOnBorderWindow import TitledOnBorderWindow
+from ..uicomponents.ButtonBox import ButtonBox
+from ..uicomponents.InputBox import InputBox
+from ...util.funcutils import sfill
+from ....common.SecretInfoBlock import SecretInfoBlock
 
 
 class EditionWindow(TitledOnBorderWindow):

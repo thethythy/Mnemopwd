@@ -29,12 +29,13 @@
 import asyncio
 import logging
 import os
-from server.clients.protocol import *
-from pyelliptic import OpenSSL
-from common.KeyHandler import KeyHandler
-from common.SecretInfoBlock import SecretInfoBlock
-from server.clients.DBHandler import DBHandler
-from server.clients.DBAccess import DBAccess
+
+from ...pyelliptic import OpenSSL
+from .protocol import *
+from ...common.KeyHandler import KeyHandler
+from ...common.SecretInfoBlock import SecretInfoBlock
+from .DBHandler import DBHandler
+from .DBAccess import DBAccess
 
 """
 The client connection handler
@@ -99,7 +100,7 @@ class ClientHandler(asyncio.Protocol):
                             OpenSSL.get_curve(name)  # Control curve name
                         else: 
                             OpenSSL.get_cipher(name)  # Control cipher name
-            except:
+            except Exception:
                 return False
 
             # Configure crypto handler

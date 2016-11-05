@@ -30,10 +30,10 @@
 State S1 : Session
 """
 
-from client.util.funcutils import singleton
-from pyelliptic import OpenSSL
-from pyelliptic import Cipher
-from pyelliptic import hmac_sha256
+from ...util.funcutils import singleton
+from ....pyelliptic import OpenSSL
+from ....pyelliptic import Cipher
+from ....pyelliptic import hmac_sha256
 
 
 @singleton

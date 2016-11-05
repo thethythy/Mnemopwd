@@ -29,11 +29,11 @@ import re
 import curses
 import curses.ascii
 
-from client.util.Configuration import Configuration
-from client.uilayer.uicomponents.TitledOnBorderWindow import TitledOnBorderWindow
-from client.uilayer.uicomponents.Component import Component
-from client.uilayer.uicomponents.InputBox import InputBox
-from client.uilayer.uiapplication.SearchResultPanel import SearchResultPanel
+from ...util.Configuration import Configuration
+from ..uicomponents.TitledOnBorderWindow import TitledOnBorderWindow
+from ..uicomponents.Component import Component
+from ..uicomponents.InputBox import InputBox
+from .SearchResultPanel import SearchResultPanel
 
 
 class SearchWindow(TitledOnBorderWindow):

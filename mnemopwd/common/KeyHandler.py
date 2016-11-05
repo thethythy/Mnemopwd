@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2015, 2016, Thierry Lemeunier <thierry at lemeunier dot net>
+# Copyright (c) 2015-2016, Thierry Lemeunier <thierry at lemeunier dot net>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -30,10 +30,8 @@ Class to create and handle keys to encrypt, decrypt and check integrity
 """
 
 import hashlib
-import logging
 
-from common.util.funcutils import memory_reset
-from pyelliptic import OpenSSL, ECC
+from ..pyelliptic import ECC
 
 
 class KeyHandler:
@@ -49,7 +47,7 @@ class KeyHandler:
     
     # Intern methods
     # --------------
-    
+
     def __init__(self, msecret,
                  cur1='sect571r1', cip1='aes-256-cbc',
                  cur2='', cip2='', cur3='', cip3=''):
@@ -57,8 +55,7 @@ class KeyHandler:
         # Compute ikey
         ho = hashlib.sha512()
         ho.update(msecret)
-        #self.ikey = bytearray(ho.digest())  # The key for integrity operations
-        self.ikey = ho.digest()  # The key for integrity operations TODO
+        self.ikey = ho.digest()  # The key for integrity operations
         
         # Create ECC objects
         self.config = cur1 + ";" + cip1 + ";" + \
@@ -79,13 +76,6 @@ class KeyHandler:
         self.eccs.append({
             'ecc': self._compute_ecc_(cur3, msecret, 'third'),
             'cipher': cip3})
-
-        logging.info('KeyHandler created')  # TODO
-
-    def __del__(self):
-        """Object destructor"""
-        #memory_reset(self.ikey, 0)  # TODO
-        logging.info('KeyHandler deleted')  # TODO
 
     def _get_ecc_(self, index):
         """Returns the tuple (ECC_object, 'cipher_name').

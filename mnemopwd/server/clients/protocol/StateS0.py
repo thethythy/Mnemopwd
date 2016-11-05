@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2015, Thierry Lemeunier <thierry at lemeunier dot net>
+# Copyright (c) 2015-2016, Thierry Lemeunier <thierry at lemeunier dot net>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -30,8 +30,8 @@
 State SO : KeySharing
 """
 
-from pyelliptic import ECC
-from server.util.funcutils import singleton
+from ....pyelliptic import ECC
+from ...util.funcutils import singleton
 
 
 @singleton

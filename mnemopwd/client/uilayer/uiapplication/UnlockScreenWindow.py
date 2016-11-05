@@ -27,9 +27,9 @@
 
 import curses
 
-from client.uilayer.uicomponents.TitledBorderWindow import TitledBorderWindow
-from client.uilayer.uicomponents.InputBox import InputBox
-from client.uilayer.uicomponents.ButtonBox import ButtonBox
+from ..uicomponents.TitledBorderWindow import TitledBorderWindow
+from ..uicomponents.InputBox import InputBox
+from ..uicomponents.ButtonBox import ButtonBox
 
 
 class UnlockScreenWindow(TitledBorderWindow):

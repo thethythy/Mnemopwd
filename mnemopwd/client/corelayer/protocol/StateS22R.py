@@ -29,8 +29,8 @@
 State S22 : Creation
 """
 
-from client.util.funcutils import singleton
-from client.corelayer.protocol.StateSCC import StateSCC
+from ...util.funcutils import singleton
+from .StateSCC import StateSCC
 
 
 @singleton

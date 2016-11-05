@@ -30,9 +30,8 @@
 State S1 : Session
 """
 
-from client.util.funcutils import singleton
-from pyelliptic import ECC
-from pyelliptic import pbkdf2
+from ...util.funcutils import singleton
+from ....pyelliptic import pbkdf2
 
 
 @singleton

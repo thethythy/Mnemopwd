@@ -26,8 +26,12 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+
+from os import path
 from pathlib import Path
 import hashlib
+
+here = path.abspath(path.dirname(__file__))
 
 
 class MnemopwdFingerPrint:
@@ -37,24 +41,28 @@ class MnemopwdFingerPrint:
                  'client', 'server']
     module_list = []
 
-    def create_module_list(self):
+    def create_module_list(self, prefix=None):
         """Create a sorted module list"""
         self.module_list = []
-        self._create_module_list(self.path_list)
+        self._create_module_list(self.path_list, prefix)
         self.module_list.sort()
 
-    def _create_module_list(self, plist):
+    def _create_module_list(self, plist, prefix):
         """Get module names from the path list given"""
-        for path in plist:
-            ap = Path(path)
+        for pa in plist:
+            # Add prefix if exists
+            if prefix is not None:
+                pa = path.join(prefix, pa)
+            ap = Path(pa)
+            # Browse or add
             if ap.is_dir() and ap.name != '__pycache__':
                 for child in ap.iterdir():
                     if child.is_dir() and child.name != '__pycache__':
-                        self._create_module_list([str(child)])
+                        self._create_module_list([str(child)], prefix)
                     elif child.suffix == '.py':
                         self.module_list.append(str(child))
-            elif Path(path).exists():
-                self.module_list.append(path)
+            elif ap.exists():
+                self.module_list.append(pa)
 
     def compute_fingerprint(self):
         """Compute fingerprint"""
@@ -65,28 +73,28 @@ class MnemopwdFingerPrint:
             h.update(source)  # Feed hash engine with each source string
         return h.hexdigest()  # Get hash in hexadecimal format
 
-    def control_fingerprint(self):
+    def control_fingerprint(self, prefix):
         """Control the fingerprint"""
         self.module_list = []
-        self.create_module_list()
+        self.create_module_list(prefix=prefix)
         the_fingerprint = self.compute_fingerprint()
         try:
-            with open("fingerprint", 'rb') as hfile:
+            with open(path.join(here, "fingerprint"), 'rb') as hfile:
                 fingerprint_from_file = (hfile.read()).decode()
                 if fingerprint_from_file != the_fingerprint:
                     print("it seems source code has been modified, so server can not be launched")
                     exit(1)
         except FileNotFoundError:
-            print("it seems source code has been modified, so server can not be launched")
+            print("source code has been modified, so server can not be launched")
             exit(1)
 
 if __name__ == "__main__":
     # Control the execution path
     if not Path("serverctl.py").exists():
-        print("This script must be launched from the Mnemopwd's directory")
+        print("This script must be launched from mnemopwd directory")
         exit(1)
     # Delete fingerprint file
-    p = Path("fingerprint")
+    p = Path(path.join(here, "fingerprint"))
     if p.exists():
         p.unlink()
     # Compute fingerprint
@@ -94,5 +102,5 @@ if __name__ == "__main__":
     mnemofg.create_module_list()
     fingerprint = mnemofg.compute_fingerprint()
     # Save fingerprint
-    with open("fingerprint", 'wb') as file:
+    with open(path.join(here, "fingerprint"), 'wb') as file:
         file.write(fingerprint.encode())

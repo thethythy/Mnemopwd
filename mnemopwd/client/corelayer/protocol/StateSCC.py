@@ -30,8 +30,9 @@ State SCC : Challenge Creation
 """
 
 import hashlib
-from pyelliptic import hmac_sha256
-from pyelliptic import hmac_sha512
+
+from ....pyelliptic import hmac_sha256
+from ....pyelliptic import hmac_sha512
 
 
 class StateSCC:

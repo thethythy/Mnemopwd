@@ -29,8 +29,8 @@ from threading import Thread
 import locale
 import curses
 
-from client.util.funcutils import Observer
-from client.uilayer.uiapplication.MainWindow import MainWindow
+from ..util.funcutils import Observer
+from .uiapplication.MainWindow import MainWindow
 
 """
 Standard curses user interface.

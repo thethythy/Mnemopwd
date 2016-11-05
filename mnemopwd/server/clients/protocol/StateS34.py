@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2015, Thierry Lemeunier <thierry at lemeunier dot net>
+# Copyright (c) 2015-2016, Thierry Lemeunier <thierry at lemeunier dot net>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -32,8 +32,8 @@ State S34 : search data operation
 import pickle
 import logging
 
-from server.util.funcutils import singleton
-from server.clients.protocol import StateSCC
+from ...util.funcutils import singleton
+from .StateSCC import StateSCC
 
 
 @singleton
@@ -71,7 +71,7 @@ class StateS34(StateSCC):
                     msg = b';SIB;' + si + b';' + lpsib + b';' + psib
                     client.loop.call_soon_threadsafe(client.transport.write, msg)
 
-                client.state = client.states['3'] # New client state
+                client.state = client.states['3']  # New client state
 
                 logging.info('Searching blocks [{} found] from {}'
                              .format(len(tabsibs), client.peername))

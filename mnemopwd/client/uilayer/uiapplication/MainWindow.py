@@ -30,18 +30,18 @@ import hashlib
 import os
 import time
 
-from client.util.Configuration import Configuration
-from client.util.funcutils import sfill
-from client.uilayer.uicomponents.BaseWindow import BaseWindow
-from client.uilayer.uicomponents.ButtonBox import ButtonBox
-from client.uilayer.uiapplication.LoginWindow import LoginWindow
-from client.uilayer.uiapplication.UserAccountWindow import UserAccountWindow
-from client.uilayer.uiapplication.UserAccountDeletionWindow import UserAccountDeletionWindow
-from client.uilayer.uiapplication.UnlockScreenWindow import UnlockScreenWindow
-from client.uilayer.uiapplication.EditionWindow import EditionWindow
-from client.uilayer.uiapplication.SearchWindow import SearchWindow
-from client.uilayer.uiapplication.ApplicationMenu import ApplicationMenu
-from client.uilayer.uiapplication.CreateMenu import CreateMenu
+from ...util.Configuration import Configuration
+from ...util.funcutils import sfill
+from ..uicomponents.BaseWindow import BaseWindow
+from ..uicomponents.ButtonBox import ButtonBox
+from .LoginWindow import LoginWindow
+from .UserAccountWindow import UserAccountWindow
+from .UserAccountDeletionWindow import UserAccountDeletionWindow
+from .UnlockScreenWindow import UnlockScreenWindow
+from .EditionWindow import EditionWindow
+from .SearchWindow import SearchWindow
+from .ApplicationMenu import ApplicationMenu
+from .CreateMenu import CreateMenu
 
 
 class MainWindow(BaseWindow):

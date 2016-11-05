@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2015, Thierry Lemeunier <thierry at lemeunier dot net>
+# Copyright (c) 2015-2016, Thierry Lemeunier <thierry at lemeunier dot net>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -32,11 +32,11 @@ State SCC : Challenge Controller
 import hashlib
 import base64
 
-from pyelliptic import hmac_sha512
-from pyelliptic import hmac_sha256
+from ....pyelliptic import hmac_sha512
+from ....pyelliptic import hmac_sha256
 
 
-class StateSCC():
+class StateSCC:
     """Challenge controller and others useful methods"""
     
     def control_challenge(self, client, data, var):

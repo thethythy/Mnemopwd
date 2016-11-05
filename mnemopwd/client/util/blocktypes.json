@@ -1,19 +1,25 @@
 {
-        "1" : { "1" : { "name" : "Email account", "option" : "False" },
-                "2" : { "name" : "Provider", "option" : "False" },
-                "3" : { "name" : "Address", "option" : "False" },
-                "4" : { "name" : "Password", "option" : "False" },
-                "5" : { "name" : "Note", "option" : "True" }
-        },
-        "2" : { "1" : { "name" : "User account", "option" : "False" },
-                "2" : { "name" : "Application", "option" : "False" },
-                "3" : { "name" : "Login", "option" : "False" },
-                "4" : { "name" : "Password", "option" : "False" },
-                "5" : { "name" : "Note", "option" : "True" }
-        },
-        "3" : { "1" : { "name" : "PIN code", "option" : "False" },
-                "2" : { "name" : "Device", "option" : "False" },
-                "3" : { "name" : "Code", "option" : "False" },
-                "4" : { "name" : "Note", "option" : "True" }
-        }
+  "1" : { "1" : { "name" : "Email Account", "option" : "False" },
+          "2" : { "name" : "Description", "option" : "False" },
+          "3" : { "name" : "Username", "option" : "False" },
+          "4" : { "name" : "Password", "option" : "False" },
+          "5" : { "name" : "Note", "option" : "True" }
+  },
+  "2" : { "1" : { "name" : "Web Login", "option" : "False" },
+          "2" : { "name" : "Description", "option" : "False" },
+          "3" : { "name" : "Username", "option" : "False" },
+          "4" : { "name" : "Password", "option" : "False" },
+          "5" : { "name" : "URL", "option" : "True" }
+  },
+  "3" : { "1" : { "name" : "User Account", "option" : "False" },
+          "2" : { "name" : "Description", "option" : "False" },
+          "3" : { "name" : "Login", "option" : "False" },
+          "4" : { "name" : "Password", "option" : "False" },
+          "5" : { "name" : "Note", "option" : "True" }
+  },
+  "4" : { "1" : { "name" : "Combination", "option" : "False" },
+          "2" : { "name" : "Description", "option" : "False" },
+          "3" : { "name" : "Code", "option" : "False" },
+          "4" : { "name" : "Note", "option" : "True" }
+  }
 }

@@ -41,8 +41,11 @@ import os
 import stat
 import json
 
-from client.util.funcutils import is_none
-from common.util.X509 import X509
+import mnemopwd
+from .funcutils import is_none
+from ...common.util.X509 import X509
+
+here = os.path.abspath(os.path.dirname(__file__))
 
 
 class MyParserAction(argparse.Action):
@@ -72,14 +75,14 @@ class Configuration:
 
     configfile = os.path.expanduser('~') + '/.mnemopwdc'  # Configuration file
     certfile = 'None'        # Default certificat X509 file
-    version = '1.0'          # Client version
+    version = mnemopwd.__version__  # Client version
     server = '127.0.0.1'     # Default server IP
     port = 62230             # Default server port
     port_min = 49152         # Minimum port value
     port_max = 65535         # Maximum port value
-    loglevel = 'DEBUG'       # Default logging level
+    loglevel = None          # Logging level: None or DEBUG
     poolsize = 1             # Pool executor size
-    queuesize = 500          # Queue size: up to 500 commands can be scheduled
+    queuesize = 25           # Queue size: up to 25 commands can be scheduled
     curve1 = 'sect571r1'     # Curve name for the first stage
     cipher1 = 'aes-256-cbc'  # Cipher name for the first stage
     curve2 = 'None'          # Curve name for the second stage
@@ -88,11 +91,11 @@ class Configuration:
     cipher3 = 'None'         # Cipher name for the third stage
     action = 'start'         # Default action if not given
     timeout = 5              # Timeout on connection request
-    lock = 1                 # Time before lock screen
+    lock = 1                 # Time before lock screen (1 minute)
 
     @staticmethod
     def __test_cert_file__(parser, certfile):
-        """Test existence and permissions of certificat file"""
+        """Test existence of certificat file"""
         if not os.path.exists(certfile):
             parser.error("invalid certificat file {} (it not exists)".format(certfile))
         return True
@@ -146,14 +149,14 @@ class Configuration:
             'timeout': str(Configuration.timeout) + " # Timeout on connection request"
         }
         fileparser['client'] = {
-            'curve1': Configuration.curve1 + " # Values allowed: ...",
-            'cipher1': Configuration.cipher1 + " # Values allowed: ...",
-            'curve2': Configuration.curve2 + " # Values allowed: None ...",
-            'cipher2': Configuration.cipher2 + " # Values allowed: None ...",
-            'curve3': Configuration.curve3 + " # Values allowed: None ...",
-            'cipher3': Configuration.cipher3 + " # Values allowed: None ...",
+            'curve1': Configuration.curve1 + " # Values allowed: secp521r1, sect571r1, secp384r1, etc.",
+            'cipher1': Configuration.cipher1 + " # Values allowed: aes-128-cbc, aes-256-cbc, etc.",
+            'curve2': Configuration.curve2 + " # Values allowed: None, secp521r1, sect571r1, secp384r1, etc.",
+            'cipher2': Configuration.cipher2 + " # Values allowed: None, aes-128-cbc, aes-256-cbc, etc.",
+            'curve3': Configuration.curve3 + " # Values allowed: None, secp521r1, sect571r1, secp384r1, etc.",
+            'cipher3': Configuration.cipher3 + " # Values allowed: None, aes-128-cbc, aes-256-cbc, etc.",
             'lock': str(Configuration.lock) +
-                    " # Values allowed: 0 or a positive integer"
+                    " # Lock screen - Values allowed: 0 or a positive integer"
         }
         with open(Configuration.configfile, 'w') as configfile:
             fileparser.write(configfile)
@@ -236,5 +239,5 @@ class Configuration:
                 exit(1)
 
         # Load SIB types
-        with open('client/util/blocktypes.json', 'rt') as jsonfile:
+        with open(os.path.join(here, 'blocktypes.json'), 'rt') as jsonfile:
             Configuration.btypes = json.load(jsonfile)

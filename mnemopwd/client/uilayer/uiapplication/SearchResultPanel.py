@@ -28,9 +28,9 @@
 import curses
 import curses.ascii
 
-from client.util.Configuration import Configuration
-from client.uilayer.uicomponents.MetaButtonBox import MetaButtonBox
-from client.uilayer.uicomponents.BaseWindow import BaseWindow
+from ...util.Configuration import Configuration
+from ..uicomponents.MetaButtonBox import MetaButtonBox
+from ..uicomponents.BaseWindow import BaseWindow
 
 
 class SearchResultPanel(BaseWindow):

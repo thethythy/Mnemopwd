@@ -29,9 +29,9 @@
 State S31 : Configuration
 """
 
-from client.util.funcutils import singleton
-from client.corelayer.protocol.StateSCC import StateSCC
-from common.KeyHandler import KeyHandler
+from ...util.funcutils import singleton
+from .StateSCC import StateSCC
+from ....common.KeyHandler import KeyHandler
 
 
 @singleton

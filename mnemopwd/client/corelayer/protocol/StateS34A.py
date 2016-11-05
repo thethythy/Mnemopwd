@@ -29,9 +29,10 @@
 State S34 : SearchData
 """
 
-from client.util.funcutils import singleton
-from client.corelayer.protocol.StateSCC import StateSCC
 import pickle
+
+from ...util.funcutils import singleton
+from .StateSCC import StateSCC
 
 
 @singleton

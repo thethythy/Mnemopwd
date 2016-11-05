@@ -31,10 +31,11 @@ import socket
 import ssl
 import time
 import concurrent.futures
+import os
 
-from client.util.Configuration import Configuration
-from client.util.funcutils import Subject
-from client.corelayer.protocol.ProtocolHandler import ProtocolHandler
+from ..util.Configuration import Configuration
+from ..util.funcutils import Subject
+from .protocol.ProtocolHandler import ProtocolHandler
 
 """
 Client part of MnemoPwd application.
@@ -73,6 +74,8 @@ class ClientCore(Subject):
                                 level=Configuration.loglevel,
                                 format='%(asctime)s %(levelname)s %(message)s',
                                 datefmt='%m/%d/%Y %I:%M:%S')
+        else:
+            logging.basicConfig(filename=os.devnull)
 
         # Create a task queue
         self.queue = asyncio.Queue(

@@ -32,17 +32,17 @@ import socket
 import ssl
 import time
 from pathlib import Path
-from server.server import Server
-from server.util.Configuration import Configuration
-from pyelliptic import ECC
-from pyelliptic import OpenSSL
-from pyelliptic import Cipher
-from pyelliptic import pbkdf2
-from pyelliptic import hmac_sha512
-from pyelliptic import hmac_sha256
+from mnemopwd.server.server import Server
+from mnemopwd.server.util.Configuration import Configuration
+from mnemopwd.pyelliptic import ECC
+from mnemopwd.pyelliptic import OpenSSL
+from mnemopwd.pyelliptic import Cipher
+from mnemopwd.pyelliptic import pbkdf2
+from mnemopwd.pyelliptic import hmac_sha256
 
 # -----------------------------------------------------------------------------
 # Test S0
+
 
 class Test_Server_Client_S0(threading.Thread):
     def __init__(self, host, port, test, number):
@@ -92,6 +92,7 @@ class Test_Server_Client_S0(threading.Thread):
 
 # -----------------------------------------------------------------------------
 # Test S1
+
 
 class Test_Server_Client_S1_OK(Test_Server_Client_S0):
     def __init__(self, host, port, test, number):
@@ -147,6 +148,7 @@ class Test_Server_Client_S1_OK(Test_Server_Client_S0):
             connect.close()
             print("Client", self.number, self.sockname, ": disconnection with the server")
 
+
 class Test_Server_Client_S1_KO(Test_Server_Client_S1_OK):
     def __init__(self, host, port, test, number):
         Test_Server_Client_S1_OK.__init__(self,host,port,test,number)
@@ -181,6 +183,7 @@ class Test_Server_Client_S1_KO(Test_Server_Client_S1_OK):
             print("Use Ctrl+c to finish the test")
 
 # -----------------------------------------------------------------------------
+
 
 class Test_ServerTestCase(unittest.TestCase):
     

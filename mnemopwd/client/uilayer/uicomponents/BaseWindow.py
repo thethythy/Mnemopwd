@@ -28,7 +28,7 @@
 import curses
 import curses.ascii
 
-from client.uilayer.uicomponents.Component import Component
+from .Component import Component
 
 
 class BaseWindow(Component):

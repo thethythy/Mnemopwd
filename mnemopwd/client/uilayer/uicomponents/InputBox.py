@@ -27,9 +27,9 @@
 
 import curses
 import curses.ascii
-from client.uilayer.uicomponents.TextEditor import TextEditor
-from client.uilayer.uicomponents.SecretTextEditor import SecretTextEditor
-from client.uilayer.uicomponents.Component import Component
+from .TextEditor import TextEditor
+from .SecretTextEditor import SecretTextEditor
+from .Component import Component
 
 
 class InputBox(Component):

@@ -25,9 +25,7 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import curses
-
-from client.uilayer.uicomponents.BaseWindow import BaseWindow
+from .BaseWindow import BaseWindow
 
 
 class TitledOnBorderWindow(BaseWindow):

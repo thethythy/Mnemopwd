@@ -27,9 +27,9 @@
 
 import curses
 
-from client.uilayer.uicomponents.TitledBorderWindow import TitledBorderWindow
-from client.uilayer.uicomponents.InputBox import InputBox
-from client.uilayer.uicomponents.ButtonBox import ButtonBox
+from ..uicomponents.TitledBorderWindow import TitledBorderWindow
+from ..uicomponents.InputBox import InputBox
+from ..uicomponents.ButtonBox import ButtonBox
 
 
 class UserAccountDeletionWindow(TitledBorderWindow):
@@ -93,6 +93,7 @@ class UserAccountDeletionWindow(TitledBorderWindow):
             return False
 
     def start(self, timeout=-1):
+        """See mother class"""
         while True:
             result = TitledBorderWindow.start(self)  # Default controller
 

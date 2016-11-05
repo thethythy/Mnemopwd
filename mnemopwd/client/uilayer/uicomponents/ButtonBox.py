@@ -26,7 +26,7 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import curses
-from client.uilayer.uicomponents.Component import Component
+from .Component import Component
 
 
 class ButtonBox(Component):

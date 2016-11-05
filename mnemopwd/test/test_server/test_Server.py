@@ -32,20 +32,21 @@ import ssl
 import time
 import pickle
 from pathlib import Path
-from server.server import Server
-from server.util.Configuration import Configuration
-from common.KeyHandler import KeyHandler
-from common.SecretInfoBlock import SecretInfoBlock
-from pyelliptic import ECC
-from pyelliptic import OpenSSL
-from pyelliptic import Cipher
-from pyelliptic import pbkdf2
-from pyelliptic import hmac_sha512
-from pyelliptic import hmac_sha256
+from mnemopwd.server.server import Server
+from mnemopwd.server.util.Configuration import Configuration
+from mnemopwd.common.KeyHandler import KeyHandler
+from mnemopwd.common.SecretInfoBlock import SecretInfoBlock
+from mnemopwd.pyelliptic import ECC
+from mnemopwd.pyelliptic import OpenSSL
+from mnemopwd.pyelliptic import Cipher
+from mnemopwd.pyelliptic import pbkdf2
+from mnemopwd.pyelliptic import hmac_sha512
+from mnemopwd.pyelliptic import hmac_sha256
 import hashlib
 
 # -----------------------------------------------------------------------------
 # Test S0
+
 
 class Test_Server_Client_S0(threading.Thread):
     def __init__(self, host, port, test, number):
@@ -92,6 +93,7 @@ class Test_Server_Client_S0(threading.Thread):
 
 # -----------------------------------------------------------------------------
 # Test S1
+
 
 class Test_Server_Client_S1_OK(Test_Server_Client_S0):
     def __init__(self, host, port, test, number):
@@ -148,6 +150,7 @@ class Test_Server_Client_S1_OK(Test_Server_Client_S0):
             connect.close()
             print("Client", self.number, self.sockname, ": disconnection with the server")
 
+
 class Test_Server_Client_S1_KO(Test_Server_Client_S1_OK):
     def __init__(self, host, port, test, number):
         Test_Server_Client_S1_OK.__init__(self,host,port,test,number)
@@ -182,6 +185,7 @@ class Test_Server_Client_S1_KO(Test_Server_Client_S1_OK):
 
 # -----------------------------------------------------------------------------
 # Test S21
+
 
 class Test_Server_Client_S21_OK(Test_Server_Client_S1_OK):
     def __init__(self, host, port, test, number, begin=None):
@@ -228,6 +232,7 @@ class Test_Server_Client_S21_OK(Test_Server_Client_S1_OK):
             connect.close()
             print("Client", self.number, self.sockname, ": disconnection with the server")
 
+
 class Test_Server_Client_S21_KO_ID(Test_Server_Client_S21_OK):
     def __init__(self, host, port, test, number):
         Test_Server_Client_S1_OK.__init__(self,host,port,test,number)
@@ -257,6 +262,7 @@ class Test_Server_Client_S21_KO_ID(Test_Server_Client_S21_OK):
         finally:
             connect.close()
             print("Client", self.number, self.sockname, ": disconnection with the server")
+
 
 class Test_Server_Client_S21_KO_COUNT(Test_Server_Client_S21_KO_ID):
     def __init__(self, host, port, test, number):
@@ -290,6 +296,7 @@ class Test_Server_Client_S21_KO_COUNT(Test_Server_Client_S21_KO_ID):
 
 # -----------------------------------------------------------------------------
 # Test S22
+
 
 class Test_Server_Client_S22_OK(Test_Server_Client_S1_OK):
     def __init__(self, host, port, test, number, login=None, begin=None):
@@ -338,6 +345,7 @@ class Test_Server_Client_S22_OK(Test_Server_Client_S1_OK):
             connect.close()
             print("Client", self.number, self.sockname, ": disconnection with the server")
 
+
 class Test_Server_Client_S22_KO_ID(Test_Server_Client_S22_OK):
     def __init__(self, host, port, test, number, begin=None):
         Test_Server_Client_S22_OK.__init__(self,host,port,test,number)
@@ -369,6 +377,7 @@ class Test_Server_Client_S22_KO_ID(Test_Server_Client_S22_OK):
         finally:
             connect.close()
             print("Client", self.number, self.sockname, ": disconnection with the server")
+
 
 class Test_Server_Client_S22_KO_COUNT(Test_Server_Client_S22_OK):
     def __init__(self, host, port, test, number, begin=None):
@@ -404,6 +413,7 @@ class Test_Server_Client_S22_KO_COUNT(Test_Server_Client_S22_OK):
 
 # -----------------------------------------------------------------------------
 # Test S31
+
 
 class Test_Server_Client_S31_OK_SAME_CONFIG(Test_Server_Client_S21_OK):
     def __init__(self, host, port, test, number, begin=None):
@@ -454,6 +464,7 @@ class Test_Server_Client_S31_OK_SAME_CONFIG(Test_Server_Client_S21_OK):
             connect.close()
             print("Client", self.number, self.sockname, ": disconnection with the server")
 
+
 class Test_Server_Client_S31_OK_NEW_CONFIG(Test_Server_Client_S31_OK_SAME_CONFIG):
     def __init__(self, host, port, test, number, begin=None):
         Test_Server_Client_S31_OK_SAME_CONFIG.__init__(self,host,port,test,number)
@@ -486,6 +497,7 @@ class Test_Server_Client_S31_OK_NEW_CONFIG(Test_Server_Client_S31_OK_SAME_CONFIG
         finally:
             connect.close()
             print("Client", self.number, self.sockname, ": disconnection with the server")
+
 
 class Test_Server_Client_S31_KO(Test_Server_Client_S31_OK_SAME_CONFIG):
     def __init__(self, host, port, test, number, begin=None):
@@ -524,6 +536,7 @@ class Test_Server_Client_S31_KO(Test_Server_Client_S31_OK_SAME_CONFIG):
 
 # -----------------------------------------------------------------------------
 # Test S32
+
 
 class Test_Server_Client_S32_OK(Test_Server_Client_S31_OK_SAME_CONFIG):
     def __init__(self, host, port, test, number, nbsibs, begin=None):
@@ -621,6 +634,7 @@ class Test_Server_Client_S32_OK(Test_Server_Client_S31_OK_SAME_CONFIG):
 # -----------------------------------------------------------------------------
 # Test S33
 
+
 class Test_Server_Client_S33_OK(Test_Server_Client_S31_OK_SAME_CONFIG):
     def __init__(self, host, port, test, number, begin=None):
         Test_Server_Client_S31_OK_SAME_CONFIG.__init__(self,host,port,test,number)
@@ -671,6 +685,7 @@ class Test_Server_Client_S33_OK(Test_Server_Client_S31_OK_SAME_CONFIG):
 
 # -----------------------------------------------------------------------------
 # Test S34
+
 
 class Test_Server_Client_S34_OK(Test_Server_Client_S31_OK_SAME_CONFIG):
     def __init__(self, host, port, test, number, nbsibs, begin=None):
@@ -766,6 +781,7 @@ class Test_Server_Client_S34_OK(Test_Server_Client_S31_OK_SAME_CONFIG):
         finally:
             connect.close()
             print("Client", self.number, self.sockname, ": disconnection with the server")
+
 
 class Test_Server_Client_S34_OK_NEW_CONFIG(Test_Server_Client_S31_OK_NEW_CONFIG):
     def __init__(self, host, port, test, number, nbsibs, begin=None):
@@ -867,6 +883,7 @@ class Test_Server_Client_S34_OK_NEW_CONFIG(Test_Server_Client_S31_OK_NEW_CONFIG)
 # -----------------------------------------------------------------------------
 # Test S35
 
+
 class Test_Server_Client_S35_OK_1(Test_Server_Client_S31_OK_SAME_CONFIG):
     def __init__(self, host, port, test, number, begin=None):
         Test_Server_Client_S31_OK_SAME_CONFIG.__init__(self,host,port,test,number)
@@ -913,6 +930,7 @@ class Test_Server_Client_S35_OK_1(Test_Server_Client_S31_OK_SAME_CONFIG):
         finally:
             connect.close()
             print("Client", self.number, self.sockname, ": disconnection with the server")
+
 
 class Test_Server_Client_S35_OK_2(Test_Server_Client_S31_OK_SAME_CONFIG):
     def __init__(self, host, port, test, number, begin=None):
@@ -966,6 +984,7 @@ class Test_Server_Client_S35_OK_2(Test_Server_Client_S31_OK_SAME_CONFIG):
             connect.close()
             print("Client", self.number, self.sockname, ": disconnection with the server")
 
+
 class Test_Server_Client_S35_KO(Test_Server_Client_S35_OK_1):
     def __init__(self, host, port, test, number, begin=None):
         Test_Server_Client_S35_OK_1.__init__(self,host,port,test,number)
@@ -1002,6 +1021,7 @@ class Test_Server_Client_S35_KO(Test_Server_Client_S35_OK_1):
         finally:
             connect.close()
             print("Client", self.number, self.sockname, ": disconnection with the server")
+
 
 class Test_Server_Client_S35_OK_NEW_CONFIG(Test_Server_Client_S31_OK_NEW_CONFIG):
     def __init__(self, host, port, test, number, begin=None):
@@ -1050,6 +1070,7 @@ class Test_Server_Client_S35_OK_NEW_CONFIG(Test_Server_Client_S31_OK_NEW_CONFIG)
 # -----------------------------------------------------------------------------
 # Test S36
 
+
 class Test_Server_Client_S36_OK(Test_Server_Client_S31_OK_SAME_CONFIG):
     def __init__(self, host, port, test, number, begin=None):
         Test_Server_Client_S31_OK_SAME_CONFIG.__init__(self,host,port,test,number)
@@ -1094,6 +1115,7 @@ class Test_Server_Client_S36_OK(Test_Server_Client_S31_OK_SAME_CONFIG):
             connect.close()
             print("Client", self.number, self.sockname, ": disconnection with the server")
 
+
 class Test_Server_Client_S36_KO_1(Test_Server_Client_S36_OK):
     def __init__(self, host, port, test, number, begin=None):
         Test_Server_Client_S36_OK.__init__(self,host,port,test,number)
@@ -1131,6 +1153,7 @@ class Test_Server_Client_S36_KO_1(Test_Server_Client_S36_OK):
             connect.close()
             print("Client", self.number, self.sockname, ": disconnection with the server")
 
+
 class Test_Server_Client_S36_KO_2(Test_Server_Client_S36_KO_1):
     def __init__(self, host, port, test, number, begin=None):
         Test_Server_Client_S36_KO_1.__init__(self,host,port,test,number)
@@ -1163,6 +1186,7 @@ class Test_Server_Client_S36_KO_2(Test_Server_Client_S36_KO_1):
 
 # -----------------------------------------------------------------------------
 # Test S37
+
 
 class Test_Server_Client_S37_OK(Test_Server_Client_S31_OK_SAME_CONFIG):
     def __init__(self, host, port, test, number, begin=None):
@@ -1217,6 +1241,7 @@ class Test_Server_Client_S37_OK(Test_Server_Client_S31_OK_SAME_CONFIG):
             connect.close()
             print("Client", self.number, self.sockname, ": disconnection with the server")
 
+
 class Test_Server_Client_S37_KO_1(Test_Server_Client_S37_OK):
     def __init__(self, host, port, test, number, begin=None):
         Test_Server_Client_S37_OK.__init__(self,host,port,test,number)
@@ -1254,6 +1279,7 @@ class Test_Server_Client_S37_KO_1(Test_Server_Client_S37_OK):
             connect.close()
             print("Client", self.number, self.sockname, ": disconnection with the server")
 
+
 class Test_Server_Client_S37_KO_2(Test_Server_Client_S37_KO_1):
     def __init__(self, host, port, test, number, begin=None):
         Test_Server_Client_S37_KO_1.__init__(self,host,port,test,number)
@@ -1285,6 +1311,7 @@ class Test_Server_Client_S37_KO_2(Test_Server_Client_S37_KO_1):
             print("Client", self.number, self.sockname, ": disconnection with the server")
 
 # -----------------------------------------------------------------------------
+
 
 class Test_ServerTestCase(unittest.TestCase):
     

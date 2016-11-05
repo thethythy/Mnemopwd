@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # coding: utf-8
 
 # Copyright (c) 2015-2016, Thierry Lemeunier <thierry at lemeunier dot net>
@@ -7,7 +6,7 @@
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
-# 1. Redistributions of source code must retain the above copyright notice, this 
+# 1. Redistributions of source code must retain the above copyright notice, this
 # list of conditions and the following disclaimer.
 #
 # 2. Redistributions in binary form must reproduce the above copyright notice,
@@ -26,17 +25,26 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from common.util.MnemopwdFingerPrint import MnemopwdFingerPrint
-from server.util.Configuration import Configuration
-from server.util.Daemon import Daemon
-from server.server import Server
+from os import path
+
+from .common.util.MnemopwdFingerPrint import MnemopwdFingerPrint
+from .server.util.Configuration import Configuration
+from .server.util.Daemon import Daemon
+from .server.server import Server
+
+here = path.abspath(path.dirname(__file__))
 
 
 class ServerDaemon(Daemon):
+    """Start server as a daemon"""
+
     def run(self):
+        """Start server"""
         Server().start()
 
-if __name__ == "__main__":
-    MnemopwdFingerPrint().control_fingerprint()
+
+def main():
+    """Main function"""
+    MnemopwdFingerPrint().control_fingerprint(prefix=here)
     Configuration.configure()
     ServerDaemon().main()

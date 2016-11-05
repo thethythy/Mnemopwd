@@ -27,7 +27,7 @@
 
 import curses
 
-from client.uilayer.uicomponents.BaseWindow import BaseWindow
+from .BaseWindow import BaseWindow
 
 
 class TitledBorderWindow(BaseWindow):

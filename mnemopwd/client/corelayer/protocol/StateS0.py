@@ -30,8 +30,8 @@
 State SO : KeySharing
 """
 
-from client.util.funcutils import singleton
-from pyelliptic import ECC
+from ...util.funcutils import singleton
+from ....pyelliptic import ECC
 
 
 @singleton

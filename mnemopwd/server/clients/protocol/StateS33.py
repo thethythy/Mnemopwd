@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2015, Thierry Lemeunier <thierry at lemeunier dot net>
+# Copyright (c) 2015-2016, Thierry Lemeunier <thierry at lemeunier dot net>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -31,9 +31,9 @@ State S33 : Deletion
 
 import logging
 
-from server.util.funcutils import singleton
-from server.clients.protocol import StateSCC
-from server.clients.DBHandler import DBHandler
+from ...util.funcutils import singleton
+from .StateSCC import StateSCC
+from ..DBHandler import DBHandler
 
 
 @singleton
@@ -73,7 +73,7 @@ class StateS33(StateSCC):
                 exist = DBHandler.exist(client.dbpath, filename)
 
                 # If login is unknown
-                if not exist :
+                if not exist:
                     msg = b'ERROR;application protocol error'
                     client.loop.call_soon_threadsafe(client.transport.write, msg)
                     raise Exception('user account does not exist')

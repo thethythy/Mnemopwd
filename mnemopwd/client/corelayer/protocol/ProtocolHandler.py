@@ -28,9 +28,9 @@
 import asyncio
 import threading
 
-from client.corelayer.protocol import *
-from client.util.Configuration import Configuration
-from client.util.funcutils import is_none
+from . import *
+from ...util.Configuration import Configuration
+from ...util.funcutils import is_none
 
 """
 Protocolar handler of the secure connection with the server
@@ -93,27 +93,34 @@ class ProtocolHandler(asyncio.Protocol):
         self.lock = threading.Lock()
 
     def connection_made(self, transport):
+        """See mother class"""
         self.transport = transport
         self.peername = transport.get_extra_info('peername')
         self.state = self.states['0']  # State 0 at the beginning
 
     def data_received(self, data):
+        """See mother class"""
         # Wait for actual execution before scheduling a new execution
         with self.lock:
             self.loop.run_in_executor(None, self.state.do, self,
                                       data)  # Future execution
 
     def connection_lost(self, exc):
+        """See mother class"""
         if exc:
             self.loop.run_in_executor(None, self.notify,
                                       'connection.state.error',
                                       str(exc).capitalize())
+        else:
+            self.loop.run_in_executor(None, self.notify,
+                                      'connection.state.error',
+                                      'Connection closed')
         asyncio.run_coroutine_threadsafe(self.core.close(), self.loop)
 
     def exception_handler(self, exc):
         """Exception handler for actions executed by the executor"""
         self.loop.run_in_executor(None, self.notify, 'connection.state.error',
-                                  str(exc).capitalize())
+                                  str(exc).capitalize()[:50] + '...')
         asyncio.run_coroutine_threadsafe(self.core.close(), self.loop)
 
     def notify(self, key, value):

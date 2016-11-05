@@ -30,8 +30,8 @@
 State S1 : Session
 """
 
-from client.util.Configuration import Configuration
-from client.util.funcutils import singleton
+from ...util.Configuration import Configuration
+from ...util.funcutils import singleton
 
 
 @singleton
