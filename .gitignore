@@ -1,5 +1,8 @@
 __pycache__
 nbproject
+build
+dist
+MnemoPwd.egg-info
 *.log
 *.bak
 *.db
