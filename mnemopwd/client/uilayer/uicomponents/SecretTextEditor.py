@@ -63,7 +63,7 @@ class SecretTextEditor(TextEditor):
                     self.stext = self.stext + \
                                  (self.win.instr(0, x - 1, 2)).decode()
                 if x > 0:
-                    self.win.addstr(y, x - 1, '♦')  # Mask key
+                    self.win.addstr(y, x - 1, chr(0x2666))  # Mask key
                 self.win.move(y, x)
         
         return self.stext

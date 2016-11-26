@@ -64,6 +64,12 @@ class ClientUI(Thread, Observer):
 
         # curses initialization
         self.window = curses.initscr()
+
+        if curses.COLS < 80 or curses.LINES < 24:
+            curses.endwin()
+            print("Please consider to use at least a 80x24 terminal size.")
+            raise Exception()
+
         self.window.keypad(1)  # Let special keys be a single key
         curses.noecho()  # No echoing key pressed
         curses.nonl()  # Leave newline mode

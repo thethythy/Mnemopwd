@@ -63,6 +63,9 @@ class InputBox(Component):
         self.cursor_y = 0
         self.cursor_x = 0
 
+        # Cursor shape
+        self.cursor_shape = chr(0x2590) + chr(0x258C)  # Like a terminal cursor
+
     def is_editable(self):
         """This component is editable"""
         return True
@@ -73,7 +76,8 @@ class InputBox(Component):
 
     def focus_on(self):
         """See mother class"""
-        self.editorbox.addstr(self.cursor_y, self.cursor_x, '█', curses.A_BLINK)
+        self.editorbox.addstr(self.cursor_y, self.cursor_x, self.cursor_shape,
+                              curses.A_BLINK)
         self.editorbox.move(self.cursor_y, self.cursor_x)
         self.editorbox.refresh()
 

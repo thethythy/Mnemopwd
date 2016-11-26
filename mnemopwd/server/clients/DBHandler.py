@@ -161,11 +161,11 @@ class DBHandler:
                 if sib.nbInfo > 0:
                     sib.keyH = keyH  # Set actual KeyHandler
                     if Configuration.search_mode == 'first':
-                        if re.search(pattern, sib['info1'].decode()) is not None:
+                        if re.search(pattern.upper(), sib['info1'].decode().upper()) is not None:
                             tabsibs.append((i, sib))  # Matching so add sib
                     else:
                         for j in range(1, sib.nbInfo + 1):  # For all info
-                            if re.search(pattern, sib['info' + str(j)].decode()) is not None:
+                            if re.search(pattern.upper(), sib['info' + str(j)].decode().upper()) is not None:
                                 tabsibs.append((i, sib))  # Matching so add sib
                                 break  # One info match so stop loop now
         return tabsibs
