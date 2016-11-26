@@ -24,7 +24,7 @@ Features
 - Server identity can be controlled by X.509 certificate (optional TLS feature)
 - Client and server share a master secret via ECDH scheme
 - Each secret information is encrypted with the ECIES scheme
-- Integrity is controlled by two hmac (ECIES scheme + a 512-bits hmac per block)
+- Integrity is controlled by two HMAC (ECIES scheme + a 512-bits HMAC per block)
 - Possibility of three stages of data encryption by client's configuration
 - Keys are computed on the fly by the client and the server
 - Keys are never stored by the server or by the client
@@ -33,24 +33,24 @@ Features
 - Server running in background (only on POSIX systems)
 - UML model of the secure application protocol (see https://github.com/thethythy/Mnemopwd)
 
-Installation (Uninstallation)
-=============================
+Installation (and uninstalling)
+===============================
 
 They are two installation modes:
 
 - PIP Installation
 
-With PIP just hit in a terminal: `pip install MnemoPwd`
-For uninstallation just hit in a terminal: `pip uninstall MnemoPwd`
+With PIP just hit in a terminal: ``pip install MnemoPwd``
+For uninstalling just hit in a terminal: ``pip uninstall MnemoPwd``
 Do not forget to delete configuration files and the database directory (see configuration explanation).
 
 For more information about PIP see https://pip.readthedocs.io/.
 
 - Source Installation
 
-You can get the ZIP archive from GitHub (https://github.com/thethythy/Mnemopwd) using the button `Clone or download`.
+You can get the ZIP archive from GitHub (https://github.com/thethythy/Mnemopwd) using the button ``Clone or download``.
 Just unzip the archive file and go in the source directory.
-For uninstallation, delete the ZIP archive and the source directory.
+For uninstalling, delete the ZIP archive and the source directory.
 Do not forget to delete configuration files and the database directory (see configuration explanation).
 
 Configuration
@@ -66,7 +66,7 @@ to indicate a private key file and a certificate file. You can change the follow
 - Host IP (by default it is the address in the local network);
 - Log level;
 - Private key file and certificate file (none by default);
-- Host port (62230 by default);
+- Host port (``62230`` by default);
 - Path to the database directory (by default it is ``~/mnemopwddata``);
 - Some other options about logging.
 
