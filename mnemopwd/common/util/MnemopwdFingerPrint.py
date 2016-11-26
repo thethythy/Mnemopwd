@@ -37,8 +37,8 @@ here = path.abspath(path.dirname(__file__))
 class MnemopwdFingerPrint:
     """Mechanism to control code has not been modified"""
 
-    path_list = ['serverctl.py', 'clientctl.py', 'common', 'pyelliptic',
-                 'client', 'server']
+    path_list = ['serverctl.py', 'clientctl.py', '__init__.py', 'common',
+                 'pyelliptic', 'client', 'server']
     module_list = []
 
     def create_module_list(self, prefix=None):

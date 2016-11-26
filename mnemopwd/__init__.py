@@ -26,5 +26,5 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 __author__ = "Thierry Lemeunier <thierry at lemeunier dot net>"
-__date__ = "$16 octobre 2016 11:28:00$"
-__version__ = "1.0.0rc1"
+__date__ = "$26 novembre 2016 10:54:00$"
+__version__ = "1.0.0rc2"
