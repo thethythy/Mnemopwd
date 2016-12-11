@@ -60,7 +60,7 @@ class TextEditor:
         self.win = win
         (self.maxy, self.maxx) = win.getmaxyx()
         self.maxy -= 1
-        self.maxx -= 1
+        self.maxx -= 2
         self.stripspaces = 1
         win.keypad(1)
 

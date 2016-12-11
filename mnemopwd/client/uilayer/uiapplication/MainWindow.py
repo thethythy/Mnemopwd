@@ -155,7 +155,11 @@ class MainWindow(BaseWindow):
             self.editscr.set_type(number)
 
         # Do edition
-        result, sib = self.editscr.start()
+        try:
+            result, sib = self.editscr.start()
+        except:
+            self.update_status('Edition impossible: a string is too long (close then resize window).')
+            return
 
         # According to the result, save / update or delete or do nothing
         if result is True:
