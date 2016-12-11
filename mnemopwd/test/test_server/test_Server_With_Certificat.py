@@ -101,7 +101,7 @@ class Test_Server_Client_S1_OK(Test_Server_Client_S0):
         self.login = 'This is the client S21 login'.encode()
 
     def state_S1S_begin(self, connect):
-        salt, ms = pbkdf2(self.password, salt=self.login)
+        salt, ms = pbkdf2(self.password, salt=self.login, hfunc='SHA1')
         self.ms = ms
         ems = self.ephecc.encrypt(self.ms, pubkey=self.ephecc.get_pubkey())
         connect.send(b'SESSION;' + ems)
