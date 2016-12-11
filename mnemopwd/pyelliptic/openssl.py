@@ -379,13 +379,15 @@ class _OpenSSL:
                                                ctypes.c_int, ctypes.c_void_p,
                                                ctypes.c_int, ctypes.c_void_p]
         except AttributeError:
-            # The above is not compatible with all versions of OSX.
-            self.PKCS5_PBKDF2_HMAC_SHA1 = self._lib.PKCS5_PBKDF2_HMAC_SHA1
-            self.PKCS5_PBKDF2_HMAC_SHA1.restype = ctypes.c_int
-            self.PKCS5_PBKDF2_HMAC_SHA1.argtypes = [ctypes.c_void_p, ctypes.c_int,
-                                                    ctypes.c_void_p, ctypes.c_int,
-                                                    ctypes.c_int, ctypes.c_int,
-                                                    ctypes.c_void_p]
+            pass
+
+        # The above is not compatible with all versions of OSX.
+        self.PKCS5_PBKDF2_HMAC_SHA1 = self._lib.PKCS5_PBKDF2_HMAC_SHA1
+        self.PKCS5_PBKDF2_HMAC_SHA1.restype = ctypes.c_int
+        self.PKCS5_PBKDF2_HMAC_SHA1.argtypes = [ctypes.c_void_p, ctypes.c_int,
+                                                ctypes.c_void_p, ctypes.c_int,
+                                                ctypes.c_int, ctypes.c_int,
+                                                ctypes.c_void_p]
 
         self._set_ciphers()
         self._set_curves()

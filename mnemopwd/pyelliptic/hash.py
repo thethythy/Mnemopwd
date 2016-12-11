@@ -82,17 +82,17 @@ def hmac_sha512(k, m):
     return md.raw
 
 
-def pbkdf2(password, salt=None, i=10000, keylen=64):
+def pbkdf2(password, salt=None, i=10000, keylen=64, hfunc='SHA256'):
     if salt is None:
         salt = OpenSSL.rand(8)
     p_password = OpenSSL.malloc(password, len(password))
     p_salt = OpenSSL.malloc(salt, len(salt))
     output = OpenSSL.malloc(0, keylen)
-    try:
+    if hfunc == 'SHA256':
         OpenSSL.PKCS5_PBKDF2_HMAC(p_password, len(password), p_salt,
                                   len(p_salt), i, OpenSSL.EVP_sha256(),
                                   keylen, output)
-    except AttributeError:
+    else:
         OpenSSL.PKCS5_PBKDF2_HMAC_SHA1(p_password, len(password), p_salt,
                                        len(p_salt), i, keylen, output)
     return salt, output.raw

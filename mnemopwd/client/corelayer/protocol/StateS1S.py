@@ -43,7 +43,7 @@ class StateS1S:
         with handler.lock:
             try:
                 # Compute the master secret
-                salt, ms = pbkdf2(handler.password, salt=handler.login)
+                salt, ms = pbkdf2(handler.password, salt=handler.login, hfunc='SHA1')
                 ems = handler.ephecc.encrypt(ms, pubkey=handler.ephecc.get_pubkey())
 
                 # Send master secret
