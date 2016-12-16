@@ -28,6 +28,7 @@
 import curses
 
 from ..uicomponents.TitledBorderWindow import TitledBorderWindow
+from ..uicomponents.LabelBox import LabelBox
 from ..uicomponents.InputBox import InputBox
 from ..uicomponents.ButtonBox import ButtonBox
 
@@ -48,8 +49,8 @@ class UserAccountDeletionWindow(TitledBorderWindow):
                                     "User account deletion confirmation window",
                                     modal=True)
 
-        self.window.addstr(5, 2, "Login")
-        self.window.addstr(8, 2, "Password")
+        LabelBox(self, 5, 2, "Login")
+        LabelBox(self, 8, 2, "Password")
 
         # Ordered list of shortcut keys
         self.shortcuts = ['', '', 'E', 'L', 'A']

@@ -25,6 +25,55 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-__author__ = "Thierry Lemeunier <thierry at lemeunier dot net>"
-__date__ = "$16 décembre 2016 10:05:00$"
-__version__ = "1.0.0rc3"
+import curses
+from .Component import Component
+
+
+class LabelBox(Component):
+    """A simple text widget no editable and no actionable"""
+
+    def __init__(self, parent, y, x, label, show=True):
+        Component.__init__(self, parent, 1, len(label) + 1, y, x)
+        self.label = label
+        self.showOrHide = show
+        if show:
+            self._create()
+
+    def is_actionable(self):
+        """Return False (no actionable)"""
+        return False
+
+    def move(self, y, x):
+        """See mother class"""
+        self.y = y
+        self.x = x
+        self.window.erase()
+        self.window = self.parent.window.derwin(1, len(self.label) + 1, y, x)
+        self._create()
+
+    def show(self):
+        """Show the button"""
+        self.showOrHide = True
+        self._create()
+
+    def hide(self):
+        """Hide the button"""
+        self.showOrHide = False
+        self.window.clear()
+        self.window.refresh()
+
+    def close(self):
+        """See mother class"""
+        if self.showOrHide:
+            Component.close(self)
+
+    def redraw(self):
+        """See mother class"""
+        if self.showOrHide:
+            self._create()
+
+    def _create(self):
+        """Create the widget content"""
+        if self.showOrHide:
+            self.window.addstr(0, 0, self.label)
+            self.window.refresh()

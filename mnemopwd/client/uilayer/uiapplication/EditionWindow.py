@@ -29,6 +29,7 @@ import curses
 
 from ...util.Configuration import Configuration
 from ..uicomponents.TitledOnBorderWindow import TitledOnBorderWindow
+from ..uicomponents.LabelBox import LabelBox
 from ..uicomponents.ButtonBox import ButtonBox
 from ..uicomponents.InputBox import InputBox
 from ...util.funcutils import sfill
@@ -77,7 +78,7 @@ class EditionWindow(TitledOnBorderWindow):
 
             # Search label max size and get shortcuts list
             shortcuts = []
-            max_len = 0
+            max_len = len("Type")  # This label exists always
             for key, infos in btype.items():
                 if int(key) > 1:
                     max_len = max(max_len, len(infos["name"]))
@@ -93,17 +94,23 @@ class EditionWindow(TitledOnBorderWindow):
 
                 # Type name
                 if k == 1:
-                    info_comp["l_pos_y"] = label_posy
-                    info_comp["l_name"] = "Type" + sfill(max_len - 4, ' ')
-                    info_comp["c_pos_y"] = label_posy
-                    info_comp["c_pos_x"] = 2 + max_len + 1
-                    info_comp["c_object"] = info["name"]
+                    # Label
+                    label = "Type" + sfill(max_len - 4, ' ')
+                    info_comp["l_object"] = LabelBox(self, label_posy, 2,
+                                                     label, show=False)
+
+                    # Label
+                    info_comp["c_object"] = LabelBox(self, label_posy,
+                                                     2 + max_len + 1,
+                                                     info["name"], show=False)
 
                 # Other field
                 else:
-                    info_comp["l_pos_y"] = label_posy
-                    info_comp["l_name"] = info["name"] +\
-                        sfill(max_len - len(info["name"]), ' ')
+                    # Label
+                    label = info["name"] + sfill(max_len - len(info["name"]), ' ')
+                    info_comp["l_object"] = LabelBox(self, label_posy, 2, label,
+                                                     show=False)
+                    # Editor
                     optional = False
                     if info["option"] == "True":
                         optional = True
@@ -137,15 +144,11 @@ class EditionWindow(TitledOnBorderWindow):
             for i in range(1, len(infos_comp) + 1):
                 info_comp = infos_comp[i]
                 # Show label
-                self.window.addstr(info_comp["l_pos_y"], 2, info_comp["l_name"])
+                info_comp["l_object"].show()
+                items.append(info_comp["l_object"])
                 # Show component
-                if i == 1:
-                    self.window.addstr(
-                        info_comp["c_pos_y"], info_comp["c_pos_x"],
-                        info_comp["c_object"])
-                else:
-                    info_comp["c_object"].show()
-                    items.append(info_comp["c_object"])
+                info_comp["c_object"].show()
+                items.append(info_comp["c_object"])
             self.window.refresh()
 
             # Construction of shortcuts and items lists
@@ -172,11 +175,10 @@ class EditionWindow(TitledOnBorderWindow):
             infos_comp = self.cpb[self.number_type]
             for i in range(1, len(infos_comp) + 1):
                 info_comp = infos_comp[i]
-                self.window.addstr(info_comp["l_pos_y"], 2,
-                                   sfill(self.w - 3, ' '))
+                info_comp["l_object"].hide()
                 if i > 1:
                     info_comp["c_object"].clear()
-                    info_comp["c_object"].hide()
+                info_comp["c_object"].hide()
             self.window.refresh()
             self.shortcuts = []
             self.items = self._items
@@ -196,7 +198,7 @@ class EditionWindow(TitledOnBorderWindow):
         sib['info1'] = (str(self.number_type)).encode()
         # Add the block type name
         sib.nbInfo += 1
-        sib['info2'] = self.cpb[self.number_type][1]["c_object"]
+        sib['info2'] = self.cpb[self.number_type][1]["c_object"].label
         for index, item in enumerate(self.items):
             if item.is_editable():
                 if not item.option and item.value is None:
@@ -216,6 +218,9 @@ class EditionWindow(TitledOnBorderWindow):
         counter = 0
         timer = Configuration.lock * 60 * 1000  # Timer in ms
 
+        # Set first widget to be editable
+        self.index = 3
+
         while True:
             # Start default controller
             result = TitledOnBorderWindow.start(self, timeout=100)
@@ -233,6 +238,8 @@ class EditionWindow(TitledOnBorderWindow):
             if type(result) is InputBox:
                 result.focus_off()
                 self.index = (self.index + 1) % len(self.items)
+                if type(self.items[self.index]) is LabelBox:
+                    self.index += 1
 
             # Try to create or update the block
             elif result == self.saveButton:

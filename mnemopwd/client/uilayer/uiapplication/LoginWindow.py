@@ -28,6 +28,7 @@
 import curses
 
 from ..uicomponents.TitledBorderWindow import TitledBorderWindow
+from ..uicomponents.LabelBox import LabelBox
 from ..uicomponents.InputBox import InputBox
 from ..uicomponents.ButtonBox import ButtonBox
 
@@ -47,8 +48,8 @@ class LoginWindow(TitledBorderWindow):
                                     int(curses.COLS / 2) - int(size_x / 2),
                                     "Connection window", modal=True)
 
-        self.window.addstr(5, 2, "Login")
-        self.window.addstr(8, 2, "Password")
+        LabelBox(self, 5, 2, "Login")
+        LabelBox(self, 8, 2, "Password")
 
         # Ordered list of shortcut keys
         self.shortcuts = ['', '', 'N', 'L', 'A']

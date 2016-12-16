@@ -87,7 +87,11 @@ class BaseWindow(Component):
                 if self.menu and (self.index + 1) >= nbitems:
                     return 1
                 self.index = (self.index + 1) % nbitems
-                self.items[self.index].focus_on()
+                if self.items[self.index].is_editable() or \
+                   self.items[self.index].is_actionable():
+                    self.items[self.index].focus_on()
+                else:
+                    curses.ungetch(curses.KEY_DOWN)
 
             # Previous component
             elif c in [curses.KEY_UP]:
@@ -95,7 +99,11 @@ class BaseWindow(Component):
                 if self.menu and (self.index - 1) < 0:
                     return -1
                 self.index = (self.index - 1) % nbitems
-                self.items[self.index].focus_on()
+                if self.items[self.index].is_editable() or \
+                   self.items[self.index].is_actionable():
+                    self.items[self.index].focus_on()
+                else:
+                    curses.ungetch(curses.KEY_UP)
 
             # Next actionable component or edit editable component
             elif c in [curses.KEY_LEFT] and self.items[self.index].is_actionable():
