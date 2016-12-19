@@ -118,6 +118,9 @@ class UnlockScreenWindow(TitledBorderWindow):
                     return True
 
     def close(self):
-        """Close the window"""
-        self.window.erase()
+        """See mother class"""
+        if self.modal:
+            self.shadows.erase()  # Erase shadow box
+            self.shadows.refresh()
+        self.window.erase()  # Erase dialog box
         self.window.refresh()

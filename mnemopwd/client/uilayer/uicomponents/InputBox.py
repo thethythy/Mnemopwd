@@ -64,7 +64,7 @@ class InputBox(Component):
         self.cursor_x = 0
 
         # Cursor shape
-        self.cursor_shape = '█'  # Like a terminal cursor
+        self.cursor_shape = chr(0x2588)  # Like a terminal cursor
 
     def is_editable(self):
         """This component is editable"""
