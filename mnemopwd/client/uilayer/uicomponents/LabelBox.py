@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2016, Thierry Lemeunier <thierry at lemeunier dot net>
+# Copyright (c) 2016-2017, Thierry Lemeunier <thierry at lemeunier dot net>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -25,7 +25,6 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import curses
 from .Component import Component
 
 
@@ -52,12 +51,12 @@ class LabelBox(Component):
         self._create()
 
     def show(self):
-        """Show the button"""
+        """Show the label"""
         self.showOrHide = True
         self._create()
 
     def hide(self):
-        """Hide the button"""
+        """Hide the label"""
         self.showOrHide = False
         self.window.clear()
         self.window.refresh()

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2016, Thierry Lemeunier <thierry at lemeunier dot net>
+# Copyright (c) 2016-2017, Thierry Lemeunier <thierry at lemeunier dot net>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -149,7 +149,6 @@ class EditionWindow(TitledOnBorderWindow):
                 # Show component
                 info_comp["c_object"].show()
                 items.append(info_comp["c_object"])
-            self.window.refresh()
 
             # Construction of shortcuts and items lists
             self.shortcuts = info_comp["c_object"].shortcuts
@@ -179,7 +178,6 @@ class EditionWindow(TitledOnBorderWindow):
                 if i > 1:
                     info_comp["c_object"].clear()
                 info_comp["c_object"].hide()
-            self.window.refresh()
             self.shortcuts = []
             self.items = self._items
             self.number_type = self.index = 0

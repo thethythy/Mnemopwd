@@ -49,7 +49,7 @@ class Component:
         elif parent is None:
             self.window = curses.newwin(h, w, y, x)
         else:
-            self.window = self.parent
+            self.window = self.parent  # Root window aka the terminal
 
         # Clear the content to have an empty window
         self.window.clear()

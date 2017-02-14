@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2016, Thierry Lemeunier <thierry at lemeunier dot net>
+# Copyright (c) 2016-2017, Thierry Lemeunier <thierry at lemeunier dot net>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -29,6 +29,7 @@ import curses
 import curses.ascii
 
 from ...util.Configuration import Configuration
+from ..uicomponents.VertScrollBar import VertScrollBar
 from ..uicomponents.MetaButtonBox import MetaButtonBox
 from ..uicomponents.BaseWindow import BaseWindow
 
@@ -41,6 +42,7 @@ class SearchResultPanel(BaseWindow):
     def __init__(self, parent, h, w, y, x, modal=False, menu=False):
         """Create base window"""
         BaseWindow.__init__(self, parent, h, w, y, x, modal=modal, menu=menu)
+        self.scroll_bar = None
         self.scroll_pos = 0
 
     def _update_application(self, show):
@@ -61,35 +63,40 @@ class SearchResultPanel(BaseWindow):
             self.items[i].hide()
         # Move all items
         for item in self.items:
-            item.move(item.y - d, 0)
+            item.move(item.y - d, 2)
         # Show only visible items
         for i in range(self.index + d, self.index + d + (- d * self.h), - d):
             self.items[i].show()
 
     def _half_scroll_up_items(self, pos):
         """Scroll up items only from a certain position"""
-        # Hide certain visible items
+        # Hide some visible items
         end = min(len(self.items), pos + self.h - self.scroll_pos)
         for i in range(pos, end):
             self.items[i].hide()
-        # Move certain items
+        # Move some items
         for i in range(pos, len(self.items)):
-            self.items[i].move(self.items[i].y - 1, 0)
-        # Show certain visible items
+            self.items[i].move(self.items[i].y - 1, 2)
+        # Show some visible items
         for i in range(pos, end):
             self.items[i].show()
 
     def add_item(self, idblock, sib):
         """Add a component in the window"""
-        label = sib['info2'].decode()[:self.w - 4]
         nbitems = len(self.items)
+        label = sib['info2'].decode()[:self.w - 4 - 1 - 2]
         show = (nbitems + 1) <= self.h
         item = MetaButtonBox(
-            self, nbitems, 0, label, show=show, data=(idblock, sib))
+            self, nbitems, 2, label, show=show, data=(idblock, sib))
         self.items.append(item)
+        # Show or update scrolling bar
+        if self.scroll_bar is None:
+            self.scroll_bar = VertScrollBar(self, self.h, 0, 0)
+        else:
+            self.scroll_bar.update(nbitems + 1)
 
     def update_item(self, idblock_to_update, new_sib):
-        """Update an component"""
+        """Update a component"""
         for i, item in enumerate(self.items):
             idblock, sib = item.get_data()
             if idblock == idblock_to_update:
@@ -114,14 +121,20 @@ class SearchResultPanel(BaseWindow):
                 del self.items[i]
                 # Scroll up by one
                 self._half_scroll_up_items(i)
+                self.scroll_bar.update(len(self.items))
                 break
 
     def clear_content(self):
         """Delete all components"""
+        # Close buttons
         for i in range(len(self.items) - 1, -1, -1):
             self.items[i].close()
-            del self.items[i]
+        self.items = []
         self.index = 0
+        # Close scrolling bar
+        if self.scroll_bar is not None:
+            self.scroll_bar.close()
+        self.scroll_bar = None
 
     def focus_on(self):
         """This window obtains the focus"""
@@ -173,6 +186,7 @@ class SearchResultPanel(BaseWindow):
                 if (self.index + 1) < nbitems and \
                    (self.scroll_pos + 1) == self.h:
                     self._scroll_items(1)
+                    self.scroll_bar.scroll(1)
                 # Normal behaviour
                 self.scroll_pos = min(self.h - 1, self.scroll_pos + 1)
                 self.index = (self.index + 1) % nbitems
@@ -189,6 +203,7 @@ class SearchResultPanel(BaseWindow):
                 # Up by one
                 if (self.index - 1) >= 0 and self.scroll_pos == 0:
                     self._scroll_items(-1)
+                    self.scroll_bar.scroll(-1)
                 # Normal behaviour
                 self.scroll_pos = max(0, self.scroll_pos - 1)
                 self.index = (self.index - 1) % nbitems
@@ -205,3 +220,9 @@ class SearchResultPanel(BaseWindow):
                 self.items[self.index].focus_off()
                 self._update_application(False)
                 return False
+
+    def redraw(self):
+        """See the mother class"""
+        BaseWindow.redraw(self)
+        if self.scroll_bar is not None:
+            self.scroll_bar.redraw()
