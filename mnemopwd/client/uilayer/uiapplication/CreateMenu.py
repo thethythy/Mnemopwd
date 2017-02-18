@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2016, Thierry Lemeunier <thierry at lemeunier dot net>
+# Copyright (c) 2016-2017, Thierry Lemeunier <thierry at lemeunier dot net>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -44,18 +44,19 @@ class CreateMenu(BaseWindow):
         for btype in btypes.values():
             max_len = max(max_len, len((btype["1"])["name"]))
         BaseWindow.__init__(
-            self, parent, len(btypes), max_len + 3, y, x, menu=True, modal=True)
+            self, parent, len(btypes) + 2, max_len + 5, y, x, menu=True, modal=True)
+        self.window.border()
         self.window.refresh()
 
         # Add buttons (preserving the order indicated in the json file)
-        posy = 0
+        posy = 1
         for i in range(1, len(btypes) + 1):
             btype = btypes[str(i)]
             name = btype["1"]["name"]
             high = (len(btype) - 1) * 4 + 2
             if high <= (curses.LINES - 4):
                 self.items.append(MetaButtonBox(
-                    self, posy, 0,
+                    self, posy, 1,
                     name + sfill(max_len - len(name), ' '), data=i))
                 posy += 1
             else:

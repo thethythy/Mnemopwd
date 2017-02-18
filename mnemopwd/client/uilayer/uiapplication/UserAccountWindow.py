@@ -1,7 +1,7 @@
 
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2016, Thierry Lemeunier <thierry at lemeunier dot net>
+# Copyright (c) 2016-2017, Thierry Lemeunier <thierry at lemeunier dot net>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -54,7 +54,7 @@ class UserAccountWindow(TitledBorderWindow):
         LabelBox(self, 11, 2, "Password again")
 
         # Ordered list of shortcut keys
-        self.shortcuts = ['', '', '', 'T', 'L', 'A']
+        self.shortcuts = ['', '', '', 't', 'l', 'a']
 
         # Editable components
         self.logineditor = InputBox(
@@ -66,11 +66,11 @@ class UserAccountWindow(TitledBorderWindow):
 
         # Actionable components
         posx = gap = int(((size_x - 2) - (8 + 7 + 8)) / 4) + 1
-        self.createButton = ButtonBox(self, 14, posx, "Create", 'T')
+        self.createButton = ButtonBox(self, 14, posx, "Create", 't')
         posx = posx + 8 + gap
-        self.clearButton = ButtonBox(self, 14, posx, "Clear", 'L')
+        self.clearButton = ButtonBox(self, 14, posx, "Clear", 'l')
         posx = posx + 7 + gap
-        self.cancelButton = ButtonBox(self, 14, posx, "Cancel", 'A')
+        self.cancelButton = ButtonBox(self, 14, posx, "Cancel", 'a')
 
         # Ordered list of components
         self.items = [self.logineditor, self.pass1editor, self.pass2editor,

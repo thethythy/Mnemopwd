@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2016, Thierry Lemeunier <thierry at lemeunier dot net>
+# Copyright (c) 2016-2017, Thierry Lemeunier <thierry at lemeunier dot net>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -50,13 +50,13 @@ class EditionWindow(TitledOnBorderWindow):
         posx = gap = int(((w - 2) - (6 + 7 + 8 + 8)) / 5) + 1
         self.saveButton = ButtonBox(self, posy, posx, "Save", 'S')
         posx = posx + 6 + gap
-        self.clearButton = ButtonBox(self, posy, posx, "Clear", 'L')
+        self.clearButton = ButtonBox(self, posy, posx, "Clear", 'l')
         posx = posx + 7 + gap
-        self.cancelButton = ButtonBox(self, posy, posx, "Cancel", 'A')
+        self.cancelButton = ButtonBox(self, posy, posx, "Cancel", 'a')
         posx = posx + 8 + gap
-        self.deleteButton = ButtonBox(self, posy, posx, "Delete", 'E')
+        self.deleteButton = ButtonBox(self, posy, posx, "Delete", 'e')
 
-        self._shortcuts = ['S', 'L', 'A', 'E']
+        self._shortcuts = ['S', 'l', 'a', 'e']
         self._items = self.items = [self.saveButton, self.clearButton,
                                     self.cancelButton, self.deleteButton]
 

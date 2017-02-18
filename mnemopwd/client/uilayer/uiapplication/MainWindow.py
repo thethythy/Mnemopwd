@@ -59,12 +59,12 @@ class MainWindow(BaseWindow):
         self.hpassword = None   # User account password
 
         # Menu zone
-        self.applicationButton = ButtonBox(self, 0, 0, "MnemoPwd", shortcut='E')
+        self.applicationButton = ButtonBox(self, 0, 0, "MnemoPwd", shortcut='e')
         self.newButton = ButtonBox(self, 0, 11, "New", shortcut='N')
-        self.searchButton = ButtonBox(self, 0, 17, "Search", shortcut='R')
+        self.searchButton = ButtonBox(self, 0, 17, "Search", shortcut='r')
 
         # Ordered list of shortcut keys
-        self.shortcuts = ['E', 'N', 'R']
+        self.shortcuts = ['e', 'N', 'r']
 
         # Ordered list of components
         self.items = [self.applicationButton, self.newButton, self.searchButton]
@@ -204,7 +204,7 @@ class MainWindow(BaseWindow):
             # Main menu
             if result == self.applicationButton:
                 self.applicationButton.focus_off()
-                result = ApplicationMenu(self, 2, 0, self.connected).start()
+                result = ApplicationMenu(self, 1, 0, self.connected).start()
                 if result == ApplicationMenu.ITEM1:  # Login/logout
                     if not self.connected:
                         self._get_credentials()  # Try a connection
@@ -237,7 +237,7 @@ class MainWindow(BaseWindow):
             elif result == self.newButton:
                 if self.connected:
                     self.newButton.focus_off()
-                    result = CreateMenu(self, Configuration.btypes, 2, 9).start()
+                    result = CreateMenu(self, Configuration.btypes, 1, 11).start()
                     if result:
                         self._handle_block(result, None)
                 else:

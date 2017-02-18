@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2016, Thierry Lemeunier <thierry at lemeunier dot net>
+# Copyright (c) 2016-2017, Thierry Lemeunier <thierry at lemeunier dot net>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -45,17 +45,17 @@ class ButtonBox(Component):
         self.window.addstr(0, 0, self.label, curses.A_BLINK | curses.A_REVERSE)
         if self.shortcut:
             self.window.addstr(
-                0, self.label.upper().find(self.shortcut), self.shortcut,
+                0, self.label.find(self.shortcut), self.shortcut,
                 curses.A_UNDERLINE | curses.A_BLINK | curses.A_REVERSE)
         self.window.refresh()
         
     def focus_off(self):
         """See mother class"""
-        self.window.addstr(0, 0, self.label, curses.A_REVERSE)
+        self.window.addstr(0, 0, self.label)
         if self.shortcut:
             self.window.addstr(
-                0, self.label.upper().find(self.shortcut), self.shortcut,
-                curses.A_UNDERLINE | curses.A_REVERSE)
+                0, self.label.find(self.shortcut), self.shortcut,
+                curses.A_UNDERLINE)
         self.window.refresh()
 
     def move(self, y, x, focus=False):
