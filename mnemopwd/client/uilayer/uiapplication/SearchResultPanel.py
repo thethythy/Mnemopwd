@@ -135,6 +135,7 @@ class SearchResultPanel(BaseWindow):
         if self.scroll_bar is not None:
             self.scroll_bar.close()
         self.scroll_bar = None
+        self.scroll_pos = 0
 
     def focus_on(self):
         """This window obtains the focus"""
@@ -157,8 +158,7 @@ class SearchResultPanel(BaseWindow):
         counter = 0
         timer = Configuration.lock * 60 * 1000  # Timer in ms
 
-        nbitems = len(self.items)
-        if nbitems > 0:
+        if len(self.items) > 0:
             self.items[self.index].focus_on()  # Focus on component at index
             self._update_application(True)  # Update application window
 
@@ -179,17 +179,17 @@ class SearchResultPanel(BaseWindow):
             if c in [curses.KEY_DOWN, curses.ascii.TAB]:
                 self.items[self.index].focus_off()
                 # Bottom reached
-                if self.menu and (self.index + 1) >= nbitems:
+                if self.menu and (self.index + 1) >= len(self.items):
                     self._update_application(False)
                     return 1
                 # Down by one
-                if (self.index + 1) < nbitems and \
+                if (self.index + 1) < len(self.items) and \
                    (self.scroll_pos + 1) == self.h:
                     self._scroll_items(1)
                     self.scroll_bar.scroll(1)
                 # Normal behaviour
                 self.scroll_pos = min(self.h - 1, self.scroll_pos + 1)
-                self.index = (self.index + 1) % nbitems
+                self.index = (self.index + 1) % len(self.items)
                 self.items[self.index].focus_on()
                 self._update_application(True)  # Update application window
 
@@ -206,7 +206,7 @@ class SearchResultPanel(BaseWindow):
                     self.scroll_bar.scroll(-1)
                 # Normal behaviour
                 self.scroll_pos = max(0, self.scroll_pos - 1)
-                self.index = (self.index - 1) % nbitems
+                self.index = (self.index - 1) % len(self.items)
                 self.items[self.index].focus_on()
                 self._update_application(True)  # Update application window
 

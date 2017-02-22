@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2016, Thierry Lemeunier <thierry at lemeunier dot net>
+# Copyright (c) 2016-2017, Thierry Lemeunier <thierry at lemeunier dot net>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -44,7 +44,8 @@ class ApplicationMenu(BaseWindow):
     def __init__(self, parent, y, x, connected):
         """Create the menu"""
         # Create the window
-        BaseWindow.__init__(self, parent, 5, 21 + 3, y, x, menu=True, modal=True)
+        BaseWindow.__init__(self, parent, 7, 19 + 5, y, x, menu=True, modal=True)
+        self.window.border()
         self.window.refresh()
 
         # Login/logout button
@@ -53,28 +54,28 @@ class ApplicationMenu(BaseWindow):
         else:
             name = 'Login' + sfill(19 - 5, ' ')
         self.items.append(MetaButtonBox(
-            self, 0, 0, name, shortcut='L', data=self.ITEM1))
+            self, 1, 1, name, shortcut='L', data=self.ITEM1))
 
         # Create user account button
         self.items.append(MetaButtonBox(
-            self, 1, 0, 'Create user account', shortcut='N', data=self.ITEM2))
+            self, 2, 1, 'Create user account', shortcut='n', data=self.ITEM2))
 
         # Delete user account button
         self.items.append(MetaButtonBox(
-            self, 2, 0, 'Delete user account', shortcut='E', data=self.ITEM3))
+            self, 3, 1, 'Delete user account', shortcut='e', data=self.ITEM3))
 
         # Lock screen
         name = 'Lock screen' + sfill(19 - 11, ' ')
         self.items.append(MetaButtonBox(
-            self, 3, 0, name, shortcut='K', data=self.ITEM4))
+            self, 4, 1, name, shortcut='k', data=self.ITEM4))
 
         # Quit button
         name = 'Quit' + sfill(19 - 4, ' ')
         self.items.append(MetaButtonBox(
-            self, 4, 0, name, shortcut='U', data=self.ITEM5))
+            self, 5, 1, name, shortcut='u', data=self.ITEM5))
 
         # Ordered list of shortcut keys
-        self.shortcuts = ['L', 'N', 'E', 'K', 'U']
+        self.shortcuts = ['L', 'n', 'e', 'k', 'u']
 
     def start(self, timeout=-1):
         """See mother class"""

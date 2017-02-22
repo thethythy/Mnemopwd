@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2015-2016, Thierry Lemeunier <thierry at lemeunier dot net>
+# Copyright (c) 2015-2017, Thierry Lemeunier <thierry at lemeunier dot net>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -30,6 +30,7 @@ State S32 : exportation operation
 """
 import logging
 import pickle
+import asyncio
 
 from ...util.funcutils import singleton
 from .StateSCC import StateSCC
@@ -67,6 +68,10 @@ class StateS32(StateSCC):
                     # Send message
                     msg = b';SIB;' + si + b';' + lpsib + b';' + psib
                     client.loop.call_soon_threadsafe(client.transport.write, msg)
+                    # Wait for sending the message
+                    coro = asyncio.sleep(0.005, loop=client.loop)
+                    future = asyncio.run_coroutine_threadsafe(coro, client.loop)
+                    future.result(1)
 
                 client.state = client.states['3']  # New client state
 

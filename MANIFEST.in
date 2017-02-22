@@ -1,4 +1,4 @@
-# Include the license file
+include CHANGELOG.rst
 include LICENSE.txt
 include mnemopwds.py
 include mnemopwdc.py

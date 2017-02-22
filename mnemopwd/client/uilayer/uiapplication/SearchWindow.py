@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2016, Thierry Lemeunier <thierry at lemeunier dot net>
+# Copyright (c) 2016-2017, Thierry Lemeunier <thierry at lemeunier dot net>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -88,7 +88,7 @@ class SearchWindow(TitledOnBorderWindow):
             self.nbResult = self.nbMaxResult = 0
             self.resultPanel.clear_content()
             pattern = self.patternEditor.value
-            if pattern == '*' or pattern in ['ALL', 'All', 'all']:
+            if self._is_pattern_all(pattern):
                 self.parent.uifacade.inform("application.exportblock", None)
             else:
                 self.parent.uifacade.inform("application.searchblock", pattern)
@@ -115,12 +115,14 @@ class SearchWindow(TitledOnBorderWindow):
         """Try to add a new block in the result panel"""
         if self.patternEditor.value is not None:
             pattern = self.patternEditor.value
-            if pattern == '*' or pattern in ['ALL', 'All', 'all']:
+            if self._is_pattern_all(pattern):
                 self.patternEditor.show()
                 self.add_a_result(idblock, sib)
             else:
                 for j in range(1, sib.nbInfo + 1):  # For all info in sib
-                    if re.search(pattern, sib['info' + str(j)].decode()) is not None:
+                    if re.search(pattern.upper(),
+                                 sib['info' + str(j)].decode().upper())\
+                            is not None:
                         self.patternEditor.show()
                         self.add_a_result(idblock, sib)
                         break  # One info match so stop loop now
@@ -186,3 +188,7 @@ class SearchWindow(TitledOnBorderWindow):
                     # Hide pattern editor if there is no result
                     self.patternEditor.hide()
                 return False, False
+
+    def _is_pattern_all(self, pattern):
+        """Test if the pattern corresponds to '*'"""
+        return pattern == '*' or pattern in ['ALL']

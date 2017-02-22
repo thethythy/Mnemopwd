@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2016, Thierry Lemeunier <thierry at lemeunier dot net>
+# Copyright (c) 2016-2017, Thierry Lemeunier <thierry at lemeunier dot net>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -69,9 +69,7 @@ class StateS32A(StateSCC):
                             # Check if the first SIB is already received
                             try:
                                 if len(tab_data[1]) > 0:
-                                    handler.loop.run_in_executor(
-                                        None, handler.data_received,
-                                        b';' + tab_data[1])
+                                    data = b';' + tab_data[1]
                             except IndexError:
                                 pass
 
@@ -108,6 +106,7 @@ class StateS32A(StateSCC):
                                 None, handler.data_received,
                                 tab_data[2][len_sib:])
 
+                        # Treat one sib
                         if len_sib == len(psib):
                             sib = pickle.loads(psib)
                             sib.control_integrity(handler.keyH)
@@ -122,7 +121,9 @@ class StateS32A(StateSCC):
                             # Indicate the task is done
                             if handler.nbSIBDone == handler.nbSIB:
                                 handler.core.taskInProgress = False
+                                self.buffer = None
 
+                        # Not enough data received, wait for new data
                         else:
                             self.buffer = data  # Push data for a next treatment
 

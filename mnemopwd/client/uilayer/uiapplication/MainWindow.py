@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2016, Thierry Lemeunier <thierry at lemeunier dot net>
+# Copyright (c) 2016-2017, Thierry Lemeunier <thierry at lemeunier dot net>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -29,6 +29,7 @@ import curses
 import hashlib
 import os
 import time
+import math
 
 from ...util.Configuration import Configuration
 from ...util.funcutils import sfill
@@ -58,12 +59,12 @@ class MainWindow(BaseWindow):
         self.hpassword = None   # User account password
 
         # Menu zone
-        self.applicationButton = ButtonBox(self, 0, 0, "MnemoPwd", shortcut='E')
+        self.applicationButton = ButtonBox(self, 0, 0, "MnemoPwd", shortcut='e')
         self.newButton = ButtonBox(self, 0, 11, "New", shortcut='N')
-        self.searchButton = ButtonBox(self, 0, 17, "Search", shortcut='R')
+        self.searchButton = ButtonBox(self, 0, 17, "Search", shortcut='r')
 
         # Ordered list of shortcut keys
-        self.shortcuts = ['E', 'N', 'R']
+        self.shortcuts = ['e', 'N', 'r']
 
         # Ordered list of components
         self.items = [self.applicationButton, self.newButton, self.searchButton]
@@ -203,7 +204,7 @@ class MainWindow(BaseWindow):
             # Main menu
             if result == self.applicationButton:
                 self.applicationButton.focus_off()
-                result = ApplicationMenu(self, 2, 0, self.connected).start()
+                result = ApplicationMenu(self, 1, 0, self.connected).start()
                 if result == ApplicationMenu.ITEM1:  # Login/logout
                     if not self.connected:
                         self._get_credentials()  # Try a connection
@@ -236,7 +237,7 @@ class MainWindow(BaseWindow):
             elif result == self.newButton:
                 if self.connected:
                     self.newButton.focus_off()
-                    result = CreateMenu(self, Configuration.btypes, 2, 9).start()
+                    result = CreateMenu(self, Configuration.btypes, 1, 11).start()
                     if result:
                         self._handle_block(result, None)
                 else:
@@ -301,18 +302,18 @@ class MainWindow(BaseWindow):
             self.editscr.clear_content()
 
     def update_load_bar(self, actual, maxi):
-        import math
-        max_len = curses.COLS - 15
+        max_len = curses.COLS - 20
         actual_len = int(actual * max_len / maxi)
         percent = str(math.floor(actual_len * 100 / max_len))
         message = sfill(actual_len, '█')
-        currenty, currentx = curses.getsyx()
+        currenty, currentx = curses.getsyx()  # Save current cursor position
         self.statscr.move(1, 7)
-        self.statscr.clrtoeol()
-        self.statscr.addstr(1, 8, percent + " %")  # Show percentage
-        self.statscr.addstr(1, 14, message)  # Show load bar
+        self.statscr.clrtoeol()  # Clear line
+        # Show percentage then load bar
+        self.statscr.addstr(1, 8, percent + "%" + " [" + str(actual) + "]")
+        self.statscr.addstr(1, 19, message)
         self.statscr.refresh()
-        curses.setsyx(currenty, currentx)
+        curses.setsyx(currenty, currentx)  # Restore cursor position
 
     def update_status(self, value):
         """Update the status window content"""
