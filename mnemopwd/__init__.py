@@ -27,4 +27,4 @@
 
 __author__ = "Thierry Lemeunier <thierry at lemeunier dot net>"
 __date__ = "$16 décembre 2016 10:05:00$"
-__version__ = "1.0.0rc3"
+__version__ = "1.0.0"
