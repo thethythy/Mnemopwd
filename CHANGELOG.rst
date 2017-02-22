@@ -2,8 +2,10 @@ Changelog
 =========
 
 
-(unreleased)
-------------
+v1.0.0 (2017-02-22)
+-------------------
+- Add a change log file generated with gitchangelog
+  (https://github.com/vaab/gitchangelog) [thethythy]
 - UI and UX enhancements. [thethythy]
 
   - A widget button is 'inversed' only when it obtains the focus
