@@ -79,8 +79,8 @@ class Configuration:
     dbpath = os.path.expanduser('~') + '/mnemopwddata'  # Default database path
     pidfile = os.path.expanduser('~') + '/mnemopwddata/mnemopwds.pid'  # Default daemon pid file
     logfile = os.path.expanduser('~') + '/mnemopwddata/mnemopwds.log'  # Default log file
-    certfile = 'None'  # Default certificat X509 file
-    keyfile = 'None'  # Default certificat private key file
+    certfile = 'None'  # Default certificate X509 file
+    keyfile = 'None'  # Default certificate private key file
     logmaxmb = 1  # Default logfile volume (1 => 1 MBytes)
     logbackups = 20  # Default backup logfile
     loglevel = 'INFO'  # Default logging level
@@ -99,17 +99,17 @@ class Configuration:
         if not os.path.exists(keyfile):
             parser.error("invalid key file {} (it not exists)".format(keyfile))
         elif not os.path.exists(certfile):
-            parser.error("invalid certificat file {} (it not exists)".
+            parser.error("invalid certificate file {} (it not exists)".
                          format(certfile))
         else:
             statinfo = os.stat(keyfile)
             if certfile == keyfile:
                 parser.error(
-                    "the certificat file ({}) and the key file ({}) must be differents"
+                    "the certificate file ({}) and the key file ({}) must be different"
                     .format(certfile, keyfile))
             if stat.filemode(statinfo.st_mode) != '-rw-------':
                 parser.error(
-                    "invalid key file {} (it must have only read, write and excecution permissions for user)"
+                    "invalid key file {} (it must have only read, write and execution permissions for user)"
                     .format(keyfile))
             elif statinfo.st_uid != os.getuid():
                 parser.error("invalid key file {} (the owner must be the user)".
@@ -127,7 +127,7 @@ class Configuration:
                 parser.error("invalid database path {} (it must be a directory)".format(path))
             elif stat.filemode(statinfo.st_mode) != 'drwx------':
                 parser.error(
-                    "invalid database path {} (it must have only read, write and excecution permissions for user)"
+                    "invalid database path {} (it must have only read, write and execution permissions for user)"
                     .format(path))
             elif statinfo.st_uid != os.getuid():
                 parser.error(
@@ -217,7 +217,7 @@ class Configuration:
         # Create and configure a command line parser
         argparser = argparse.ArgumentParser(
             description='MnemoPwd server v' + Configuration.version,
-            epilog='More informations can be found at https://github.com/thethythy/Mnemopwd',
+            epilog='More information can be found at https://github.com/thethythy/Mnemopwd',
             formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
         # IP server
@@ -242,7 +242,7 @@ class Configuration:
         # Certificat file
         argparser.add_argument(
             '-c', '--cert', nargs='?', default=Configuration.certfile,
-            metavar='certificat', type=str, help="the PEM X509 certificate file",
+            metavar='certificate', type=str, help="the PEM X509 certificate file",
             action=MyParserAction)
 
         # Certificat private key file
@@ -262,7 +262,7 @@ class Configuration:
             '-m', '--searchmode', type=str, default=Configuration.search_mode,
             metavar='search_mode', help="the search mode; 'first' for \
             searching only on first secret information block and 'all' \
-            for searching on all informations", action=MyParserAction)
+            for searching on all information", action=MyParserAction)
 
         # Start action
         argparser.add_argument(
@@ -301,7 +301,7 @@ class Configuration:
         # Verify dbpath
         Configuration.__test_dbpath__(argparser, Configuration.dbpath)
 
-        # Verify private key and certificat files
+        # Verify private key and certificate files
         if Configuration.keyfile != 'None' and Configuration.certfile != 'None':
             Configuration.__test_cert_key_files__(
                 argparser, Configuration.certfile, Configuration.keyfile)

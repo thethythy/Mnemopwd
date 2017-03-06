@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2016, Thierry Lemeunier <thierry at lemeunier dot net>
+# Copyright (c) 2016-2017, Thierry Lemeunier <thierry at lemeunier dot net>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -26,5 +26,5 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 __author__ = "Thierry Lemeunier <thierry at lemeunier dot net>"
-__date__ = "$16 décembre 2016 10:05:00$"
+__date__ = "$06 mars 2017 18:47:00$"
 __version__ = "1.1.0rc1"

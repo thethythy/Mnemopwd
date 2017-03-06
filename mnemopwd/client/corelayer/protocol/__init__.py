@@ -50,7 +50,6 @@ from .StateS37A import StateS37A
 
 __author__ = "Thierry Lemeunier <thierry at lemeunier dot net>"
 __date__ = "$6 février 2016 10:35:44$"
-__version__ = "1.0"
 
 __all__ = ['StateS0', 'StateS1S', 'StateS1CR', 'StateS1CA', 'StateS21R',
            'StateS21A', 'StateS22R', 'StateS22A', 'StateS31R', 'StateS31A',

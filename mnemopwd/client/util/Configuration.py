@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2016, Thierry Lemeunier <thierry at lemeunier dot net>
+# Copyright (c) 2016-2017, Thierry Lemeunier <thierry at lemeunier dot net>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -42,6 +42,7 @@ import stat
 import json
 
 import mnemopwd
+from .IPConfiguration import IPConfiguration
 from .funcutils import is_none
 from ...common.util.X509 import X509
 
@@ -73,11 +74,12 @@ class MyParserAction(argparse.Action):
 class Configuration:
     """Configuration of the server"""
 
+    first_execution = True   # Flag for configuring or not
     configfile = os.path.expanduser('~') + '/.mnemopwdc'  # Configuration file
-    certfile = 'None'        # Default certificat X509 file
+    certfile = 'None'        # Default certificate X509 file
     version = mnemopwd.__version__  # Client version
-    server = '127.0.0.1'     # Default server IP
-    port = 62230             # Default server port
+    server = None            # Server IP
+    port = None              # Server port
     port_min = 49152         # Minimum port value
     port_max = 65535         # Maximum port value
     loglevel = None          # Logging level: None or DEBUG
@@ -95,9 +97,9 @@ class Configuration:
 
     @staticmethod
     def __test_cert_file__(parser, certfile):
-        """Test existence of certificat file"""
+        """Test existence of certificate file"""
         if not os.path.exists(certfile):
-            parser.error("invalid certificat file {} (it not exists)".format(certfile))
+            parser.error("invalid certificate file {} (it not exists)".format(certfile))
         return True
 
     @staticmethod
@@ -146,7 +148,7 @@ class Configuration:
                     " # Values allowed: " + str(Configuration.port_min) +
                     ".." + str(Configuration.port_max),
             'certfile': Configuration.certfile + " # Use an absolute path",
-            'timeout': str(Configuration.timeout) + " # Timeout on connection request"
+            'timeout': str(Configuration.timeout) + " # Timeout of the connection request"
         }
         fileparser['client'] = {
             'curve1': Configuration.curve1 + " # Values allowed: secp521r1, sect571r1, secp384r1, etc.",
@@ -165,13 +167,13 @@ class Configuration:
 
     @staticmethod
     def configure():
-        """Configure the server: load configuration file then parse
+        """Configure the client: load configuration file then parse
         command line"""
 
         # Create and configure a command line parser
         argparser = argparse.ArgumentParser(
             description='MnemoPwd client v' + Configuration.version,
-            epilog='More informations can be found at https://github.com/thethythy/Mnemopwd',
+            epilog='More information can be found at https://github.com/thethythy/Mnemopwd',
             formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
         # IP server
@@ -188,14 +190,14 @@ class Configuration:
         # Certificat file
         argparser.add_argument(
             '-c', '--cert', nargs='?', default=Configuration.certfile,
-            metavar='certificat', type=str, action=MyParserAction,
-            help="the server PEM X509 certificat file")
+            metavar='certificate', type=str, action=MyParserAction,
+            help="the server PEM X509 certificate file")
 
         # Lock screen timeout
         argparser.add_argument(
             '-l', '--lock', type=int, nargs='?', default=Configuration.lock,
             metavar='minute(s)', action=MyParserAction,
-            help="the time before lock the screen (0 for no automatic lock scren)")
+            help="the time before lock the screen (0 for no automatic lock screen)")
 
         # Start action
         argparser.add_argument(
@@ -219,16 +221,19 @@ class Configuration:
             # Load values from configuration file
             Configuration.__load_config_file__(argparser, fileparser)
             Configuration.first_execution = False
-        else:
-            # Create default configuration file
-            Configuration.__create_config_file__(fileparser)
-            Configuration.first_execution = True
 
         # Parse the command line to get options
         options = argparser.parse_args()
         Configuration.action = options.action  # Action to apply to the server
 
-        # Verify certificat file
+        # Create default configuration file if needed
+        if Configuration.first_execution:
+            Configuration.server, Configuration.port =\
+                IPConfiguration.find_server_address(Configuration.server,
+                                                    Configuration.port)
+            Configuration.__create_config_file__(fileparser)
+
+        # Verify certificate file
         if Configuration.certfile != 'None':
             Configuration.__test_cert_file__(argparser, Configuration.certfile)
             try:
