@@ -10,17 +10,17 @@ that is a high level wrapper of OpenSSL (see https://github.com/yann2192/pyellip
 
 See https://www.openssl.org ("OpenSSL Homepage") web site for more information.
 
-Require Python 3.4.4 or newer, OpenSSL, GNU/Linux or Mac OS X
+Require Python 3.4.4 or newer, OpenSSL, GNU/Linux or macOS
 
 Always use the last version for security.
 
-Copyright (c) 2015-2016, Thierry Lemeunier <thierry at lemeunier dot net> under 
+Copyright (c) 2015-2017, Thierry Lemeunier <thierry at lemeunier dot net> under
 BSD Licence
 
 Features
 ========
 
-- Double level of connection security : the SSL/TLS protocol and the application protocol
+- Double level of connection security: the SSL/TLS protocol and the application protocol
 - Server identity can be controlled by X.509 certificate (optional TLS feature)
 - Client and server share a master secret via ECDH scheme
 - Each secret information is encrypted with the ECIES scheme
@@ -29,6 +29,7 @@ Features
 - Keys are computed on the fly by the client and the server
 - Keys are never stored by the server or by the client
 - Do some self-controls before starting
+- IP Auto-configuration at first launch (if server and client are on same private LAN)
 - Configuration by file and/or by command line options
 - Server running in background (only on POSIX systems)
 - UML model of the secure application protocol (see https://github.com/thethythy/Mnemopwd)
@@ -85,8 +86,8 @@ at the first launch if it does not already exist. You can edit this file, for ex
 to indicate a shared certificate file. You can change the following options:
 
 - Shared certificate file (none by default);
-- Server IP;
-- Server port;
+- Server IP (found by auto-configuration in the case of a private LAN);
+- Server port (found by auto-configuration in the case of a private LAN);
 - Lock screen timeout (one minute by default);
 - Cryptographic suites (by default one stage with sect571r1 and aes-256-cbc).
 
@@ -119,7 +120,7 @@ Start a client
 
    ``mnemopwdc -h``          --> get a help screen
 
-   ``mnemopwdc``             --> start the client (you may indicate the server ip address)
+   ``mnemopwdc``             --> start the client
 
    ``mnemopwdc --status``    --> get a status message
 
