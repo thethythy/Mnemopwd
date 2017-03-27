@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2015-2016, Thierry Lemeunier <thierry at lemeunier dot net>
+# Copyright (c) 2015-2017, Thierry Lemeunier <thierry at lemeunier dot net>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -79,6 +79,8 @@ class StateS22(StateSCC):
                         client.transport.write, b'OK')
                     client.state = client.states['31']  # Next state
                 else:
+                    ip, port = client.peername
+                    client.shield.add_suspect_ip(ip)  # Suspect client ?
                     msg = b'ERROR;application protocol error'
                     client.loop.call_soon_threadsafe(client.transport.write, msg)
                     raise Exception('S22: user account already used')

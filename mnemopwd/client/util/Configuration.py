@@ -82,7 +82,7 @@ class Configuration:
     port = None              # Server port
     port_min = 49152         # Minimum port value
     port_max = 65535         # Maximum port value
-    loglevel = None          # Logging level: None or DEBUG
+    loglevel = None          # Logging level: None or 'DEBUG'
     poolsize = 1             # Pool executor size
     queuesize = 25           # Queue size: up to 25 commands can be scheduled
     curve1 = 'sect571r1'     # Curve name for the first stage
@@ -93,6 +93,7 @@ class Configuration:
     cipher3 = 'None'         # Cipher name for the third stage
     action = 'start'         # Default action if not given
     timeout = 5              # Timeout on connection request
+    timeout_task = 300       # Timeout on task execution
     lock = 1                 # Time before lock screen (1 minute)
 
     @staticmethod

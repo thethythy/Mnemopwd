@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2015-2016, Thierry Lemeunier <thierry at lemeunier dot net>
+# Copyright (c) 2015-2017, Thierry Lemeunier <thierry at lemeunier dot net>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -91,6 +91,7 @@ class Configuration:
     port_max = 65535  # Maximum port value
     poolsize = 10  # Default pool executor size
     search_mode = 'all'  # Default search mode
+    max_login = 5  # Default maximum login attempts per hour
     action = 'status'  # Default action if not given
 
     @staticmethod
@@ -173,6 +174,7 @@ class Configuration:
             Configuration.poolsize = int(fileparser['server']['poolsize'])
             Configuration.search_mode = fileparser['server']['search_mode']
             Configuration.loglevel = fileparser['server']['loglevel']
+            Configuration.max_login = int(fileparser['server']['max_login'])
             Configuration.pidfile = fileparser['daemon']['pidfile']
             Configuration.logfile = fileparser['daemon']['logfile']
             Configuration.logmaxmb = int(fileparser['daemon']['logmaxmb'])
@@ -193,7 +195,9 @@ class Configuration:
             'search_mode': Configuration.search_mode
             + " # Values allowed: all first",
             'loglevel': Configuration.loglevel
-            + " # Values allowed: DEBUG INFO WARNING ERROR CRITICAL"
+            + " # Values allowed: DEBUG INFO WARNING ERROR CRITICAL",
+            'max_login': str(Configuration.max_login)
+            + " # Maximum login attempt per hour"
         }
         fileparser['daemon'] = {
             'pidfile': Configuration.pidfile + " # Use an absolute path",

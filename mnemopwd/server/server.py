@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2015-2016, Thierry Lemeunier <thierry at lemeunier dot net>
+# Copyright (c) 2015-2017, Thierry Lemeunier <thierry at lemeunier dot net>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -31,6 +31,7 @@ import socket
 import ssl
 import concurrent.futures
 from .util.Configuration import Configuration
+from .clients.BruteForceShield import BruteForceShield
 from .clients.ClientHandler import ClientHandler
 
 """
@@ -69,7 +70,10 @@ class Server:
         # Create and set an executor
         executor = concurrent.futures.ThreadPoolExecutor(Configuration.poolsize)
         self.loop.set_default_executor(executor)
-        
+
+        # Create a brute-force shield
+        shield = BruteForceShield()
+
         # Create a SSL context
         context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
         context.options |= ssl.OP_NO_SSLv2  # SSL v2 not allowed
@@ -90,7 +94,7 @@ class Server:
         
         # Create an asynchronous SSL server
         coro = self.loop.create_server(
-            lambda: ClientHandler(self.loop, Configuration.dbpath),
+            lambda: ClientHandler(self.loop, Configuration.dbpath, shield),
             Configuration.host, Configuration.port, family=socket.AF_INET,
             backlog=100, ssl=context, reuse_address=False)
         self.server = self.loop.run_until_complete(coro)

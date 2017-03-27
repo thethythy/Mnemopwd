@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2016, Thierry Lemeunier <thierry at lemeunier dot net>
+# Copyright (c) 2016-2017, Thierry Lemeunier <thierry at lemeunier dot net>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -81,6 +81,7 @@ class ClientCore(Subject):
         self.queue = asyncio.Queue(
             maxsize=Configuration.queuesize, loop=self.loop)
         self.cmdH = None  # The command handler co-routine
+        self.task = None  # The current task executed by the command handler
         self.taskInProgress = False  # Flag to indicate a task is in progress
         self.lastblock = None  # The last block or the last index used
 
@@ -131,17 +132,17 @@ class ClientCore(Subject):
             future.cancel()
             self.update(
                 'connection.state',
-                'Enable to connect to server. Retry or verify your configuration')
+                'Enable to connect to server: retry or verify your configuration')
             raise
         except ConnectionRefusedError as e:
             if not self.loop.is_running():
                 print(e)
-                print("Enable to connect to server. Retry or verify your configuration")
+                print("Enable to connect to server: retry or verify your configuration")
                 exit(1)
             else:
                 self.update(
                     'connection.state',
-                    'Enable to connect to server. Retry or verify your configuration')
+                    'Enable to connect to server: retry or verify your configuration')
                 raise
         except ssl.SSLError as e:
             if not self.loop.is_running():
@@ -163,35 +164,53 @@ class ClientCore(Subject):
 
     @asyncio.coroutine
     def _command_handler(self):
-        """Tasks' execution loop"""
+        """Loop for the execution of tasks"""
         while True:
-            task = yield from self.queue.get()
-            yield from asyncio.wait_for(task, None)
+            try:
+                coro = yield from self.queue.get()
+                self.task = asyncio.ensure_future(coro, loop=self.loop)
+                yield from asyncio.wait_for(asyncio.shield(self.task),
+                                            Configuration.timeout_task,
+                                            loop=self.loop)
+                self.task = None
+            except asyncio.TimeoutError:
+                self.taskInProgress = False
+                self.task = None
+            except asyncio.CancelledError:
+                if self.task is not None and self.task.cancelled():
+                    self.taskInProgress = False
+                    self.task = None
+                else:
+                    raise
 
     @asyncio.coroutine
     def _task_set_credentials(self, login, password):
-        """Store login and password then start state S1"""
-        self.protocol.login = login.encode()
-        self.protocol.password = password.encode()
-        # Wait for being in state number one
-        while self.protocol.state != self.protocol.states['1S']:
-            yield from asyncio.sleep(0.01, loop=self.loop)
-        # Execute protocol state
-        self.taskInProgress = True
-        yield from self.loop.run_in_executor(
-            None, self.protocol.data_received, None)
-        # Waiting for the end of the task
-        while self.taskInProgress:
-            yield from asyncio.sleep(0.01, loop=self.loop)
+        """Store credentials, start S1 then wait for the end of the task"""
+        if self.transport is not None:
+            self.protocol.login = login.encode()
+            self.protocol.password = password.encode()
+            self.taskInProgress = True
+
+            # Wait for being in state number one
+            while self.protocol.state != self.protocol.states['1S'] \
+                    and self.taskInProgress:
+                yield from asyncio.sleep(0.01, loop=self.loop)
+
+            # Execute protocol state
+            if self.taskInProgress and self.transport is not None:
+                yield from self.loop.run_in_executor(
+                    None, self.protocol.data_received, None)
+                # Waiting for the end of the task
+                while self.taskInProgress:
+                    yield from asyncio.sleep(0.01, loop=self.loop)
 
     @asyncio.coroutine
     def _task_close(self):
         """Close the connection with the server"""
         yield from self.loop.run_in_executor(
             None, self.update, 'connection.state.logout', 'Connection closed')
-        self.queue = asyncio.Queue(
-            maxsize=Configuration.queuesize, loop=self.loop)
         self.taskInProgress = False
+        self.task = None
         self.transport.close()
         self.transport = None
 
@@ -300,11 +319,19 @@ class ClientCore(Subject):
 
     @asyncio.coroutine
     def close(self):
-        """Close the connection and empty the queue"""
-        if self.transport is not None:
+        """Cancel the actual task, empty the queue and close the connection"""
+        self.taskInProgress = False
+
+        # Cancel the actual task if it exists
+        if self.task is not None:
+            self.task.cancel()
+
+            # Empty the queue
             self.queue = asyncio.Queue(
                 maxsize=Configuration.queuesize, loop=self.loop)
-            self.taskInProgress = False
+
+        # Close the transport if not already closed
+        if self.transport is not None:
             self.transport.close()
             self.transport = None
 
@@ -335,33 +362,33 @@ class ClientCore(Subject):
             self.loop.close()
 
     def command(self, key, value):
-        """Create and enqueue a task from a command coming from UI layer"""
-        task = None
+        """Create and enqueue a coroutine from a command of the UI layer"""
+        coro = None
 
         if key == "connection.open.credentials":
             try:
                 # Direct execution because queue is empty at this moment
                 self._open()
-                task = self._task_set_credentials(*value)
+                coro = self._task_set_credentials(*value)
             except:
                 pass
         if key == "connection.close":
-            task = self._task_close()
+            coro = self._task_close()
         if key == "connection.close.deletion":
-            task = self._task_deletion()
+            coro = self._task_deletion()
         if key == "application.editblock":
-            task = self._task_add_data_or_update_data(*value)
+            coro = self._task_add_data_or_update_data(*value)
         if key == "application.deleteblock":
-            task = self._task_delete_data(value)
+            coro = self._task_delete_data(value)
         if key == "application.searchblock":
-            task = self._task_search_data(value)
+            coro = self._task_search_data(value)
         if key == "application.exportblock":
-            task = self._task_export_data()
+            coro = self._task_export_data()
         if key == "application.searchblock.blockvalues":
-            task = self._task_get_block_values(value)
+            coro = self._task_get_block_values(value)
 
-        if task is not None:
-            asyncio.run_coroutine_threadsafe(self.queue.put(task), self.loop)
+        if coro is not None:
+            asyncio.run_coroutine_threadsafe(self.queue.put(coro), self.loop)
 
     @asyncio.coroutine
     def assign_last_block(self, idblock, task):

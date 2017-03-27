@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2015, Thierry Lemeunier <thierry at lemeunier dot net>
+# Copyright (c) 2015-2017, Thierry Lemeunier <thierry at lemeunier dot net>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -45,10 +45,11 @@ The client connection handler
 class ClientHandler(asyncio.Protocol):
     """The client connection handler"""
     
-    def __init__(self, loop, path):
+    def __init__(self, loop, path, shield):
         """Initialize the handler"""
         self.dbpath = path  # The path to the database
         self.loop = loop  # The i/o asynchronous loop
+        self.shield = shield  # The brute-force shield
         # The protocol states
         self.states = {
             '0': StateS0(), '1S': StateS1S(), '1C': StateS1C(),
@@ -62,12 +63,18 @@ class ClientHandler(asyncio.Protocol):
         """Connection starting : set default protocol state and start it"""
         self.transport = transport
         self.peername = transport.get_extra_info('peername')
-        cipher = transport.get_extra_info('cipher')
-        logging.info('Connection from {} with {}'.format(self.peername, cipher))
+
+        ip, port = self.peername
+        if self.shield.is_suspect_ip(ip, self.loop):
+            logging.critical('Connection attempt from a banished IP ({})'.format(ip))
+            self.transport.close()  # IP is banished
+        else:
+            cipher = transport.get_extra_info('cipher')
+            logging.info('Connection from {} with {}'.format(self.peername, cipher))
                 
-        # Set the default state and schedule its execution
-        self.state = self.states['0']  # State 0 at the beginning
-        self.loop.run_in_executor(None, self.state.do, self, None)
+            # Set the default state and schedule its execution
+            self.state = self.states['0']  # State 0 at the beginning
+            self.loop.run_in_executor(None, self.state.do, self, None)
 
     def connection_lost(self, exc):
         """Connection finishing"""
@@ -79,7 +86,7 @@ class ClientHandler(asyncio.Protocol):
 
     def data_received(self, data):
         """Data received"""
-        # Future excecution
+        # Future execution
         self.loop.run_in_executor(None, self.state.do, self, data)
 
     def exception_handler(self, exc):
