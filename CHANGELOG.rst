@@ -2,6 +2,17 @@ Changelog
 =========
 
 
+v1.1.0 (2017-03-28)
+-------------------
+- Add a limitation of number of login and user account creation per hour
+  (#2) [thethythy]
+- Add IP auto-configuration of the client (enhancement #3) [thethythy]
+- ULM model updated. [thethythy]
+- Add a scrolling bar in the research result panel (issue #4 fixed)
+  [thethythy]
+- Add a 3D effect to dialog windows (enhancement #5) [thethythy]
+
+
 v1.0.0 (2017-02-22)
 -------------------
 - Add a change log file generated with gitchangelog
