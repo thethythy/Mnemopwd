@@ -82,10 +82,10 @@ class MnemopwdFingerPrint:
             with open(path.join(here, "fingerprint"), 'rb') as hfile:
                 fingerprint_from_file = (hfile.read()).decode()
                 if fingerprint_from_file != the_fingerprint:
-                    print("it seems source code has been modified, so server can not be launched")
+                    print("it seems source code has been modified, so client/server can not be launched")
                     exit(1)
         except FileNotFoundError:
-            print("source code has been modified, so server can not be launched")
+            print("source code has been modified, so client/server can not be launched")
             exit(1)
 
 if __name__ == "__main__":
