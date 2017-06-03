@@ -81,6 +81,14 @@ class IPConfiguration:
         return ip, port
 
     @staticmethod
+    def abort(timer, msg):
+        """Server has not been found"""
+        timer.cancel()
+        print(msg)
+        print('Use option -i on the command line to specify IP MnemoPwd server.')
+        exit(1)
+
+    @staticmethod
     def find_server_address(ip, port):
         """Find the ip and the connection port of the Mnemopwd server"""
         try:
@@ -124,10 +132,13 @@ class IPConfiguration:
 
                         # Search timed out
                         if IPConfiguration.stop:
-                            print('Enable to find a MnemoPwd server after 5 minutes.')
-                            exit(1)
+                            IPConfiguration.abort(timer,
+                                                  'Enable to find a MnemoPwd server after 5 minutes.')
+
+            # At this point, you know the LAN is not a normal private network
+            IPConfiguration.abort(timer,
+                                  'Your local network is not conform to RFC 1918.')
 
         except KeyboardInterrupt:
-            timer.cancel()
-            print('Waited enough? Enable to find a MnemoPwd server.')
-            exit(1)
+            IPConfiguration.abort(timer,
+                                  'Waited enough? Enable to find a MnemoPwd server.')
