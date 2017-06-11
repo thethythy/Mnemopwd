@@ -43,15 +43,19 @@ class SearchWindow(TitledOnBorderWindow):
 
     def __init__(self, parent, h, w, y, x, title):
         """Create the window"""
-        TitledOnBorderWindow.__init__(
-            self, parent, h, w, y, x, title, modal=True, menu=True)
+
+        TitledOnBorderWindow.__init__(self, parent, h, w, y, x, title,
+                                      modal=True, menu=True,
+                                      colourT=Configuration.colourT,
+                                      colourD=Configuration.colourD)
 
         # Pattern editor
-        self.patternEditor = InputBox(self, 3, w - 4, 1, 2, show=False)
+        self.patternEditor = InputBox(self, 3, w - 4, 1, 2, show=False,
+                                      colourD=Configuration.colourD)
 
         # Result panel
-        self.resultPanel = SearchResultPanel(
-            self, h - 3 - 2, w - 4, 4, 2, modal=True, menu=True)
+        self.resultPanel = SearchResultPanel(self, h - 3 - 2, w - 4, 4, 2,
+                                             modal=True, menu=True)
         self.nbResult = self.nbMaxResult = 0
 
         self.shortcuts = []

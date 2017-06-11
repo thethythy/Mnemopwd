@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2016, Thierry Lemeunier <thierry at lemeunier dot net>
+# Copyright (c) 2016-2017, Thierry Lemeunier <thierry at lemeunier dot net>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -27,6 +27,7 @@
 
 import curses
 import curses.ascii
+
 from .TextEditor import TextEditor
 from .SecretTextEditor import SecretTextEditor
 from .Component import Component
@@ -43,12 +44,14 @@ class InputBox(Component):
     """
 
     def __init__(self, parent, h, w, y, x, shortcuts=None, secret=False,
-                 show=True, option=False):
+                 show=True, option=False, colourD=False):
         """Create a input text box"""
         Component.__init__(self, parent, h, w, y, x)
         if show:
+            self.window.attrset(colourD)
             self.window.border()
             self.window.refresh()
+            self.window.attrset(0)
         self.editorbox = self.window.derwin(1, w - 4, 1, 2)
         if not secret:
             self.editor = TextEditor(self.editorbox)
@@ -58,6 +61,7 @@ class InputBox(Component):
         self.shortcuts = shortcuts
         self.option = option
         self.showOrHide = show
+        self.colourD = colourD
 
         # Cursor position
         self.cursor_y = 0
@@ -99,8 +103,10 @@ class InputBox(Component):
         if self.value is not None:
             self.editor.populate(self.value)
             self.cursor_x = len(self.value)
+        self.window.attrset(self.colourD)
         self.window.border()
         self.window.refresh()
+        self.window.attrset(0)
 
     def hide(self):
         """Hide the editor"""
@@ -114,8 +120,10 @@ class InputBox(Component):
             if self.value is not None:
                 self.editor.populate(self.value)
                 self.cursor_x = len(self.value)
+            self.window.attrset(self.colourD)
             self.window.border()
             self.window.refresh()
+            self.window.attrset(0)
 
     def _controller_(self, ch):
         """Control if the character is a control key"""
@@ -135,7 +143,7 @@ class InputBox(Component):
     def edit(self):
         """Start editing operation"""
         try:
-            curses.curs_set(2)
+            curses.curs_set(2)  # Show cursor
         except curses.error:
             pass
         result = self.editor.edit(self._controller_)
@@ -147,6 +155,6 @@ class InputBox(Component):
                 self.value = None
                 self.cursor_x = 0
         try:
-            curses.curs_set(0)
+            curses.curs_set(0)  # Hide cursor
         except curses.error:
             pass

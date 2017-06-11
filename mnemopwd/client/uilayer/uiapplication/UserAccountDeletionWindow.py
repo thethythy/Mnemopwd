@@ -27,6 +27,7 @@
 
 import curses
 
+from ...util.Configuration import Configuration
 from ..uicomponents.TitledBorderWindow import TitledBorderWindow
 from ..uicomponents.LabelBox import LabelBox
 from ..uicomponents.InputBox import InputBox
@@ -47,27 +48,33 @@ class UserAccountDeletionWindow(TitledBorderWindow):
                                     int(curses.LINES / 2) - int(size_y / 2),
                                     int(curses.COLS / 2) - int(size_x / 2),
                                     "User account deletion confirmation window",
-                                    modal=True)
+                                    modal=True, colourT=Configuration.colourT,
+                                    colourD=Configuration.colourD)
 
-        LabelBox(self, 5, 2, "Login")
-        LabelBox(self, 8, 2, "Password")
+        LabelBox(self, 5, 2, "Login", colour=Configuration.colourD)
+        LabelBox(self, 8, 2, "Password", colour=Configuration.colourD)
 
         # Ordered list of shortcut keys
         self.shortcuts = ['', '', 'e', 'l', 'a']
 
         # Editable components
-        self.logineditor = InputBox(
-            self, 3, size_x - 15, 5 - 1, 12, self.shortcuts)
-        self.passeditor = InputBox(
-            self, 3, size_x - 15, 8 - 1, 12, self.shortcuts, secret=True)
+        self.logineditor = InputBox(self, 3, size_x - 15, 5 - 1, 12,
+                                    self.shortcuts,
+                                    colourD=Configuration.colourD)
+        self.passeditor = InputBox(self, 3, size_x - 15, 8 - 1, 12,
+                                   self.shortcuts, secret=True,
+                                   colourD=Configuration.colourD)
 
         # Actionable components
         posx = gap = int(((size_x - 2) - (9 + 7 + 8)) / 4) + 1
-        self.deleteButton = ButtonBox(self, 11, posx, "Delete", 'e')
+        self.deleteButton = ButtonBox(self, 11, posx, "Delete", 'e',
+                                      colour=Configuration.colourB)
         posx = posx + 9 + gap
-        self.clearButton = ButtonBox(self, 11, posx, "Clear", 'l')
+        self.clearButton = ButtonBox(self, 11, posx, "Clear", 'l',
+                                     colour=Configuration.colourB)
         posx = posx + 7 + gap
-        self.cancelButton = ButtonBox(self, 11, posx, "Cancel", 'a')
+        self.cancelButton = ButtonBox(self, 11, posx, "Cancel", 'a',
+                                      colour=Configuration.colourB)
 
         # Ordered list of components
         self.items = [self.logineditor, self.passeditor, self.deleteButton,

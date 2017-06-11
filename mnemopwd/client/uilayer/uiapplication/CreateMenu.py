@@ -29,6 +29,7 @@ import curses
 
 from ..uicomponents.BaseWindow import BaseWindow
 from ..uicomponents.MetaButtonBox import MetaButtonBox
+from ...util.Configuration import Configuration
 from ...util.funcutils import sfill
 
 
@@ -39,14 +40,17 @@ class CreateMenu(BaseWindow):
 
     def __init__(self, parent, btypes, y, x):
         """Create the menu according to block types"""
+
         # Create the window
         max_len = 0
         for btype in btypes.values():
             max_len = max(max_len, len((btype["1"])["name"]))
-        BaseWindow.__init__(
-            self, parent, len(btypes) + 2, max_len + 5, y, x, menu=True, modal=True)
+        BaseWindow.__init__(self, parent, len(btypes) + 2, max_len + 5, y, x,
+                            menu=True, modal=True)
+        self.window.attrset(Configuration.colourD)
         self.window.border()
         self.window.refresh()
+        self.window.attrset(0)
 
         # Add buttons (preserving the order indicated in the json file)
         posy = 1
@@ -55,9 +59,10 @@ class CreateMenu(BaseWindow):
             name = btype["1"]["name"]
             high = (len(btype) - 1) * 4 + 2
             if high <= (curses.LINES - 4):
-                self.items.append(MetaButtonBox(
-                    self, posy, 1,
-                    name + sfill(max_len - len(name), ' '), data=i))
+                self.items.append(
+                    MetaButtonBox(self, posy, 1,
+                                  name + sfill(max_len - len(name), ' '),
+                                  data=i, colour=Configuration.colourB))
                 posy += 1
             else:
                 self.parent.update_status(

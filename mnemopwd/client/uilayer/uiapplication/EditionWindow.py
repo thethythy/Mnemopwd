@@ -43,26 +43,35 @@ class EditionWindow(TitledOnBorderWindow):
 
     def __init__(self, parent, h, w, y, x, title, btypes):
         """Create the window"""
-        TitledOnBorderWindow.__init__(self, parent, h, w, y, x, title)
+
+        TitledOnBorderWindow.__init__(self, parent, h, w, y, x, title,
+                                      colourT=Configuration.colourT,
+                                      colourD=Configuration.colourD)
 
         # Buttons
         posy = h - 2
         posx = gap = int(((w - 2) - (6 + 7 + 8 + 8)) / 5) + 1
-        self.saveButton = ButtonBox(self, posy, posx, "Save", 'S')
+        self.saveButton = ButtonBox(self, posy, posx, "Save", 'S',
+                                    colour=Configuration.colourB)
         posx = posx + 6 + gap
-        self.clearButton = ButtonBox(self, posy, posx, "Clear", 'l')
+        self.clearButton = ButtonBox(self, posy, posx, "Clear", 'l',
+                                     colour=Configuration.colourB)
         posx = posx + 7 + gap
-        self.cancelButton = ButtonBox(self, posy, posx, "Cancel", 'a')
+        self.cancelButton = ButtonBox(self, posy, posx, "Cancel", 'a',
+                                      colour=Configuration.colourB)
         posx = posx + 8 + gap
-        self.deleteButton = ButtonBox(self, posy, posx, "Delete", 'e')
+        self.deleteButton = ButtonBox(self, posy, posx, "Delete", 'e',
+                                      colour=Configuration.colourB)
 
         self._shortcuts = ['S', 'l', 'a', 'e']
         self._items = self.items = [self.saveButton, self.clearButton,
                                     self.cancelButton, self.deleteButton]
 
         # Separator
+        self.window.attrset(Configuration.colourD)
         self.window.hline(h - 3, 1, curses.ACS_HLINE, w - 2)
         self.window.refresh()
+        self.window.attrset(0)
 
         # Prepare "panels" for block types
         self.new_block = True  # Flag to indicate it is a new block or not
@@ -96,27 +105,30 @@ class EditionWindow(TitledOnBorderWindow):
                 if k == 1:
                     # Label
                     label = "Type" + sfill(max_len - 4, ' ')
-                    info_comp["l_object"] = LabelBox(self, label_posy, 2,
-                                                     label, show=False)
+                    info_comp["l_object"] = LabelBox(
+                        self, label_posy, 2, label, show=False,
+                        colour=Configuration.colourD)
 
                     # Label
-                    info_comp["c_object"] = LabelBox(self, label_posy,
-                                                     2 + max_len + 1,
-                                                     info["name"], show=False)
+                    info_comp["c_object"] = LabelBox(
+                        self, label_posy, 2 + max_len + 1, info["name"],
+                        show=False, colour=Configuration.colourD)
 
                 # Other field
                 else:
                     # Label
                     label = info["name"] + sfill(max_len - len(info["name"]), ' ')
-                    info_comp["l_object"] = LabelBox(self, label_posy, 2, label,
-                                                     show=False)
+                    info_comp["l_object"] = LabelBox(
+                        self, label_posy, 2, label, show=False,
+                        colour=Configuration.colourD)
                     # Editor
                     optional = False
                     if info["option"] == "True":
                         optional = True
                     info_comp["c_object"] = InputBox(
                         self, 3, self.w - 5 - max_len, label_posy - 1,
-                        2 + max_len + 1, shortcuts, show=False, option=optional)
+                        2 + max_len + 1, shortcuts, show=False, option=optional,
+                        colourD=Configuration.colourD)
 
                 label_posy += 3
                 infos_comp[k] = info_comp  # Add with others components
@@ -271,5 +283,8 @@ class EditionWindow(TitledOnBorderWindow):
 
     def redraw(self):
         """See mother class"""
+        self.window.attrset(Configuration.colourD)
         self.window.hline(self.h - 3, 1, curses.ACS_HLINE, self.w - 2)
+        self.window.refresh()
+        self.window.attrset(0)
         TitledOnBorderWindow.redraw(self)

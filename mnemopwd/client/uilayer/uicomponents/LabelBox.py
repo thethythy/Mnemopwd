@@ -31,10 +31,11 @@ from .Component import Component
 class LabelBox(Component):
     """A simple text widget no editable and no actionable"""
 
-    def __init__(self, parent, y, x, label, show=True):
+    def __init__(self, parent, y, x, label, show=True, colour=False):
         Component.__init__(self, parent, 1, len(label) + 1, y, x)
         self.label = label
         self.showOrHide = show
+        self.colour = colour
         if show:
             self._create()
 
@@ -74,5 +75,5 @@ class LabelBox(Component):
     def _create(self):
         """Create the widget content"""
         if self.showOrHide:
-            self.window.addstr(0, 0, self.label)
+            self.window.addstr(0, 0, self.label, self.colour)
             self.window.refresh()

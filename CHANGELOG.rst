@@ -2,6 +2,19 @@ Changelog
 =========
 
 
+(unreleased)
+------------
+
+New
+~~~
+- Add the possibility to use colours in client interface (#6)
+  [thethythy]
+
+Fix
+~~~
+- Bug correction when LAN is not conform with RFC 1918. [thethythy]
+
+
 v1.1.0 (2017-03-28)
 -------------------
 - Add a limitation of number of login and user account creation per hour
@@ -238,11 +251,11 @@ v1.0.0rc1 (2016-11-05)
   file) [Thierry Lemeunier]
 - Add configuration feature. [Thierry Lemeunier]
 - S11 and S12 completed - Delete unused files - Add test cases for S0,
-  S11 and S12 protocol states. [Thierry Lemeunier]
+  S11 and S12 protocol states. [Thierry Lemeunier <>]
 - States S11 and S12 Minor modification of the protocol. [toto]
 - Major modifications of the protocol. [Thierry Lemeunier]
 - States S0, S1 and S11 Minor modification of the protocol. [Thierry
-  Lemeunier]
+  Lemeunier <>]
 - Starting protocol conception and architecture to handle it - The
   server is an asyncio server based on an i/o asynchronous loop (class
   Server) - Each client connection is handled by a separate object
@@ -251,7 +264,7 @@ v1.0.0rc1 (2016-11-05)
   method - do method of each state is executed by an executor for not
   blocking i/o asynchronous loop - Exception raised by do method is
   treated asynchronously by a callable of the client handler. [Thierry
-  Lemeunier]
+  Lemeunier <>]
 - Add verification of the keypair. [Thierry Lemeunier]
 - Change pyelliptic version to 1.5.7. [Thierry Lemeunier]
 - Common classes with encryption and decryption treatments - Add
@@ -261,7 +274,6 @@ v1.0.0rc1 (2016-11-05)
   ECIES scheme (IEEE 1363a) to compute keypairs, to encrypt and to
   decrypt (via OpenSSL library) - ECC keypairs are computed from a
   master secret (shared with client and server) - Three stages of
-  encryption/decryption can be used. [Thierry Lemeunier]
-
+  encryption/decryption can be used. [Thierry Lemeunier <>]
 
 

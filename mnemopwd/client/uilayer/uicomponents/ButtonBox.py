@@ -32,9 +32,10 @@ from .Component import Component
 class ButtonBox(Component):
     """A simple button text box"""
     
-    def __init__(self, parent, y, x, label, shortcut=None, show=True):
+    def __init__(self, parent, y, x, label, shortcut=None, show=True, colour=False):
         self.label = ' ' + label + ' '
         Component.__init__(self, parent, 1, len(self.label) + 1, y, x)
+        self.colour = colour
         self.shortcut = shortcut
         self.showOrHide = show
         if self.showOrHide:
@@ -42,20 +43,21 @@ class ButtonBox(Component):
         
     def focus_on(self):
         """See mother class"""
-        self.window.addstr(0, 0, self.label, curses.A_BLINK | curses.A_REVERSE)
+        self.window.addstr(0, 0, self.label,
+                           curses.A_BLINK | curses.A_REVERSE | self.colour)
         if self.shortcut:
             self.window.addstr(
                 0, self.label.find(self.shortcut), self.shortcut,
-                curses.A_UNDERLINE | curses.A_BLINK | curses.A_REVERSE)
+                curses.A_UNDERLINE | curses.A_BLINK | curses.A_REVERSE | self.colour)
         self.window.refresh()
         
     def focus_off(self):
         """See mother class"""
-        self.window.addstr(0, 0, self.label)
+        self.window.addstr(0, 0, self.label, self.colour)
         if self.shortcut:
             self.window.addstr(
                 0, self.label.find(self.shortcut), self.shortcut,
-                curses.A_UNDERLINE)
+                curses.A_UNDERLINE | self.colour)
         self.window.refresh()
 
     def move(self, y, x, focus=False):

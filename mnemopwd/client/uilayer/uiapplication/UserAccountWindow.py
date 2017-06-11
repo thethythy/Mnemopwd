@@ -28,6 +28,7 @@
 
 import curses
 
+from ...util.Configuration import Configuration
 from ..uicomponents.TitledBorderWindow import TitledBorderWindow
 from ..uicomponents.LabelBox import LabelBox
 from ..uicomponents.InputBox import InputBox
@@ -47,30 +48,38 @@ class UserAccountWindow(TitledBorderWindow):
         TitledBorderWindow.__init__(self, parent, size_y, size_x,
                                     int(curses.LINES / 2) - int(size_y / 2),
                                     int(curses.COLS / 2) - int(size_x / 2),
-                                    "User account creation window", modal=True)
+                                    "User account creation window", modal=True,
+                                    colourT=Configuration.colourT,
+                                    colourD=Configuration.colourD)
 
-        LabelBox(self, 5, 2, "Login")
-        LabelBox(self, 8, 2, "Password")
-        LabelBox(self, 11, 2, "Password again")
+        LabelBox(self, 5, 2, "Login", colour=Configuration.colourD)
+        LabelBox(self, 8, 2, "Password", colour=Configuration.colourD)
+        LabelBox(self, 11, 2, "Password again", colour=Configuration.colourD)
 
         # Ordered list of shortcut keys
         self.shortcuts = ['', '', '', 't', 'l', 'a']
 
         # Editable components
-        self.logineditor = InputBox(
-            self, 3, size_x - 21, 5 - 1, 18, self.shortcuts)
-        self.pass1editor = InputBox(
-            self, 3, size_x - 21, 8 - 1, 18, self.shortcuts, secret=True)
-        self.pass2editor = InputBox(
-            self, 3, size_x - 21, 11 - 1, 18, self.shortcuts, secret=True)
+        self.logineditor = InputBox(self, 3, size_x - 21, 5 - 1, 18,
+                                    self.shortcuts,
+                                    colourD=Configuration.colourD)
+        self.pass1editor = InputBox(self, 3, size_x - 21, 8 - 1, 18,
+                                    self.shortcuts, secret=True,
+                                    colourD=Configuration.colourD)
+        self.pass2editor = InputBox(self, 3, size_x - 21, 11 - 1, 18,
+                                    self.shortcuts, secret=True,
+                                    colourD=Configuration.colourD)
 
         # Actionable components
         posx = gap = int(((size_x - 2) - (8 + 7 + 8)) / 4) + 1
-        self.createButton = ButtonBox(self, 14, posx, "Create", 't')
+        self.createButton = ButtonBox(self, 14, posx, "Create", 't',
+                                      colour=Configuration.colourB)
         posx = posx + 8 + gap
-        self.clearButton = ButtonBox(self, 14, posx, "Clear", 'l')
+        self.clearButton = ButtonBox(self, 14, posx, "Clear", 'l',
+                                     colour=Configuration.colourB)
         posx = posx + 7 + gap
-        self.cancelButton = ButtonBox(self, 14, posx, "Cancel", 'a')
+        self.cancelButton = ButtonBox(self, 14, posx, "Cancel", 'a',
+                                      colour=Configuration.colourB)
 
         # Ordered list of components
         self.items = [self.logineditor, self.pass1editor, self.pass2editor,

@@ -10,9 +10,7 @@ that is a high level wrapper of OpenSSL (see https://github.com/yann2192/pyellip
 
 See https://www.openssl.org ("OpenSSL Homepage") web site for more information.
 
-Require Python 3.4.4 or newer, OpenSSL, GNU/Linux or macOS
-
-Always use the last version for security.
+Require Python 3.4.4 or newer, OpenSSL (not compatible with version > 1.0.x), GNU/Linux or macOS
 
 Copyright (c) 2015-2017, Thierry Lemeunier <thierry at lemeunier dot net> under
 BSD Licence
@@ -31,6 +29,7 @@ Features
 - Do some self-controls before starting
 - IP Auto-configuration at first launch (if server and client are on same private LAN)
 - Configuration by file and/or by command line options
+- Some colours on client interface (see the configuration file)
 - Server running in background (only on POSIX systems)
 - UML model of the secure application protocol (see https://github.com/thethythy/Mnemopwd)
 
@@ -90,6 +89,7 @@ to indicate a shared certificate file. You can change the following options:
 - Server port (found by auto-configuration in the case of a private LAN);
 - Lock screen timeout (one minute by default);
 - Cryptographic suites (by default one stage with sect571r1 and aes-256-cbc).
+- Colours of user interface if available
 
 The user can define in the configuration file three stages of encryption. There is
 one stage defined by default. Paranoiac users can add one or two stages of encryption

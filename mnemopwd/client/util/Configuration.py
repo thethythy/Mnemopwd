@@ -63,6 +63,8 @@ class MyParserAction(argparse.Action):
             Configuration.server = values
         if option_string in ['-l', '--lock']:
             Configuration.lock = int(values)
+        if option_string in ['-b', '--beauty']:
+            Configuration.colour = 1
         if option_string in ['-p', '--port']:
             if values in range(Configuration.port_min, Configuration.port_max):
                 Configuration.port = int(values)
@@ -95,6 +97,11 @@ class Configuration:
     timeout = 5              # Timeout on connection request
     timeout_task = 300       # Timeout on task execution
     lock = 1                 # Time before lock screen (1 minute)
+    colour = 0               # Not use colors by default (ANSI/VT100 colours)
+    colourB = 'Cyan'         # Default button colour
+    colourD = 'White'        # Default decoration colour
+    colourT = 'Yellow'       # Default title color
+    colourM = 'Magenta'      # Default message color
 
     @staticmethod
     def __test_cert_file__(parser, certfile):
@@ -123,10 +130,7 @@ class Configuration:
         """Load configuration file"""
         try:
             fileparser.read(Configuration.configfile)
-        except configparser.ParsingError:
-            parser.error("parsing error of configuration file {}".
-                         format(Configuration.configfile))
-        else:
+
             Configuration.server = fileparser['server']['server']
             Configuration.port = int(fileparser['server']['port'])
             Configuration.certfile = fileparser['server']['certfile']
@@ -138,7 +142,21 @@ class Configuration:
             Configuration.cipher2 = is_none(fileparser['client']['cipher2'])
             Configuration.curve3 = is_none(fileparser['client']['curve3'])
             Configuration.cipher3 = is_none(fileparser['client']['cipher3'])
-            Configuration.lock = int(fileparser['client']['lock'])
+
+            Configuration.lock = int(fileparser['ui']['lock'])
+            Configuration.colour = int(fileparser['ui']['colour'])
+            Configuration.colourB = fileparser['ui']['colourb']
+            Configuration.colourD = fileparser['ui']['colourd']
+            Configuration.colourT = fileparser['ui']['colourt']
+            Configuration.colourM = fileparser['ui']['colourm']
+
+        except configparser.ParsingError:
+            parser.error("parsing error of configuration file {}".
+                         format(Configuration.configfile))
+
+        except KeyError:
+            parser.error("parsing error of configuration file {}".
+                         format(Configuration.configfile))
 
     @staticmethod
     def __create_config_file__(fileparser):
@@ -148,18 +166,38 @@ class Configuration:
             'port': str(Configuration.port) +
                     " # Values allowed: " + str(Configuration.port_min) +
                     ".." + str(Configuration.port_max),
-            'certfile': Configuration.certfile + " # Use an absolute path",
-            'timeout': str(Configuration.timeout) + " # Timeout of the connection request"
+            'certfile': Configuration.certfile +
+                        " # Use an absolute path",
+            'timeout': str(Configuration.timeout) +
+                       " # Timeout of the connection request"
         }
         fileparser['client'] = {
-            'curve1': Configuration.curve1 + " # Values allowed: secp521r1, sect571r1, secp384r1, etc.",
-            'cipher1': Configuration.cipher1 + " # Values allowed: aes-128-cbc, aes-256-cbc, etc.",
-            'curve2': Configuration.curve2 + " # Values allowed: None, secp521r1, sect571r1, secp384r1, etc.",
-            'cipher2': Configuration.cipher2 + " # Values allowed: None, aes-128-cbc, aes-256-cbc, etc.",
-            'curve3': Configuration.curve3 + " # Values allowed: None, secp521r1, sect571r1, secp384r1, etc.",
-            'cipher3': Configuration.cipher3 + " # Values allowed: None, aes-128-cbc, aes-256-cbc, etc.",
+            'curve1': Configuration.curve1 +
+                      " # Values allowed: secp521r1, sect571r1, secp384r1, etc.",
+            'cipher1': Configuration.cipher1 +
+                       " # Values allowed: aes-128-cbc, aes-256-cbc, etc.",
+            'curve2': Configuration.curve2 +
+                      " # Values allowed: None, secp521r1, sect571r1, secp384r1, etc.",
+            'cipher2': Configuration.cipher2 +
+                       " # Values allowed: None, aes-128-cbc, aes-256-cbc, etc.",
+            'curve3': Configuration.curve3 +
+                      " # Values allowed: None, secp521r1, sect571r1, secp384r1, etc.",
+            'cipher3': Configuration.cipher3 +
+                       " # Values allowed: None, aes-128-cbc, aes-256-cbc, etc."
+        }
+        fileparser['ui'] = {
             'lock': str(Configuration.lock) +
-                    " # Lock screen - Values allowed: 0 or a positive integer"
+                    " # Lock screen - Values allowed: 0 or a positive integer",
+            'colour': str(Configuration.colour) +
+                      " # If available use colours (1) or not (0)",
+            'colourB': Configuration.colourB +
+                       " # Colour for editable widgets (button, input box...)",
+            'colourD': Configuration.colourD +
+                       " # Colour for decoration (label, frame...)",
+            'colourT': Configuration.colourT +
+                       " # Colour for titles",
+            'colourM': Configuration.colourM +
+                       " # Colour for messages"
         }
         with open(Configuration.configfile, 'w') as configfile:
             fileparser.write(configfile)
@@ -199,6 +237,11 @@ class Configuration:
             '-l', '--lock', type=int, nargs='?', default=Configuration.lock,
             metavar='minute(s)', action=MyParserAction,
             help="the time before lock the screen (0 for no automatic lock screen)")
+
+        # Using colour
+        argparser.add_argument(
+            '-b', '--beauty', nargs=0, default='false', action=MyParserAction,
+            help="use colours if available")
 
         # Start action
         argparser.add_argument(

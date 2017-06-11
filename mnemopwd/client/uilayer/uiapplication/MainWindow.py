@@ -57,11 +57,15 @@ class MainWindow(BaseWindow):
         self.connected = False  # Login state
         self.login = None       # User account login
         self.hpassword = None   # User account password
+        self.salt = None        # Salt value for hashing password
 
         # Menu zone
-        self.applicationButton = ButtonBox(self, 0, 0, "MnemoPwd", shortcut='e')
-        self.newButton = ButtonBox(self, 0, 11, "New", shortcut='N')
-        self.searchButton = ButtonBox(self, 0, 17, "Search", shortcut='r')
+        self.applicationButton = ButtonBox(self, 0, 0, "MnemoPwd", shortcut='e',
+                                           colour=Configuration.colourB)
+        self.newButton = ButtonBox(self, 0, 11, "New", shortcut='N',
+                                   colour=Configuration.colourB)
+        self.searchButton = ButtonBox(self, 0, 17, "Search", shortcut='r',
+                                      colour=Configuration.colourB)
 
         # Ordered list of shortcut keys
         self.shortcuts = ['e', 'N', 'r']
@@ -80,39 +84,51 @@ class MainWindow(BaseWindow):
 
         # Status window
         self.statscr = curses.newwin(2, curses.COLS, curses.LINES - 2, 0)
+        self.statscr.attrset(Configuration.colourD)
         self.statscr.hline(0, 0, curses.ACS_HLINE, curses.COLS)
         self.statscr.refresh()
+        self.statscr.attrset(0)
 
         self._decorate()
 
     def _decorate(self):
         """Show specific content"""
+        self.window.attrset(Configuration.colourD)
         self.window.hline(1, 0, curses.ACS_HLINE, curses.COLS)
         message = "MnemoPwd Client v" + Configuration.version
-        self.window.addstr(0, curses.COLS - len(message) - 1, message)
+        self.window.addstr(0, curses.COLS - len(message) - 1, message,
+                           Configuration.colourT)
         self.window.addch(0, curses.COLS - len(message) - 3, curses.ACS_VLINE)
         self.window.addch(1, curses.COLS - len(message) - 3, curses.ACS_BTEE)
+        self.statscr.attrset(Configuration.colourD)
         self.statscr.hline(0, 0, curses.ACS_HLINE, curses.COLS)
         self.window.refresh()
+        self.window.attrset(0)
+        self.statscr.attrset(0)
 
     def lock_screen(self):
         """Lock / unlock the screen"""
         if self.connected:
-            self.uifacade.clear_content()
-            self.window.timeout(-1)
+            self.uifacade.clear_content()  # Clear the terminal
+
+            # Waiting for a keystroke
             self.window.addstr(
                 int(curses.LINES / 2), int(curses.COLS / 2 - 13),
-                "Hit a key to unlock screen")
+                "Hit a key to unlock screen", Configuration.colourB)
+            self.window.timeout(-1)
             self.window.getch()
+
+            # Waiting for unlocking
             while UnlockScreenWindow(self).start() is False:
                 self.window.addstr(
                     int(curses.LINES / 2), int(curses.COLS / 2 - 13),
-                    "Hit a key to unlock screen")
+                    "Hit a key to unlock screen", Configuration.colourB)
                 self.window.getch()
-            self.redraw()
+
+            self.redraw()  # Redraw main window
 
     def hash_password(self, password):
-        """Compute a digest of the password. USe a random salt value"""
+        """Compute a digest of the password. Use a random salt value"""
         ho = hashlib.sha512()
         ho.update(password.encode() + self.salt)
         return ho.digest()
@@ -226,6 +242,8 @@ class MainWindow(BaseWindow):
                 if result == ApplicationMenu.ITEM4:  # Lock screen
                     if self.connected:
                         self.lock_screen()
+                    else:
+                        self.update_status('You must be connected for locking the terminal')
                 if result == ApplicationMenu.ITEM5:  # Quit application
                     if self.connected:
                         # Disconnection
@@ -255,7 +273,7 @@ class MainWindow(BaseWindow):
 
     def _post_close(self, value):
         """Actions to do after the connection has been closed"""
-        self.login = self.hpassword = None
+        self.login = self.hpassword = self.salt = None
         self.connected = False
         self.update_status(value)
         self.editscr.clear_content()
@@ -310,8 +328,9 @@ class MainWindow(BaseWindow):
         self.statscr.move(1, 7)
         self.statscr.clrtoeol()  # Clear line
         # Show percentage then load bar
-        self.statscr.addstr(1, 8, percent + "%" + " [" + str(actual) + "]")
-        self.statscr.addstr(1, 19, message)
+        self.statscr.addstr(1, 8, percent + "%" + " [" + str(actual) + "]",
+                            Configuration.colourM)
+        self.statscr.addstr(1, 19, message, Configuration.colourM)
         self.statscr.refresh()
         curses.setsyx(currenty, currentx)  # Restore cursor position
 
@@ -321,12 +340,12 @@ class MainWindow(BaseWindow):
         self.statscr.move(1, 1)
         self.statscr.clrtoeol()
         if self.connected:
-            self.statscr.addstr("-O-")
+            self.statscr.addstr("-O-", Configuration.colourM)
         else:
-            self.statscr.addstr("-||-")
-        self.statscr.addch(0, 6, curses.ACS_TTEE)
-        self.statscr.addch(1, 6, curses.ACS_VLINE)
-        self.statscr.addstr(1, 8, value)
+            self.statscr.addstr("-||-", Configuration.colourM)
+        self.statscr.addch(0, 6, curses.ACS_TTEE, Configuration.colourD)
+        self.statscr.addch(1, 6, curses.ACS_VLINE, Configuration.colourD)
+        self.statscr.addstr(1, 8, value, Configuration.colourM)
         self.statscr.refresh()
         curses.setsyx(currenty, currentx)
 

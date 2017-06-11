@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2016, Thierry Lemeunier <thierry at lemeunier dot net>
+# Copyright (c) 2016-2017, Thierry Lemeunier <thierry at lemeunier dot net>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -29,6 +29,7 @@ from threading import Thread
 import locale
 import curses
 
+from ..util.Configuration import Configuration
 from ..util.funcutils import Observer
 from .uiapplication.MainWindow import MainWindow
 
@@ -65,6 +66,10 @@ class ClientUI(Thread, Observer):
         # curses initialization
         self.window = curses.initscr()
 
+        # Use colours if the user wants it and if it's available
+        ClientUI._define_colours()
+
+        # Control terminal size
         if curses.COLS < 80 or curses.LINES < 24:
             curses.endwin()
             print("Please consider to use at least a 80x24 terminal size.")
@@ -74,12 +79,57 @@ class ClientUI(Thread, Observer):
         curses.noecho()  # No echoing key pressed
         curses.nonl()  # Leave newline mode
         try:
-            curses.curs_set(0)  # No cursor
+            curses.curs_set(0)  # Hide cursor
         except:
             pass
 
         # Open the main window
         self.wmain = MainWindow(self)
+
+    @staticmethod
+    def _define_colours():
+        """Define UI colours"""
+
+        def get_colour_index(str_colour):
+            str_colour = str_colour.upper()
+            if str_colour == 'BLUE':
+                return curses.color_pair(1)
+            if str_colour == 'CYAN':
+                return curses.color_pair(2)
+            if str_colour == 'GREEN':
+                return curses.color_pair(3)
+            if str_colour == 'MAGENTA':
+                return curses.color_pair(4)
+            if str_colour == 'RED':
+                return curses.color_pair(5)
+            if str_colour == 'YELLOW':
+                return curses.color_pair(6)
+            if str_colour == 'WHITE':
+                return curses.color_pair(7)
+            return curses.color_pair(0)
+
+        if Configuration.colour == 1:
+            curses.start_color()
+            if curses.has_colors():
+                curses.init_pair(1, curses.COLOR_BLUE, 0)
+                curses.init_pair(2, curses.COLOR_CYAN, 0)
+                curses.init_pair(3, curses.COLOR_GREEN, 0)
+                curses.init_pair(4, curses.COLOR_MAGENTA, 0)
+                curses.init_pair(5, curses.COLOR_RED, 0)
+                curses.init_pair(6, curses.COLOR_YELLOW, 0)
+                curses.init_pair(7, curses.COLOR_WHITE, 0)
+                Configuration.colourB = get_colour_index(Configuration.colourB)
+                Configuration.colourD = get_colour_index(Configuration.colourD)
+                Configuration.colourT = get_colour_index(Configuration.colourT)
+                Configuration.colourM = get_colour_index(Configuration.colourM)
+            else:
+                Configuration.colour = 0  # Can not or do not use colours
+
+        if Configuration.colour == 0:
+            Configuration.colourB = 0  # Default colour
+            Configuration.colourD = 0  # Default colour
+            Configuration.colourT = 0  # Default colour
+            Configuration.colourM = 0  # Default colour
 
     def clear_content(self):
         """Clear the window content"""
@@ -89,7 +139,7 @@ class ClientUI(Thread, Observer):
     def stop(self):
         """Stop UI and return to normal interaction"""
         try:
-            curses.curs_set(2)
+            curses.curs_set(2)  # Show cursor
         except:
             pass
         curses.nonl()  # Enter newline mode

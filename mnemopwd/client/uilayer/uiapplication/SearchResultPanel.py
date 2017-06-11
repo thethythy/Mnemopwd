@@ -86,12 +86,13 @@ class SearchResultPanel(BaseWindow):
         nbitems = len(self.items)
         label = sib['info2'].decode()[:self.w - 4 - 1 - 2]
         show = (nbitems + 1) <= self.h
-        item = MetaButtonBox(
-            self, nbitems, 2, label, show=show, data=(idblock, sib))
+        item = MetaButtonBox(self, nbitems, 2, label, show=show,
+                             data=(idblock, sib), colour=Configuration.colourB)
         self.items.append(item)
         # Show or update scrolling bar
         if self.scroll_bar is None:
-            self.scroll_bar = VertScrollBar(self, self.h, 0, 0)
+            self.scroll_bar = VertScrollBar(self, self.h, 0, 0,
+                                            colour=Configuration.colourD)
         else:
             self.scroll_bar.update(nbitems + 1)
 

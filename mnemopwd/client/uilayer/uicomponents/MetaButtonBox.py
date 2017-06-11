@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2016, Thierry Lemeunier <thierry at lemeunier dot net>
+# Copyright (c) 2016-2017, Thierry Lemeunier <thierry at lemeunier dot net>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -31,11 +31,12 @@ from .ButtonBox import ButtonBox
 class MetaButtonBox(ButtonBox):
     """A button box with a user data"""
 
-    def __init__(self, parent, y, x, label, shortcut=None, show=True, data=None):
+    def __init__(self, parent, y, x, label, shortcut=None, show=True, data=None,
+                 colour=False):
         """Object initialization"""
         if show:
-            ButtonBox.__init__(
-                self, parent, y, x, label, shortcut=shortcut, show=show)
+            ButtonBox.__init__(self, parent, y, x, label, shortcut=shortcut,
+                               show=show, colour=colour)
         else:
             self.label = ' ' + label + ' '
             self.parent = parent
@@ -44,6 +45,7 @@ class MetaButtonBox(ButtonBox):
             self.shortcut = shortcut
             self.modal = False
             self.showOrHide = show
+            self.colour = colour
         self.data = data
 
     def move(self, y, x, focus=False):

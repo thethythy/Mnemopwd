@@ -34,7 +34,7 @@ from .Component import Component
 class VertScrollBar(Component):
     """A vertical scrolling bar"""
 
-    def __init__(self, parent, h, y, x):
+    def __init__(self, parent, h, y, x, colour=False):
         """Initialization of a VertScrollBar instance"""
         Component.__init__(self, parent, h, 2, y, x, False)
         self.size = 0  # Vertical length of the scrolling bar
@@ -42,6 +42,7 @@ class VertScrollBar(Component):
         self.count = 0  # Counter for scrolling up or scrolling down
         self.counter = 0  # Counter for adjusting
         self.content_size = 0  # Save content size for adjusting
+        self.colour = colour
         self._create()
 
     def is_actionable(self):
@@ -93,17 +94,17 @@ class VertScrollBar(Component):
         if self.h >= 2:
             # Draw standard shape
             for i in range(1, self.h - 1):
-                self.window.addch(i, 0, curses.ACS_VLINE)  # '|'
+                self.window.addch(i, 0, curses.ACS_VLINE | self.colour)  # '|'
             # Draw decorations
-            self.window.addstr(0, 0, chr(0x25B2))  # '▲'
-            self.window.addstr(self.h - 1, 0, chr(0x25BC))  # '▼'
+            self.window.addch(0, 0, chr(0x25B2), self.colour)  # '▲'
+            self.window.addch(self.h - 1, 0, chr(0x25BC), self.colour)  # '▼'
             # Draw scrolling bar if necessary
             if self.size > 0:
-                end = self.pos + self.size + 1
+                end = min(self.pos + self.size + 1, self.h)
                 for i in range(self.pos, end):
-                    self.window.addstr(i, 0, chr(0x2588))  # '█'
+                    self.window.addch(i, 0, chr(0x2588), self.colour)  # '█'
             # Redraw bottom decoration if necessary
             if self.counter < self.content_size - self.h:
-                self.window.addstr(self.h - 1, 0, chr(0x25BC))  # '▼'
+                self.window.addch(self.h - 1, 0, chr(0x25BC), self.colour)  # '▼'
             # Finally refresh window
             self.window.refresh()

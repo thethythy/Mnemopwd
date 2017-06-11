@@ -25,6 +25,7 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+from ...util.Configuration import Configuration
 from ..uicomponents.BaseWindow import BaseWindow
 from ..uicomponents.MetaButtonBox import MetaButtonBox
 from ...util.funcutils import sfill
@@ -43,36 +44,44 @@ class ApplicationMenu(BaseWindow):
 
     def __init__(self, parent, y, x, connected):
         """Create the menu"""
+
         # Create the window
         BaseWindow.__init__(self, parent, 7, 19 + 5, y, x, menu=True, modal=True)
+        self.window.attrset(Configuration.colourD)
         self.window.border()
         self.window.refresh()
+        self.window.attrset(0)
 
         # Login/logout button
         if connected:
             name = 'Logout' + sfill(19 - 6, ' ')
         else:
             name = 'Login' + sfill(19 - 5, ' ')
-        self.items.append(MetaButtonBox(
-            self, 1, 1, name, shortcut='L', data=self.ITEM1))
+        self.items.append(MetaButtonBox(self, 1, 1, name, shortcut='L',
+                                        data=self.ITEM1,
+                                        colour=Configuration.colourB))
 
         # Create user account button
-        self.items.append(MetaButtonBox(
-            self, 2, 1, 'Create user account', shortcut='n', data=self.ITEM2))
+        self.items.append(MetaButtonBox(self, 2, 1, 'Create user account',
+                                        shortcut='n', data=self.ITEM2,
+                                        colour=Configuration.colourB))
 
         # Delete user account button
-        self.items.append(MetaButtonBox(
-            self, 3, 1, 'Delete user account', shortcut='e', data=self.ITEM3))
+        self.items.append(MetaButtonBox(self, 3, 1, 'Delete user account',
+                                        shortcut='e', data=self.ITEM3,
+                                        colour=Configuration.colourB))
 
         # Lock screen
         name = 'Lock screen' + sfill(19 - 11, ' ')
-        self.items.append(MetaButtonBox(
-            self, 4, 1, name, shortcut='k', data=self.ITEM4))
+        self.items.append(MetaButtonBox(self, 4, 1, name, shortcut='k',
+                                        data=self.ITEM4,
+                                        colour=Configuration.colourB))
 
         # Quit button
         name = 'Quit' + sfill(19 - 4, ' ')
-        self.items.append(MetaButtonBox(
-            self, 5, 1, name, shortcut='u', data=self.ITEM5))
+        self.items.append(MetaButtonBox(self, 5, 1, name, shortcut='u',
+                                        data=self.ITEM5,
+                                        colour=Configuration.colourB))
 
         # Ordered list of shortcut keys
         self.shortcuts = ['L', 'n', 'e', 'k', 'u']
