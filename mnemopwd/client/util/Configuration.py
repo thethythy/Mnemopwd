@@ -129,32 +129,101 @@ class Configuration:
     def __load_config_file__(parser, fileparser):
         """Load configuration file"""
         try:
+            is_incomplete = False  # Flag if config. file is incomplete
+
             fileparser.read(Configuration.configfile)
 
-            Configuration.server = fileparser['server']['server']
-            Configuration.port = int(fileparser['server']['port'])
-            Configuration.certfile = fileparser['server']['certfile']
-            Configuration.timeout = int(fileparser['server']['timeout'])
+            try:
+                Configuration.server = fileparser['server']['server']
+            except KeyError:
+                is_incomplete = True
 
-            Configuration.curve1 = is_none(fileparser['client']['curve1'])
-            Configuration.cipher1 = is_none(fileparser['client']['cipher1'])
-            Configuration.curve2 = is_none(fileparser['client']['curve2'])
-            Configuration.cipher2 = is_none(fileparser['client']['cipher2'])
-            Configuration.curve3 = is_none(fileparser['client']['curve3'])
-            Configuration.cipher3 = is_none(fileparser['client']['cipher3'])
+            try:
+                Configuration.port = int(fileparser['server']['port'])
+            except KeyError:
+                is_incomplete = True
 
-            Configuration.lock = int(fileparser['ui']['lock'])
-            Configuration.colour = int(fileparser['ui']['colour'])
-            Configuration.colourB = fileparser['ui']['colourb']
-            Configuration.colourD = fileparser['ui']['colourd']
-            Configuration.colourT = fileparser['ui']['colourt']
-            Configuration.colourM = fileparser['ui']['colourm']
+            try:
+                Configuration.certfile = fileparser['server']['certfile']
+            except KeyError:
+                is_incomplete = True
 
-        except configparser.ParsingError:
+            try:
+                Configuration.timeout = int(fileparser['server']['timeout'])
+            except KeyError:
+                is_incomplete = True
+
+            try:
+                Configuration.curve1 = is_none(fileparser['client']['curve1'])
+            except KeyError:
+                is_incomplete = True
+
+            try:
+                Configuration.cipher1 = is_none(fileparser['client']['cipher1'])
+            except KeyError:
+                is_incomplete = True
+
+            try:
+                Configuration.curve2 = is_none(fileparser['client']['curve2'])
+            except KeyError:
+                is_incomplete = True
+
+            try:
+                Configuration.cipher2 = is_none(fileparser['client']['cipher2'])
+            except KeyError:
+                is_incomplete = True
+
+            try:
+                Configuration.curve3 = is_none(fileparser['client']['curve3'])
+            except KeyError:
+                is_incomplete = True
+
+            try:
+                Configuration.cipher3 = is_none(fileparser['client']['cipher3'])
+            except KeyError:
+                is_incomplete = True
+
+            try:
+                Configuration.lock = int(fileparser['ui']['lock'])
+            except KeyError:
+                is_incomplete = True
+
+            try:
+                Configuration.colour = int(fileparser['ui']['colour'])
+            except KeyError:
+                is_incomplete = True
+
+            try:
+                Configuration.colourB = fileparser['ui']['colourb']
+            except KeyError:
+                is_incomplete = True
+
+            try:
+                Configuration.colourD = fileparser['ui']['colourd']
+            except KeyError:
+                is_incomplete = True
+
+            try:
+                Configuration.colourT = fileparser['ui']['colourt']
+            except KeyError:
+                is_incomplete = True
+
+            try:
+                Configuration.colourM = fileparser['ui']['colourm']
+            except KeyError:
+                is_incomplete = True
+
+            # Complete configuration file if necessary
+            if is_incomplete:
+                Configuration.__create_config_file__(fileparser)
+                print("configuration file {} updated".
+                    format(Configuration.configfile))
+
+        except ValueError:
             parser.error("parsing error of configuration file {}".
                          format(Configuration.configfile))
 
-        except KeyError:
+        except configparser.ParsingError:
             parser.error("parsing error of configuration file {}".
                          format(Configuration.configfile))
 
