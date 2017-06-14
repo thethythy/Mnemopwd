@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2016, Thierry Lemeunier <thierry at lemeunier dot net>
+# Copyright (c) 2016-2017, Thierry Lemeunier <thierry at lemeunier dot net>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -41,6 +41,7 @@ class SecretTextEditor(TextEditor):
 
     def edit(self, validate=None):
         """Edit in the widget window and collect the results."""
+        self._show_cursor()
         while 1:
             ch = self.win.getch()
             if validate:

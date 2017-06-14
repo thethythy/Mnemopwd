@@ -67,9 +67,6 @@ class InputBox(Component):
         self.cursor_y = 0
         self.cursor_x = 0
 
-        # Cursor shape
-        self.cursor_shape = chr(0x2588)  # Like a terminal cursor
-
     def is_editable(self):
         """This component is editable"""
         return True
@@ -80,8 +77,7 @@ class InputBox(Component):
 
     def focus_on(self):
         """See mother class"""
-        self.editorbox.addstr(self.cursor_y, self.cursor_x, self.cursor_shape,
-                              curses.A_BLINK)
+        self.editorbox.addstr(self.cursor_y, self.cursor_x, '_', curses.A_BLINK)
         self.editorbox.move(self.cursor_y, self.cursor_x)
         self.editorbox.refresh()
 
@@ -131,6 +127,9 @@ class InputBox(Component):
                   curses.ascii.CR, curses.ascii.ESC, curses.KEY_MOUSE]:
             curses.ungetch(ch)
             return curses.ascii.NL
+        elif ch in [curses.KEY_RIGHT, curses.KEY_LEFT, curses.KEY_A1,
+                    curses.KEY_A3, curses.KEY_C1, curses.KEY_C3]:
+            return False
         elif ch in [curses.ascii.DEL]:
             return curses.ascii.BS
         elif curses.ascii.isctrl(ch):
@@ -142,10 +141,6 @@ class InputBox(Component):
 
     def edit(self):
         """Start editing operation"""
-        try:
-            curses.curs_set(2)  # Show cursor
-        except curses.error:
-            pass
         result = self.editor.edit(self._controller_)
         if result != self.value:
             if result != "":
@@ -154,7 +149,4 @@ class InputBox(Component):
             else:
                 self.value = None
                 self.cursor_x = 0
-        try:
-            curses.curs_set(0)  # Hide cursor
-        except curses.error:
-            pass
+

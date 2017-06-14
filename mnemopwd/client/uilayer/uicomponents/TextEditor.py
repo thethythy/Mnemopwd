@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2016, Thierry Lemeunier <thierry at lemeunier dot net>
+# Copyright (c) 2016-2017, Thierry Lemeunier <thierry at lemeunier dot net>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -26,7 +26,7 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 """Simple text editing widget (copy of the official file but with
-character > 127 and without insert mode)"""
+character > 127, a software cursor and without insert mode)"""
 
 import curses
 import curses.ascii
@@ -77,12 +77,19 @@ class TextEditor:
             last -= 1
         return last
 
+    def _show_cursor(self):
+        """Insert a software cursor at the actual position"""
+        self.win.addch('_', curses.A_BLINK)
+        (y, x) = self.win.getyx()
+        self.win.move(y, x - 1)
+
     def _insert_printable_char(self, ch):
         # The try-catch ignores the error we trigger from some curses
         # versions by trying to write into the lowest-rightmost spot
         # in the window.
         try:
             self.win.addch(ch)
+            self._show_cursor()  # Add this
         except curses.error:
             pass
 
@@ -90,7 +97,10 @@ class TextEditor:
         """Preset value in the editor"""
         self.win.move(0, 0)
         for ch in value:
-            self._insert_printable_char(ch)
+            try:
+                self.win.addch(ch)
+            except curses.error:
+                pass
 
     def do_command(self, ch):
         """Process a single editing command."""
@@ -109,6 +119,7 @@ class TextEditor:
                 self.win.move(y-1, self.maxx)
             if ch in (curses.ascii.BS, curses.KEY_BACKSPACE):
                 self.win.delch()
+                self._show_cursor()  # Add this
         elif ch == curses.ascii.EOT:                           # ^d
             self.win.delch()
         elif ch == curses.ascii.ENQ:                           # ^e
@@ -124,9 +135,11 @@ class TextEditor:
             else:
                 self.win.move(y+1, 0)
         elif ch == curses.ascii.BEL:                           # ^g
+            self.win.clrtoeol()
             return 0
         elif ch == curses.ascii.NL:                            # ^j
             if self.maxy == 0:
+                self.win.clrtoeol()
                 return 0
             elif y < self.maxy:
                 self.win.move(y+1, 0)
@@ -174,6 +187,7 @@ class TextEditor:
 
     def edit(self, validate=None):
         """Edit in the widget window and collect the results."""
+        self._show_cursor()  # Add this
         while 1:
             ch = self.win.getch()
             if validate:
