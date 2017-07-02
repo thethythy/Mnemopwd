@@ -38,11 +38,13 @@ class ButtonBox(Component):
         self.colour = colour
         self.shortcut = shortcut
         self.showOrHide = show
+        self.focus = False
         if self.showOrHide:
             self.focus_off()
         
     def focus_on(self):
         """See mother class"""
+        self.focus = True
         self.window.addstr(0, 0, self.label,
                            curses.A_BLINK | curses.A_REVERSE | self.colour)
         if self.shortcut:
@@ -53,12 +55,17 @@ class ButtonBox(Component):
         
     def focus_off(self):
         """See mother class"""
+        self.focus = False
         self.window.addstr(0, 0, self.label, self.colour)
         if self.shortcut:
             self.window.addstr(
                 0, self.label.find(self.shortcut), self.shortcut,
                 curses.A_UNDERLINE | self.colour)
         self.window.refresh()
+
+    def has_focus(self):
+        """Does the component have the focus"""
+        return self.focus
 
     def move(self, y, x, focus=False):
         """See mother class"""

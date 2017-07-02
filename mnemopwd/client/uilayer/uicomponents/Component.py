@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2016, Thierry Lemeunier <thierry at lemeunier dot net>
+# Copyright (c) 2016-2017, Thierry Lemeunier <thierry at lemeunier dot net>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -69,6 +69,10 @@ class Component:
         
     def focus_off(self):
         """This component has lost the focus"""
+        pass
+
+    def has_focus(self):
+        """Does the component have the focus"""
         pass
 
     def move(self, y, x, focus=False):

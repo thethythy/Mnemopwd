@@ -61,6 +61,7 @@ class InputBox(Component):
         self.shortcuts = shortcuts
         self.option = option
         self.showOrHide = show
+        self.focus = False
         self.colourD = colourD
 
         # Cursor position
@@ -77,21 +78,33 @@ class InputBox(Component):
 
     def focus_on(self):
         """See mother class"""
+        self.focus = True
         self.editorbox.addstr(self.cursor_y, self.cursor_x, '_', curses.A_BLINK)
         self.editorbox.move(self.cursor_y, self.cursor_x)
         self.editorbox.refresh()
 
     def focus_off(self):
         """See mother class"""
+        self.focus = False
         self.editorbox.move(self.cursor_y, self.cursor_x)
         self.editorbox.clrtoeol()
         self.editorbox.refresh()
+
+    def has_focus(self):
+        """Does the component have the focus"""
+        return self.focus
 
     def clear(self):
         """Clean up the editor content"""
         self.value = None
         self.cursor_x = 0
         self.focus_off()
+
+    def update(self, label):
+        """Change the content"""
+        self.value = label
+        self.window.clear()
+        self.show()
 
     def show(self):
         """Show the editor"""

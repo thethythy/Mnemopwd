@@ -72,6 +72,11 @@ class LabelBox(Component):
         if self.showOrHide:
             self._create()
 
+    def update(self, label):
+        """Change the label"""
+        self.label = label
+        self.move(self.y, self.x)
+
     def _create(self):
         """Create the widget content"""
         if self.showOrHide:
