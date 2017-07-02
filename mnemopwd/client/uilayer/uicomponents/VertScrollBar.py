@@ -40,7 +40,6 @@ class VertScrollBar(Component):
         self.size = 0  # Vertical length of the scrolling bar
         self.pos = 0  # Position of the scrolling bar
         self.count = 0  # Counter for scrolling up or scrolling down
-        self.counter = 0  # Counter for adjusting
         self.content_size = 0  # Save content size for adjusting
         self.colour = colour
         self._create()
@@ -52,7 +51,7 @@ class VertScrollBar(Component):
     def update(self, content_size):
         """Update scrolling bar size"""
         self.content_size = content_size
-        size = math.floor(self.h * self.h / content_size)
+        size = max(1, int(math.floor(self.h * self.h / content_size)))
         do_redraw = self.size != size
 
         if size < self.h:
@@ -64,30 +63,32 @@ class VertScrollBar(Component):
             self._create()
 
     def scroll(self, direction):
-        """Try to scrolling up or scrolling down"""
+        """
+        Try to scrolling up or scrolling down
+        Scrolling depends on the number of 'up' or 'down' done by user
+        """
         if self.size > 0:
-            # Redraw bottom decoration or not
-            self.counter += direction
-            do_redraw = self.counter == self.content_size - self.h
-
-            # Redraw scrolling bar or not
             self.count += direction
             pos = self.pos
-            if math.fabs(self.count) == math.floor(self.h / self.size):
+            if math.fabs(self.count) == math.floor(self.content_size / self.h):
                 pos += direction
                 self.count = 0
 
                 pos = max(0, pos)  # Top limit
                 pos = min(pos, self.h - self.size)  # Bottom limit
-                do_redraw = pos != self.pos
+                do_redraw = pos != self.pos  # Redraw if pos has changed
                 self.pos = pos
 
-            if do_redraw:
-                self._create()
+                if do_redraw:
+                    self._create()
 
     def redraw(self):
         """See the mother class"""
         self._create()
+
+    def reset(self):
+        """Re-initialize attributes"""
+        self.pos = self.size = self.content_size = self.count = 0
 
     def _create(self):
         """Draw the widget content"""
@@ -100,11 +101,8 @@ class VertScrollBar(Component):
             self.window.addch(self.h - 1, 0, chr(0x25BC), self.colour)  # '▼'
             # Draw scrolling bar if necessary
             if self.size > 0:
-                end = min(self.pos + self.size + 1, self.h)
+                end = min(self.pos + self.size, self.h)
                 for i in range(self.pos, end):
                     self.window.addch(i, 0, chr(0x2588), self.colour)  # '█'
-            # Redraw bottom decoration if necessary
-            if self.counter < self.content_size - self.h:
-                self.window.addch(self.h - 1, 0, chr(0x25BC), self.colour)  # '▼'
             # Finally refresh window
             self.window.refresh()
