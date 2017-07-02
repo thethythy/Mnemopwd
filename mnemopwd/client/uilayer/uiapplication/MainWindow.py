@@ -35,6 +35,7 @@ from ...util.Configuration import Configuration
 from ...util.funcutils import sfill
 from ..uicomponents.BaseWindow import BaseWindow
 from ..uicomponents.ButtonBox import ButtonBox
+from ..uicomponents.FileChooserWindow import FileChooserWindow
 from .LoginWindow import LoginWindow
 from .UserAccountWindow import UserAccountWindow
 from .UserAccountDeletionWindow import UserAccountDeletionWindow
@@ -43,6 +44,7 @@ from .EditionWindow import EditionWindow
 from .SearchWindow import SearchWindow
 from .ApplicationMenu import ApplicationMenu
 from .CreateMenu import CreateMenu
+from .ExportImportMenu import ExportImportMenu
 
 
 class MainWindow(BaseWindow):
@@ -58,20 +60,24 @@ class MainWindow(BaseWindow):
         self.login = None       # User account login
         self.hpassword = None   # User account password
         self.salt = None        # Salt value for hashing password
+        self.directory = os.path.expanduser('~')  # Default directory
 
         # Menu zone
-        self.applicationButton = ButtonBox(self, 0, 0, "MnemoPwd", shortcut='e',
+        self.applicationButton = ButtonBox(self, 0, 0, "MnemoPwd", shortcut='M',
                                            colour=Configuration.colourB)
         self.newButton = ButtonBox(self, 0, 11, "New", shortcut='N',
                                    colour=Configuration.colourB)
-        self.searchButton = ButtonBox(self, 0, 17, "Search", shortcut='r',
+        self.searchButton = ButtonBox(self, 0, 17, "Search", shortcut='h',
                                       colour=Configuration.colourB)
+        self.expimpButton = ButtonBox(self, 0, 26, "Export/Import",
+                                      shortcut='o', colour=Configuration.colourB)
 
         # Ordered list of shortcut keys
-        self.shortcuts = ['e', 'N', 'r']
+        self.shortcuts = ['M', 'N', 'h', 'o']
 
         # Ordered list of components
-        self.items = [self.applicationButton, self.newButton, self.searchButton]
+        self.items = [self.applicationButton, self.newButton, self.searchButton,
+                      self.expimpButton]
 
         # Edition window
         self.editscr = EditionWindow(
@@ -191,6 +197,26 @@ class MainWindow(BaseWindow):
         self.searchscr.pre_search()
         return self.searchscr.start()
 
+    def _handle_export_import(self, action):
+        """Start an exportation or an importation"""
+        if action == ExportImportMenu.ITEM3:
+            self.update_status('Please navigate then select an existing file')
+            mode = FileChooserWindow.SELECT
+        elif action == ExportImportMenu.ITEM1 or action == ExportImportMenu.ITEM2:
+            self.update_status('Please navigate, select a directory then edit a new filename')
+            mode = FileChooserWindow.CREATE
+
+        result = FileChooserWindow(self, self.directory,
+                                   colourB=Configuration.colourB,
+                                   colourT=Configuration.colourT,
+                                   colourD=Configuration.colourD,
+                                   mode=mode).start()
+
+        self.update_status(str(result))
+
+        # TODO : launch importation or exportation according result
+        # TODO : save directory returned if result not False
+
     def start(self, timeout=-1):
         """See mother class"""
         if Configuration.first_execution:
@@ -268,6 +294,16 @@ class MainWindow(BaseWindow):
                     number_type, idblock = self._search_block()
                     if type(number_type) is int:
                         self._handle_block(number_type, idblock)
+                else:
+                    self.update_status('Please start a connection')
+
+            # Export/Import menu
+            elif result == self.expimpButton:
+                if self.connected:
+                    self.expimpButton.focus_off()
+                    result = ExportImportMenu(self, 1, 26).start()
+                    if result:
+                        self._handle_export_import(result)
                 else:
                     self.update_status('Please start a connection')
 
