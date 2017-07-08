@@ -33,7 +33,7 @@ from ...util.Configuration import Configuration
 from ..uicomponents.TitledOnBorderWindow import TitledOnBorderWindow
 from ..uicomponents.Component import Component
 from ..uicomponents.InputBox import InputBox
-from .SearchResultPanel import SearchResultPanel
+from ..uicomponents.ListBox import ListBox
 
 
 class SearchWindow(TitledOnBorderWindow):
@@ -54,8 +54,8 @@ class SearchWindow(TitledOnBorderWindow):
                                       colourD=Configuration.colourD)
 
         # Result panel
-        self.resultPanel = SearchResultPanel(self, h - 3 - 2, w - 4, 4, 2,
-                                             modal=True, menu=True)
+        self.resultPanel = ListBox(self, h - 3 - 2, w - 4, 4, 2)
+        self.resultPanel.set_listener(self)
         self.nbResult = self.nbMaxResult = 0
 
         self.shortcuts = []
@@ -78,8 +78,19 @@ class SearchWindow(TitledOnBorderWindow):
         """Update parent status"""
         self.parent.update_status(message)
 
-    def update_window(self, key, value):
-        self.parent.update_window(key, value)
+    def update(self, item):
+        """
+        Update window according the item selected in the ListBox.
+        This method is called by the ListBox widget instance.
+        """
+        if isinstance(item, Component) and item.has_focus():
+            idblock, sib = item.get_data()
+            atuple = int(sib['info1'].decode()), sib
+            self.parent.update_window(
+                "application.editionblock.seteditors", atuple)
+        else:
+            self.parent.update_window(
+                "application.editionblock.cleareditors", None)
 
     def pre_search(self):
         """Prepare window before searching"""
@@ -108,12 +119,18 @@ class SearchWindow(TitledOnBorderWindow):
 
     def add_a_result(self, idblock, sib):
         """Add a search result in the panel"""
-        # Create and add a button to the result panel
+
         self.nbResult += 1
-        self.resultPanel.add_item(idblock, sib)
-        # Change focus on result panel if it is the last result
-        if self.nbResult == self.nbMaxResult and self.index == 0:
-            self.focus_off_force(1)
+        the_end = self.nbResult >= self.nbMaxResult  # All results treated ?
+
+        # Create and add a button to the result panel
+        label = sib['info2'].decode()[:self.w - 4 - 1 - 2]
+        self.resultPanel.add_item(label, idblock, data=sib, scroll=the_end)
+
+        # Change focus on result panel if it was the last result
+        if the_end and self.index == 0:
+            self.items[self.index].focus_off()
+            self.index += 1  # Next item: the result panel
 
     def try_add_a_result(self, idblock, sib):
         """Try to add a new block in the result panel"""
@@ -138,12 +155,6 @@ class SearchWindow(TitledOnBorderWindow):
     def remove_a_result(self, idblock):
         """Remove a previous search result"""
         self.resultPanel.remove_item(idblock)
-
-    def focus_off_force(self, direction):
-        """This window must lost focus"""
-        self.items[self.index].focus_off()
-        self.index += direction
-        curses.ungetch(curses.ascii.CR)
 
     def start(self, timeout=-1):
         """See mother class"""

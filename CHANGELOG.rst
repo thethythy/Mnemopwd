@@ -7,11 +7,15 @@ Changelog
 
 New
 ~~~
+- Add a FileChooserWindow standard dialog box. [thethythy]
+- Add a ListBox widget. [thethythy]
 - Add the possibility to use colours in client interface (#6)
   [thethythy]
 
 Changes
 ~~~~~~~
+- Replace and delete SearchPanelResult by ListBox widget in
+  SearchWindow. [thethythy]
 - Better cursor handler in editors. [Thierry Lemeunier]
 - Now the configuration file is updated if necessary when a new version
   of MnemoPwd is installed. [Thierry Lemeunier]
