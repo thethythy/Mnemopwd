@@ -118,22 +118,32 @@ class FileChooserWindow(TitledBorderWindow):
         else:
             return name
 
+    def _count_files(self, path):
+        size = 0
+        for child in path.iterdir():
+            size += 1
+        return size
+
     def _populate(self, directory):
         """Update ListBox contents"""
         d = Path(directory)
         if d.is_dir():
-            self.dirListBox.add_item('.   [current directory]', 1, str(d))
+            self.dirListBox.add_item('.   [current directory]', 1, str(d),
+                                     scroll=False)
             if d != Path('/'):
                 p = (d / '..').resolve()
-                self.dirListBox.add_item('..  [parent directory]', 2, str(p))
+                self.dirListBox.add_item('..  [parent directory]', 2, str(p),
+                                         scroll=False)
             idx = 3
+            size = self._count_files(d)  # Number if files in the the directory
             for child in d.iterdir():
                 label = child.name
                 length = self.dirListBox.w - 5  # Item's ListBox width
                 if child.is_dir(): length -= 1  # If child is a directory
                 label = self._format_name(label, length)
                 if child.is_dir(): label += "/" # If child is a directory
-                self.dirListBox.add_item(label, idx, str(child))  # Update list
+                last = size == idx - 2
+                self.dirListBox.add_item(label, idx, str(child), scroll=last)
                 idx += 1
 
     def update(self, item):

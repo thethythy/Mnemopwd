@@ -14,6 +14,7 @@ New
 
 Changes
 ~~~~~~~
+- Better UX using the vertical scrollbar widget. [thethythy]
 - Replace and delete SearchPanelResult by ListBox widget in
   SearchWindow. [thethythy]
 - Better cursor handler in editors. [Thierry Lemeunier]

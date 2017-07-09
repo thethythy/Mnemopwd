@@ -40,10 +40,9 @@ class ListBox(BaseWindow):
     A vertical scroll bar is visible if necessary.
     """
 
-    def __init__(self, parent, h, w, y, x, modal=True, menu=True,
-                 colourB=False, colourD=False):
+    def __init__(self, parent, h, w, y, x, colourB=False, colourD=False):
         """Create base window"""
-        BaseWindow.__init__(self, parent, h, w, y, x, modal=modal, menu=menu)
+        BaseWindow.__init__(self, parent, h, w, y, x, modal=True, menu=True)
         self.colourB = colourB
         self.colourD = colourD
         self.listener = None  # The listener of any changes
@@ -85,17 +84,18 @@ class ListBox(BaseWindow):
         if isinstance(listener, Component):
             self.listener = listener
 
-    def add_item(self, label, idx, data=False):
+    def add_item(self, label, idx, data=False, scroll=True):
         """Add a component in the window"""
+        # Add a button (visible or not visible)
         nbitems = len(self.items)
         label = label[:self.w - 5]
         show = (nbitems + 1) <= self.h
-        item = MetaButtonBox(self, nbitems, 0, label, show=show,
-                             data=(idx, data), colour=self.colourB)
-        self.items.append(item)
+        self.items.append(MetaButtonBox(self, nbitems, 0, label, show=show,
+                                        data=(idx, data), colour=self.colourB))
+
         # Show and/or update scrolling bar
         show = (nbitems + 1) > self.h
-        if show:
+        if scroll and show:
             if self.scroll_bar is None:
                 self.scroll_bar = VertScrollBar(self, self.h, 0, self.w - 2,
                                                 colour=self.colourD)
@@ -136,13 +136,14 @@ class ListBox(BaseWindow):
     def clear_content(self):
         """Delete all components"""
         # Close scrolling bar
-        if self.scroll_bar is not None:
-            self.scroll_bar.reset()
+        self.scroll_bar = None
         self.scroll_pos = 0
 
         # Delete items
         self.items = []
         self.index = 0
+
+        # Clear window
         self.window.clear()
         self.window.refresh()
 
@@ -214,6 +215,12 @@ class ListBox(BaseWindow):
                 self.items[self.index].focus_off()
                 self._update_parent()
                 return False
+
+    def close(self):
+        """Close the component"""
+        # Clear the content
+        self.window.erase()
+        self.window.refresh()
 
     def redraw(self):
         """See the mother class"""

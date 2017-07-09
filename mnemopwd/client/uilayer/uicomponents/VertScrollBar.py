@@ -40,6 +40,7 @@ class VertScrollBar(Component):
         self.size = 0  # Vertical length of the scrolling bar
         self.pos = 0  # Position of the scrolling bar
         self.count = 0  # Counter for scrolling up or scrolling down
+        self.counter = 0  # Counter of 'up' and 'down' movements
         self.content_size = 0  # Save content size for adjusting
         self.colour = colour
         self._create()
@@ -51,6 +52,8 @@ class VertScrollBar(Component):
     def update(self, content_size):
         """Update scrolling bar size"""
         self.content_size = content_size
+
+        # Compute scrolling bar length
         size = max(1, int(math.floor(self.h * self.h / content_size)))
         do_redraw = self.size != size
 
@@ -67,6 +70,10 @@ class VertScrollBar(Component):
         Try to scrolling up or scrolling down
         Scrolling depends on the number of 'up' or 'down' done by user
         """
+
+        self.counter += direction  # Counter of 'up' and 'down'
+        do_redraw = self.counter == self.content_size - self.h
+
         if self.size > 0:
             self.count += direction
             pos = self.pos
@@ -79,8 +86,8 @@ class VertScrollBar(Component):
                 do_redraw = pos != self.pos  # Redraw if pos has changed
                 self.pos = pos
 
-                if do_redraw:
-                    self._create()
+        if do_redraw:
+            self._create()
 
     def redraw(self):
         """See the mother class"""
@@ -88,7 +95,7 @@ class VertScrollBar(Component):
 
     def reset(self):
         """Re-initialize attributes"""
-        self.pos = self.size = self.content_size = self.count = 0
+        self.pos = self.size = self.content_size = self.count = self.counter = 0
 
     def _create(self):
         """Draw the widget content"""
@@ -96,13 +103,18 @@ class VertScrollBar(Component):
             # Draw standard shape
             for i in range(1, self.h - 1):
                 self.window.addch(i, 0, curses.ACS_VLINE | self.colour)  # '|'
-            # Draw decorations
-            self.window.addch(0, 0, chr(0x25B2), self.colour)  # '▲'
-            self.window.addch(self.h - 1, 0, chr(0x25BC), self.colour)  # '▼'
+
             # Draw scrolling bar if necessary
             if self.size > 0:
                 end = min(self.pos + self.size, self.h)
                 for i in range(self.pos, end):
                     self.window.addch(i, 0, chr(0x2588), self.colour)  # '█'
+
+            # Draw arrows if necessary
+            if self.counter > 0:
+                self.window.addch(0, 0, chr(0x25B2), self.colour)  # '▲'
+            if self.counter < self.content_size - self.h:
+                self.window.addch(self.h - 1, 0, chr(0x25BC), self.colour)  # '▼'
+
             # Finally refresh window
             self.window.refresh()

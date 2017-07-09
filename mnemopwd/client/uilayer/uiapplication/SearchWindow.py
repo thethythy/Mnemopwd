@@ -200,8 +200,8 @@ class SearchWindow(TitledOnBorderWindow):
                 self.index = 0  # For focusing on first item at the return
                 self.update_status("")  # Clear status bar
                 if self.nbResult == 0:
-                    # Hide pattern editor if there is no result
-                    self.patternEditor.hide()
+                    self.clear_content()  # Hide contents if there is no result
+
                 return False, False
 
     def _is_pattern_all(self, pattern):
