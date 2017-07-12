@@ -27,6 +27,8 @@
 
 import curses
 from pathlib import Path
+import os
+import stat
 
 from .TitledBorderWindow import TitledBorderWindow
 from .Component import Component
@@ -141,7 +143,7 @@ class FileChooserWindow(TitledBorderWindow):
                 length = self.dirListBox.w - 5  # Item's ListBox width
                 if child.is_dir(): length -= 1  # If child is a directory
                 label = self._format_name(label, length)
-                if child.is_dir(): label += "/" # If child is a directory
+                if child.is_dir(): label += "/"  # If child is a directory
                 last = size == idx - 2
                 self.dirListBox.add_item(label, idx, str(child), scroll=last)
                 idx += 1
@@ -188,11 +190,14 @@ class FileChooserWindow(TitledBorderWindow):
                     # A normal file or a directory
                     else:
                         if Path(path).is_dir():
-                            self.dnameLabel.update(
-                                self._format_name(path, self.w - 15))
-                            self.dirListBox.clear_content()
-                            self.directory = path
-                            self._populate(path)
+                            try:
+                                self.dnameLabel.update(
+                                    self._format_name(path, self.w - 15))
+                                self.dirListBox.clear_content()
+                                self.directory = path
+                                self._populate(path)
+                            except PermissionError:
+                                pass
                         else:
                             self.dirListBox.focus_off()
                             self.index += 1  # Next widget (editor or button)
