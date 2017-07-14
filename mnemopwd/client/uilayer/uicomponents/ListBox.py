@@ -127,10 +127,11 @@ class ListBox(BaseWindow):
                 del self.items[i]
                 # Scroll up by one from position i
                 self._half_scroll_up_items(i)
-                if self.scroll_bar is not None and len(self.items) > self.h:
-                    self.scroll_bar.update(len(self.items))
-                elif len(self.items) <= self.h:
-                    self.scroll_bar.update(1)
+                if self.scroll_bar is not None:
+                    if len(self.items) > self.h:
+                        self.scroll_bar.update(len(self.items))
+                    else:
+                        self.scroll_bar.update(1)  # Hide scroll bar
                 break
 
     def clear_content(self):
