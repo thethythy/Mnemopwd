@@ -114,9 +114,11 @@ class StateS32A(StateSCC):
                             handler.nbSIBDone += 1
 
                             # Notify the UI layer
-                            handler.loop.run_in_executor(
-                                None, handler.notify, "application.state.loadbar",
-                                (handler.nbSIBDone, handler.nbSIB))
+                            if handler.core.notify:
+                                handler.loop.run_in_executor(
+                                    None, handler.notify,
+                                    "application.state.loadbar",
+                                    (handler.nbSIBDone, handler.nbSIB))
 
                             # Indicate the task is done
                             if handler.nbSIBDone == handler.nbSIB:

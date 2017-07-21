@@ -30,7 +30,6 @@ import curses
 from ..uicomponents.BaseWindow import BaseWindow
 from ..uicomponents.MetaButtonBox import MetaButtonBox
 from ...util.Configuration import Configuration
-from ...util.funcutils import sfill
 
 
 class ExportImportMenu(BaseWindow):
@@ -40,13 +39,14 @@ class ExportImportMenu(BaseWindow):
 
     ITEM1 = 'CLEAR_EXPORT'
     ITEM2 = 'CRYPT_EXPORT'
-    ITEM3 = 'IMPORT'
+    ITEM3 = 'CLEAR_IMPORT'
+    ITEM4 = 'CRYPT_IMPORT'
 
     def __init__(self, parent, y, x):
         """Create the menu"""
 
         # Create the window
-        BaseWindow.__init__(self, parent, 6, 23 + 5, y, x, menu=True, modal=True)
+        BaseWindow.__init__(self, parent, 7, 23 + 5, y, x, menu=True, modal=True)
 
         # Border and horizontal line
         self.window.attrset(Configuration.colourD)
@@ -56,7 +56,7 @@ class ExportImportMenu(BaseWindow):
         self.window.attrset(0)
 
         # Exportation in clear text
-        name = 'Clear text exportation'
+        name = 'Clear text exportation '
         self.items.append(MetaButtonBox(self, 1, 1, name, shortcut='l',
                                         data=self.ITEM1,
                                         colour=Configuration.colourB))
@@ -67,14 +67,20 @@ class ExportImportMenu(BaseWindow):
                                         data=self.ITEM2,
                                         colour=Configuration.colourB))
 
-        # Importation
-        name = 'Importation' + sfill( - 11, ' ')
-        self.items.append(MetaButtonBox(self, 4, 1, name, shortcut='I',
+        # Importation from clear text
+        name = 'Clear text importation '
+        self.items.append(MetaButtonBox(self, 4, 1, name, shortcut='i',
                                         data=self.ITEM3,
                                         colour=Configuration.colourB))
 
+        # Importation from cypher text
+        name = 'Cypher text importation'
+        self.items.append(MetaButtonBox(self, 5, 1, name, shortcut='m',
+                                        data=self.ITEM4,
+                                        colour=Configuration.colourB))
+
         # Ordered list of shortcut keys
-        self.shortcuts = ['l', 'p', 'I']
+        self.shortcuts = ['l', 'p', 'I', 'm']
 
     def start(self, timeout=-1):
         """See mother class"""

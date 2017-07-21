@@ -191,6 +191,12 @@ class ClientUI(Thread, Observer):
         if key == "application.searchblock.removeresult":
             # Remove one previous result
             self.wmain.update_window(key, value)
+        if key == "application.exportation.result":
+            # Inform exportation operation execution
+            self.wmain.update_status(value)
+        if key == "application.importation.result":
+            # Inform importation operation execution
+            self.wmain.update_status(value)
 
     def inform(self, key, value):
         """Indicate to core layer a user demand"""

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2016, Thierry Lemeunier <thierry at lemeunier dot net>
+# Copyright (c) 2016-2017, Thierry Lemeunier <thierry at lemeunier dot net>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -29,8 +29,6 @@
 State S35 : AddData
 """
 
-import asyncio
-
 from ...util.funcutils import singleton
 from .StateSCC import StateSCC
 
@@ -54,17 +52,15 @@ class StateS35A(StateSCC):
                 if is_OK:
                     index = data[3:]
                     try:
-                        index = int(index.decode())
-                        asyncio.run_coroutine_threadsafe(
-                            handler.core.assign_last_block(index, 'add'),
-                            handler.loop)
+                        handler.core.last_index = int(index.decode())
                     except:
                         raise Exception('S35 protocol error')
 
                     # Notify the handler a property has changed
-                    handler.loop.run_in_executor(
-                        None, handler.notify, 'application.state',
-                        'New information saved by server')
+                    if handler.core.notify:
+                        handler.loop.run_in_executor(
+                            None, handler.notify, 'application.state',
+                            'New information saved by server')
 
                     # Indicate the actual task is done
                     handler.core.taskInProgress = False

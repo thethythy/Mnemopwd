@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2015, Thierry Lemeunier <thierry at lemeunier dot net>
+# Copyright (c) 2015-2017, Thierry Lemeunier <thierry at lemeunier dot net>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -94,7 +94,7 @@ class InfoBlock:
         assert isinstance(nbInfo, int) and nbInfo > 0
         if nbInfo < self._nbInfo:
             logging.critical(
-                "The size of an InfoBlock object has decrased (%s/%s). Next information are deleted :",
+                "InfoBlock: size decreased (%s/%s). Next information deleted :",
                 nbInfo, self._nbInfo)
         while nbInfo < self._nbInfo:
             infoX = "info" + str(self._nbInfo) 
@@ -122,11 +122,12 @@ class InfoBlock:
     def _verify_index_(self, index):
         """Verifies if the index parameter is a valid index format"""
         if not isinstance(index, str):
-            logging.error("In an InfoBlock object index parameter %s must be a string", str(index))
+            logging.error("InfoBlock: index parameter %s must be a string",
+                          str(index))
             raise TypeError("index parameter must be a string")
         index_regex = "^info[1-" + str(self.nbInfo) + "]$"
         if re.search(index_regex, index) is None:
-            logging.error("In an InfoBlock object index parameter %s is not correct", index)
+            logging.error("InfoBlock: index parameter %s is not correct", index)
             raise KeyError("index parameter is not correct")
     
     def __getitem__(self, index):
@@ -162,6 +163,19 @@ class InfoBlock:
         size = len(self.infos)
         condition = 0 <= size <= self.nbInfo
         if not condition:
-            logging.critical("The size of an InfoBlock object is not correct : %s / %s", str(size), self.nbInfo)
+            logging.critical("InfoBlock: size is not correct : %s / %s",
+                             str(size), self.nbInfo)
         assert condition 
         return size
+
+    def __iter__(self):
+        """Return an iterator"""
+        self._iter_counter = 0
+        return self
+
+    def __next__(self):
+        """Returns the next element or raises StopIteration"""
+        if self._iter_counter == self.nbInfo:
+            raise StopIteration
+        self._iter_counter += 1
+        return self['info' + str(self._iter_counter)]

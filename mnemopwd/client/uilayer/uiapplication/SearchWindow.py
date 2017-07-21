@@ -111,6 +111,7 @@ class SearchWindow(TitledOnBorderWindow):
     def post_search(self, table_result):
         """Prepare window after searching"""
         # Set the number of blocks found
+        self.nbResult = 0
         self.nbMaxResult = len(table_result)
         # Populate result panel
         for index in table_result:
@@ -141,12 +142,15 @@ class SearchWindow(TitledOnBorderWindow):
                 self.add_a_result(idblock, sib)
             else:
                 for j in range(1, sib.nbInfo + 1):  # For all info in sib
-                    if re.search(pattern.upper(),
-                                 sib['info' + str(j)].decode().upper())\
-                            is not None:
-                        self.patternEditor.show()
-                        self.add_a_result(idblock, sib)
-                        break  # One info match so stop loop now
+                    try:
+                        if re.search(pattern.upper(),
+                                     sib['info' + str(j)].decode().upper()) \
+                                is not None:
+                            self.patternEditor.show()
+                            self.add_a_result(idblock, sib)
+                            break  # One info match so stop loop now
+                    except KeyError:
+                        continue
 
     def update_a_result(self, idblock, sib):
         """Update a previous search result"""

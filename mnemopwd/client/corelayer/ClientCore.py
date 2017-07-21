@@ -32,10 +32,13 @@ import ssl
 import time
 import concurrent.futures
 import os
+import stat
+import json
 
 from ..util.Configuration import Configuration
 from ..util.funcutils import Subject
 from .protocol.ProtocolHandler import ProtocolHandler
+from ...common.SecretInfoBlock import SecretInfoBlock
 
 """
 Client part of MnemoPwd application.
@@ -68,6 +71,8 @@ class ClientCore(Subject):
 
         # Create an i/o asynchronous loop
         self.loop = asyncio.get_event_loop()
+
+        # Set logging configuration
         if Configuration.loglevel is not None:
             self.loop.set_debug(Configuration.loglevel == 'DEBUG')
             logging.basicConfig(filename="client.log",
@@ -80,10 +85,14 @@ class ClientCore(Subject):
         # Create a task queue
         self.queue = asyncio.Queue(
             maxsize=Configuration.queuesize, loop=self.loop)
+
+        # Set attributes
         self.cmdH = None  # The command handler co-routine
         self.task = None  # The current task executed by the command handler
         self.taskInProgress = False  # Flag to indicate a task is in progress
-        self.lastblock = None  # The last block or the last index used
+        self.last_block = None  # The last block used
+        self.last_index = None  # The last index used
+        self.notify = True  # Flag for UI layer notification or not
 
         # Create and set an executor
         executor = concurrent.futures.ThreadPoolExecutor(Configuration.poolsize)
@@ -226,34 +235,48 @@ class ClientCore(Subject):
             yield from asyncio.sleep(0.01, loop=self.loop)
 
     @asyncio.coroutine
-    def _task_add_data_or_update_data(self, idblock, sib):
-        """Add a new block or update an existing block"""
-        if idblock is None:
-            # Add a new block
-            self.protocol.state = self.protocol.states['35R']
-        else:
-            # Update an existing block
-            self.protocol.state = self.protocol.states['37R']
+    def _task_add_data(self, sib, notify=True):
+        """Add a new block"""
+        self.protocol.state = self.protocol.states['35R']  # Add a new block
 
         # Remember the block
-        self.lastblock = sib
+        self.last_block = sib
 
         # Execute protocol state
+        self.notify = notify
         self.taskInProgress = True
-        if idblock is None:
-            yield from self.loop.run_in_executor(
-                None, self.protocol.data_received, self.lastblock)
-        else:
-            yield from self.loop.run_in_executor(
-                None, self.protocol.data_received, (idblock, self.lastblock))
+        yield from self.loop.run_in_executor(
+            None, self.protocol.data_received, sib)
 
         # Waiting for the end of the task
         while self.taskInProgress:
             yield from asyncio.sleep(0.01, loop=self.loop)
+        self.notify = True
+
+        # Assign new block
+        yield from self._assign_last_block(self.last_index, 'add')
+
+    @asyncio.coroutine
+    def _task_update_data(self, idblock, sib, notify=True):
+        """Update an existing block"""
+        self.protocol.state = self.protocol.states['37R']  # Update a block
+
+        # Remember the block
+        self.last_block = sib
+
+        # Execute protocol state
+        self.notify = notify
+        self.taskInProgress = True
+        yield from self.loop.run_in_executor(
+            None, self.protocol.data_received, (idblock, sib))
+
+        # Waiting for the end of the task
+        while self.taskInProgress:
+            yield from asyncio.sleep(0.01, loop=self.loop)
+        self.notify = True
 
         # Assign updated block
-        if idblock is not None:
-            yield from self.assign_last_block(idblock, 'update')
+        yield from self._assign_last_block(idblock, 'update')
 
     @asyncio.coroutine
     def _task_delete_data(self, idblock):
@@ -290,21 +313,42 @@ class ClientCore(Subject):
                 self.searchTable)
 
     @asyncio.coroutine
-    def _task_export_data(self):
+    def _task_export_data(self, notify=True):
         """Get all blocks"""
         self.protocol.state = self.protocol.states['32R']  # Export
         self.searchTable = list()  # Reset search table
         # Execute protocol state
+        self.notify = notify
         self.taskInProgress = True
         yield from self.loop.run_in_executor(
             None, self.protocol.data_received, None)
         while self.taskInProgress:
             yield from asyncio.sleep(0.01, loop=self.loop)
+        self.notify = True
         # Notify the result to UI layer
-        if len(self.searchTable) > 0:
+        if len(self.searchTable) > 0 and notify:
             yield from self.loop.run_in_executor(
                 None, self.update, 'application.searchblock.result',
                 self.searchTable)
+
+    @asyncio.coroutine
+    def _task_import_data(self, sib, notify=False):
+        """Add some SIBs"""
+        self.protocol.state = self.protocol.states['35R']  # Add a new block
+
+        # Execute protocol state
+        self.notify = notify
+        self.taskInProgress = True
+        yield from self.loop.run_in_executor(
+            None, self.protocol.data_received, sib)
+
+        # Waiting for the end of the task
+        while self.taskInProgress:
+            yield from asyncio.sleep(0.01, loop=self.loop)
+        self.notify = True
+
+        # Assign new block
+        self.assign_result_search_block(self.last_index, sib)
 
     @asyncio.coroutine
     def _task_get_block_values(self, idblock):
@@ -315,7 +359,163 @@ class ClientCore(Subject):
             None, self.update, 'application.searchblock.oneresult',
             (idblock, sib))
 
+    @asyncio.coroutine
+    def _task_export_file(self, filename, secure):
+        """Exportation to a JSON file"""
+
+        # Inform UI layer about progression
+        yield from self.loop.run_in_executor(
+            None, self.update, 'application.exportation.result',
+            "Exporting (can take few minutes)...")
+
+        # Control no existence and write permission
+        try:
+            # Try to create file
+            with open(filename, 'x'):
+                pass
+
+            # Change file permissions
+            os.chmod(filename,
+                     stat.S_IRUSR | stat.S_IWUSR | stat.S_IREAD | stat.S_IWRITE)
+
+        except FileExistsError:
+            yield from self.loop.run_in_executor(
+                None, self.update, 'application.exportation.result',
+                "Exportation failed: file already exists")
+            return
+        except OSError:
+            yield from self.loop.run_in_executor(
+                None, self.update, 'application.exportation.result',
+                "Exportation failed: no write permission")
+            return
+
+        # Get SIBs from server
+        yield from self._task_export_data(notify=False)
+
+        # Exportation
+
+        to_export = dict()  # Dictionary of all information of all SIBs
+        to_export["size"] = len(self.table)  # Number of SIBs
+        if not secure:
+            to_export["secure"] = "False"  # Information in clear
+        else:
+            to_export["secure"] = "True"   # Information encrypted
+
+        # Loop on SIBs to export
+        for i, sib in enumerate(self.table.values(), start=1):
+            if secure:
+                to_export[str(i)] = sib.exportation(secure, self.protocol.ms)
+            else:
+                to_export[str(i)] = sib.exportation(secure)
+            yield from self.loop.run_in_executor(
+                None, self.update, "application.state.loadbar",
+                (i, len(self.table)))
+
+        try:
+            # Save to JSON file
+            with open(filename, 'w') as file:
+                json.dump(to_export, file,
+                          ensure_ascii=False, indent=4, sort_keys=True)
+
+            # Notify the result to UI layer
+            yield from self.loop.run_in_executor(
+                None, self.update, 'application.exportation.result',
+                "Exportation done")
+
+        except OSError:
+            yield from self.loop.run_in_executor(
+                None, self.update, 'application.exportation.result',
+                "Exportation failed: no enough disk space?")
+
+    @asyncio.coroutine
+    def _task_import_file(self, filename, login=None, passwd=None):
+
+        # Inform UI layer about progression
+        yield from self.loop.run_in_executor(
+            None, self.update, 'application.importation.result',
+            "Importing (can take few minutes)...")
+
+        # Control existence, read permission and JSON format
+        try:
+            with open(filename, 'r') as file:
+                table = json.load(file)  # Load information from JSON file
+
+            secure = table["secure"] == "True"  # Is a secure export file ?
+            size = table["size"]  # Number of information blocks
+
+        except OSError:
+            yield from self.loop.run_in_executor(
+                None, self.update, 'application.importation.result',
+                "Importation failed: file not exist or wrong read permission")
+            return
+
+        except ValueError:
+            yield from self.loop.run_in_executor(
+                None, self.update, 'application.importation.result',
+                "Importation failed: wrong file format?")
+            return
+
+        except KeyError:
+            yield from self.loop.run_in_executor(
+                None, self.update, 'application.importation.result',
+                "Importation failed: wrong file format?")
+            return
+
+        # Do importation
+        try:
+            self.searchTable = list()  # Reset search table
+            i = 1
+            while True:
+                sib = SecretInfoBlock(self.protocol.keyH)
+                sib.importation(
+                    table[str(i)], secure, login=login, passwd=passwd)
+
+                # Send new SIB to the server
+                yield from self._task_import_data(sib, notify=False)
+
+                yield from self.loop.run_in_executor(
+                    None, self.update, "application.state.loadbar", (i, size))
+
+                i += 1
+
+        except KeyError:
+            # Notify the result to UI layer
+            if len(self.searchTable) > 0:
+                yield from self.loop.run_in_executor(
+                    None, self.update, 'application.searchblock.result',
+                    self.searchTable)
+
+            # Inform UI layer about progression
+            yield from self.loop.run_in_executor(
+                None, self.update, 'application.importation.result',
+                "Importation done")
+
+        except AssertionError:
+            yield from self.loop.run_in_executor(
+                None, self.update, 'application.importation.result',
+                "Importation failed: integrity not respected")
+
     # External methods
+
+    @asyncio.coroutine
+    def _assign_last_block(self, idblock, task):
+        """Co-routine for assignation of the last block used"""
+        # Update table
+        self.table[idblock] = self.last_block
+        # Notify the result to UI layer
+        if task == 'add':
+            yield from self.loop.run_in_executor(
+                None, self.update, 'application.searchblock.tryoneresult',
+                (idblock, self.last_block))
+        elif task == 'update':
+            yield from self.loop.run_in_executor(
+                None, self.update, 'application.searchblock.updateresult',
+                (idblock, self.last_block))
+
+    def assign_result_search_block(self, idblock, sib):
+        """Callback method for assignation of a search result"""
+        self.table[idblock] = sib
+        self.searchTable.append(idblock)
 
     @asyncio.coroutine
     def close(self):
@@ -367,8 +567,7 @@ class ClientCore(Subject):
 
         if key == "connection.open.credentials":
             try:
-                # Direct execution because queue is empty at this moment
-                self._open()
+                self._open()  # Direct execution because queue is empty here
                 coro = self._task_set_credentials(*value)
             except:
                 pass
@@ -376,8 +575,10 @@ class ClientCore(Subject):
             coro = self._task_close()
         if key == "connection.close.deletion":
             coro = self._task_deletion()
-        if key == "application.editblock":
-            coro = self._task_add_data_or_update_data(*value)
+        if key == "application.addblock":
+            coro = self._task_add_data(value)
+        if key == "application.updateblock":
+            coro = self._task_update_data(*value)
         if key == "application.deleteblock":
             coro = self._task_delete_data(value)
         if key == "application.searchblock":
@@ -386,27 +587,14 @@ class ClientCore(Subject):
             coro = self._task_export_data()
         if key == "application.searchblock.blockvalues":
             coro = self._task_get_block_values(value)
+        if key == "application.exportation.clear":
+            coro = self._task_export_file(value, False)
+        if key == "application.exportation.cypher":
+            coro = self._task_export_file(value, True)
+        if key == "application.importation.clear":
+            coro = self._task_import_file(value)
+        if key == "application.importation.cypher":
+            coro = self._task_import_file(*value)
 
         if coro is not None:
             asyncio.run_coroutine_threadsafe(self.queue.put(coro), self.loop)
-
-    @asyncio.coroutine
-    def assign_last_block(self, idblock, task):
-        """Callback method for assignation of last block used"""
-        # Notify the result to UI layer
-        if task == 'add':
-            yield from self.loop.run_in_executor(
-                None, self.update, 'application.searchblock.tryoneresult',
-                (idblock, self.lastblock))
-        elif task == 'update':
-            yield from self.loop.run_in_executor(
-                None, self.update, 'application.searchblock.updateresult',
-                (idblock, self.lastblock))
-        # Update table
-        self.table[idblock] = self.lastblock
-        self.lastblock = None
-
-    def assign_result_search_block(self, idblock, sib):
-        """Callback method for assignation of a search result"""
-        self.table[idblock] = sib
-        self.searchTable.append(idblock)

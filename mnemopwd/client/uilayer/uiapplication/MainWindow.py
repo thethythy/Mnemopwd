@@ -31,6 +31,8 @@ import os
 import time
 import math
 
+from pathlib import Path
+
 from ...util.Configuration import Configuration
 from ...util.funcutils import sfill
 from ..uicomponents.BaseWindow import BaseWindow
@@ -184,9 +186,12 @@ class MainWindow(BaseWindow):
             self.update_status('Edition impossible: a string is too long (close then resize window).')
             return
 
-        # According to the result, save / update or delete or do nothing
+        # According to the result: save or update or delete or do nothing
         if result is True:
-            self.uifacade.inform("application.editblock", (idblock, sib))
+            if idblock is None:
+                self.uifacade.inform("application.addblock", sib)
+            else:
+                self.uifacade.inform("application.updateblock", (idblock, sib))
         elif sib is True:
             self.uifacade.inform("application.deleteblock", idblock)
         else:
@@ -199,23 +204,38 @@ class MainWindow(BaseWindow):
 
     def _handle_export_import(self, action):
         """Start an exportation or an importation"""
-        if action == ExportImportMenu.ITEM3:
+
+        # Change status message and select execution mode
+        if action == ExportImportMenu.ITEM3 or action == ExportImportMenu.ITEM4:
             self.update_status('Please navigate then select an existing file')
             mode = FileChooserWindow.SELECT
         elif action == ExportImportMenu.ITEM1 or action == ExportImportMenu.ITEM2:
             self.update_status('Please navigate, select a directory then edit a new filename')
             mode = FileChooserWindow.CREATE
 
+        # Execute file chooser dialog box to get a full path file name
         result = FileChooserWindow(self, self.directory,
                                    colourB=Configuration.colourB,
                                    colourT=Configuration.colourT,
                                    colourD=Configuration.colourD,
                                    mode=mode).start()
 
-        self.update_status(str(result))
-
-        # TODO : launch importation or exportation according result
-        # TODO : save directory returned if result not False
+        # Do exportation or importation operation according selected action
+        if result:
+            self.directory = str(Path(result).parent)  # Store actual directory
+            if action == ExportImportMenu.ITEM1:
+                self.uifacade.inform("application.exportation.clear", result)
+            elif action == ExportImportMenu.ITEM2:
+                self.uifacade.inform("application.exportation.cypher", result)
+            elif action == ExportImportMenu.ITEM3:
+                self.uifacade.inform("application.importation.clear", result)
+            elif action == ExportImportMenu.ITEM4:
+                # Get login / password in case of a secure importation
+                self.update_status('Give login / password of the encrypted file')
+                login, passwd = LoginWindow(self, "Login / password of encrypted file").start()
+                if login is not False:
+                    self.uifacade.inform("application.importation.cypher",
+                                         (result, login, passwd))
 
     def start(self, timeout=-1):
         """See mother class"""

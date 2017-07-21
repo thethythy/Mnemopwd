@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2016, Thierry Lemeunier <thierry at lemeunier dot net>
+# Copyright (c) 2016-2017, Thierry Lemeunier <thierry at lemeunier dot net>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -52,9 +52,10 @@ class StateS37A(StateSCC):
                 if is_OK:
 
                     # Notify the handler a property has changed
-                    handler.loop.run_in_executor(
-                        None, handler.notify, "application.state",
-                        "Information updated by server")
+                    if handler.core.notify:
+                        handler.loop.run_in_executor(
+                            None, handler.notify, "application.state",
+                            "Information updated by server")
 
                     # Indicate the actual task is done
                     handler.core.taskInProgress = False

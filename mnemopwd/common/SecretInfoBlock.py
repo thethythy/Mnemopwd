@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2015-2016, Thierry Lemeunier <thierry at lemeunier dot net>
+# Copyright (c) 2015-2017, Thierry Lemeunier <thierry at lemeunier dot net>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -40,7 +40,12 @@ the application.
 """
 
 import logging
+
+from base64 import b32decode, b32encode
+
 from .InfoBlock import InfoBlock
+from .KeyHandler import KeyHandler
+from ..pyelliptic import pbkdf2
 from ..pyelliptic import hash
 
 
@@ -135,3 +140,67 @@ class SecretInfoBlock(InfoBlock):
         assert condition
         
         self.keyH = keyH  # Store the key handler
+
+    def exportation(self, secure, ms=None):
+        """Export information in clear text or cypher text"""
+
+        sib_to_export = dict()  # Dictionary of information of the SIB
+
+        if secure:
+            # Encrypt information with the default cryptographic suite
+            # but with the actual master secret
+            exp_sib = SecretInfoBlock(keyH=KeyHandler(ms), nbInfo=self.nbInfo)
+
+        j = 1
+        for info in self:  # For all info
+
+            info = info.decode()  # Info in clear
+
+            if secure:            # Encrypt then encode
+                exp_sib['info' + str(j)] = info.encode()
+                info = b32encode(exp_sib.infos['info' + str(j)]).decode()
+
+            sib_to_export[str(j)] = info
+
+            j += 1
+
+        # Add integrity hash in case of the secure exportation
+        if secure:
+            fgprt = exp_sib.__getstate__()['fingerprint']
+            sib_to_export['fingerprint'] = b32encode(fgprt).decode()
+
+        return sib_to_export
+
+    def importation(self, infos, secure, login=False, passwd=False):
+        """Import clear or encrypted information in an empty SIB"""
+        if secure:
+            # Create a KeyHandler instance for the encrypted file
+            salt, ms = pbkdf2(passwd.encode(), salt=login.encode(),
+                              hfunc='SHA1')
+            tmp_keyH = KeyHandler(ms)
+            tmp_sib = SecretInfoBlock(keyH=tmp_keyH)  # For integrity checking
+
+        try:
+            j = 1
+            while True:
+                info = infos[str(j)]  # info is a string of characters
+                if j > 1:
+                    self.nbInfo += 1
+                    if secure:
+                        tmp_sib.nbInfo += 1
+                if not secure:
+                    self['info' + str(j)] = info.encode()  # Encrypt
+                else:
+                    info = b32decode(info)                 # Decode
+                    tmp_sib.infos['info' + str(j)] = info  # Save in tmp_sib
+                    self['info' + str(j)] = tmp_keyH.decrypt(0, info)  # Encrypt
+                j += 1
+        except KeyError:
+            pass
+
+        # Check integrity in case of a secure importation
+        if secure:
+            tmp_sib.fingerprint = b32decode(infos['fingerprint'])
+            tmp_sib.control_integrity(tmp_keyH)
+
+        return self
