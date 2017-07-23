@@ -31,6 +31,7 @@ Features
 - Configuration by file and/or by command line options
 - Some colours on client interface (see the configuration file)
 - Server running in background (only on POSIX systems)
+- Importation / exportation in clear text or cypher text
 - UML model of the secure application protocol (see https://github.com/thethythy/Mnemopwd)
 
 Installation (and uninstalling)
@@ -42,7 +43,6 @@ They are two installation modes:
 
 With PIP just hit in a terminal: ``pip install MnemoPwd``
 For uninstalling just hit in a terminal: ``pip uninstall MnemoPwd``
-Do not forget to delete configuration files and the database directory (see configuration explanation).
 
 For more information about PIP see https://pip.readthedocs.io/.
 
@@ -51,7 +51,6 @@ For more information about PIP see https://pip.readthedocs.io/.
 You can get the ZIP archive from GitHub (https://github.com/thethythy/Mnemopwd) using the button ``Clone or download``.
 Just unzip the archive file and go in the source directory.
 For uninstalling, delete the ZIP archive and the source directory.
-Do not forget to delete configuration files and the database directory (see configuration explanation).
 
 Configuration
 =============
@@ -143,7 +142,7 @@ a new self-signed certificate created with OpenSSL. In the last case, please fol
 
    where ``mnemopwdcert`` is the certificate file to share and ``mnemopwdkey`` is the private key
    file to keep secret (never shared this file).
-   
+
    See https://www.openssl.org/docs/manmaster/apps/req.html for more information.
 
 2. Move certificate file and key file in a secure directory on server (I recommend the ``~/mnemopwddata``
