@@ -2,11 +2,13 @@ Changelog
 =========
 
 
-(unreleased)
-------------
+v1.2.0 (2017-07-23)
+-------------------
 
 New
 ~~~
+- Add clear and secure importation / exportation functionalities.
+  [thethythy]
 - Add a FileChooserWindow standard dialog box. [thethythy]
 - Add a ListBox widget. [thethythy]
 - Add the possibility to use colours in client interface (#6)
@@ -14,6 +16,7 @@ New
 
 Changes
 ~~~~~~~
+- UML model updated. [thethythy]
 - Better UX using the vertical scrollbar widget. [thethythy]
 - Replace and delete SearchPanelResult by ListBox widget in
   SearchWindow. [thethythy]
