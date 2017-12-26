@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2015-2016, Thierry Lemeunier <thierry at lemeunier dot net>
+# Copyright (c) 2015-2017, Thierry Lemeunier <thierry at lemeunier dot net>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -53,7 +53,7 @@ class StateS1C:
             challenge = client.ephecc.decrypt(echallenge)  # Decrypting
 
             # Compute challenge
-            challenge_bis = hmac_sha256(client.ms, client.session + b'S1.12')
+            challenge_bis = hmac_sha256(client.ms, client.session + b'S1.13')
 
             if challenge == challenge_bis:
                 # Send challenge accepted
