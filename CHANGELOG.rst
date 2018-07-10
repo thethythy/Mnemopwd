@@ -2,6 +2,15 @@ Changelog
 =========
 
 
+v1.2.1 (2018-07-10)
+-------------------
+
+Changes
+~~~~~~~
+- New process for generating the session number. [Thierry Lemeunier]
+- UML model updated. [thethythy]
+
+
 v1.2.0 (2017-07-23)
 -------------------
 
