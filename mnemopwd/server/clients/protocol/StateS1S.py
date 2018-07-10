@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2015-2016, Thierry Lemeunier <thierry at lemeunier dot net>
+# Copyright (c) 2015-2017, Thierry Lemeunier <thierry at lemeunier dot net>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -30,9 +30,6 @@
 State S1S : Session
 """
 
-import os
-
-from ....pyelliptic import Cipher
 from ...util.funcutils import singleton
 
 
@@ -41,25 +38,27 @@ class StateS1S:
     """State S1S : Session"""
         
     def do(self, client, data):
-        """Action of the state S1S: establish a session number and
-        a challenge request"""
+        """Action of the state S1S: get master secret and session number from
+        client and do a challenge request"""
         
         try:
+
             # Test for S1S command
             is_cd_S1S = data[:7] == b"SESSION"
             if not is_cd_S1S:
                 raise Exception('S1S protocol error')
-                
-            ems = data[8:]  # Master secret encrypted
+
+            tab_data = data[8:].split(b';', maxsplit=1)  # Split in two
+            len_esession = int((tab_data[0]).decode())  # Get length of esession
+
+            esession = tab_data[1][:len_esession]  # Session number encrypted
+            session = client.ephecc.decrypt(esession)  # Decrypt session number
+
+            ems = tab_data[1][len_esession+1:]  # Master secret encrypted
             ms = client.ephecc.decrypt(ems)  # Decrypt master secret
-            session = (os.urandom(256))[64:128]  # Random session value
-            
-            iv = Cipher.gen_IV('aes-256-cbc')
-            ctx = Cipher(ms, iv, 1, 'aes-256-cbc')
-            esession = ctx.ciphering(session)  # Encrypt session number
-            
+
             # Send challenge request
-            message = b'CHALLENGER;' + iv + b';' + esession
+            message = b'CHALLENGER'
             client.loop.call_soon_threadsafe(client.transport.write, message)
             
         except Exception as exc:

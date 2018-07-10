@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2016, Thierry Lemeunier <thierry at lemeunier dot net>
+# Copyright (c) 2016-2017, Thierry Lemeunier <thierry at lemeunier dot net>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -31,8 +31,6 @@ State S1 : Session
 """
 
 from ...util.funcutils import singleton
-from ....pyelliptic import OpenSSL
-from ....pyelliptic import Cipher
 from ....pyelliptic import hmac_sha256
 
 
@@ -49,17 +47,8 @@ class StateS1CR:
                 if not is_cd_S1CR:
                     raise Exception('S1CR protocol error')
 
-                # Get esession number
-                blocksize = OpenSSL.get_cipher('aes-256-cbc').get_blocksize()
-                iv = data[11:11 + blocksize]
-                esession = data[12 + blocksize:]
-
-                # Decrypt session number
-                ctx = Cipher(handler.ms, iv, 0, 'aes-256-cbc')
-                session = ctx.ciphering(esession)
-
                 # Compute challenge answer
-                challenge = hmac_sha256(handler.ms, session + b'S1.12')
+                challenge = hmac_sha256(handler.ms, handler.session + b'S1.13')
 
                 # Encrypt challenge answer
                 echallenge = handler.ephecc.encrypt(
@@ -79,5 +68,4 @@ class StateS1CR:
                 handler.loop.call_soon_threadsafe(handler.exception_handler, exc)
 
             else:
-                handler.session = session  # Store the session number
                 handler.state = handler.states['1CA']  # Next state

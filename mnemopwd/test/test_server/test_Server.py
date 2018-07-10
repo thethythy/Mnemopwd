@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2015, Thierry Lemeunier <thierry at lemeunier dot net>
+# Copyright (c) 2015-2017, Thierry Lemeunier <thierry at lemeunier dot net>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -31,18 +31,19 @@ import socket
 import ssl
 import time
 import pickle
+import hashlib
+import os
+
 from pathlib import Path
 from mnemopwd.server.server import Server
 from mnemopwd.server.util.Configuration import Configuration
 from mnemopwd.common.KeyHandler import KeyHandler
 from mnemopwd.common.SecretInfoBlock import SecretInfoBlock
 from mnemopwd.pyelliptic import ECC
-from mnemopwd.pyelliptic import OpenSSL
 from mnemopwd.pyelliptic import Cipher
 from mnemopwd.pyelliptic import pbkdf2
 from mnemopwd.pyelliptic import hmac_sha512
 from mnemopwd.pyelliptic import hmac_sha256
-import hashlib
 
 # -----------------------------------------------------------------------------
 # Test S0
@@ -105,14 +106,18 @@ class Test_Server_Client_S1_OK(Test_Server_Client_S0):
         salt, ms = pbkdf2(self.password, salt=self.login, hfunc='SHA1')
         self.ms = ms
         ems = self.ephecc.encrypt(self.ms, pubkey=self.ephecc.get_pubkey())
-        connect.send(b'SESSION;' + ems)
+
+        nonce = (os.urandom(32))  # Random nonce (32 bytes)
+        cipher = Cipher(ms, Cipher.gen_IV('aes-256-cbc'), 1, 'aes-256-cbc')
+        self.session = cipher.ciphering(nonce)[:16]  # Compute session number (16 bytes)
+        esession = self.ephecc.encrypt(self.session, pubkey=self.ephecc.get_pubkey())
+        len_esession = str(len(esession)).encode()
+
+        connect.send(b'SESSION;' + len_esession + b';' + esession + b';' + ems)
 
     def state_S1S_end(self, connect):
         message = connect.recv(4096)
         protocol_cd = message[:10]
-        blocksize = OpenSSL.get_cipher('aes-256-cbc').get_blocksize()
-        self.iv = message[11:11+blocksize]
-        self.esession = message[12+blocksize:]
         self.test.assertEqual(protocol_cd, b'CHALLENGER')
     
     def get_echallenge(self, var, bug=False):
@@ -123,10 +128,7 @@ class Test_Server_Client_S1_OK(Test_Server_Client_S0):
         return self.ephecc.encrypt(challenge, pubkey=self.ephecc.get_pubkey())
     
     def state_S1C_begin(self, connect):
-        ctx = Cipher(self.ms, self.iv, 0, 'aes-256-cbc')
-        self.session = ctx.ciphering(self.esession)
-        echallenge = self.get_echallenge(b'S1.12')
-        
+        echallenge = self.get_echallenge(b'S1.13')
         connect.send(b'CHALLENGEA;' + echallenge)
         
     def state_S1C_end(self, connect):
@@ -156,9 +158,7 @@ class Test_Server_Client_S1_KO(Test_Server_Client_S1_OK):
         Test_Server_Client_S1_OK.__init__(self,host,port,test,number)
 
     def state_S1C_begin(self, connect):
-        ctx = Cipher(self.ms, self.iv, 0, 'aes-256-cbc')
-        self.session = ctx.ciphering(self.esession)
-        echallenge = self.get_echallenge(b'S1.12', bug=True)
+        echallenge = self.get_echallenge(b'S1.13', bug=True)
         connect.send(b'CHALLENGEA;' + echallenge)
         
     def state_S1C_end(self, connect):
@@ -1316,7 +1316,7 @@ class Test_Server_Client_S37_KO_2(Test_Server_Client_S37_KO_1):
 class Test_ServerTestCase(unittest.TestCase):
     
     def setUp(self):
-        self.path = 'test/data'
+        self.path = 'mnemopwd/test/data'
         for child in Path(self.path).iterdir():
             if Path(child).suffix == '.db':
                 Path(child).unlink()
@@ -1376,7 +1376,7 @@ class Test_ServerTestCase(unittest.TestCase):
         Test_Server_Client_S35_OK_NEW_CONFIG(Configuration.host, Configuration.port, self, 30, 13).start()
         
         # Begin after 14 secondes
-        Test_Server_Client_S34_OK_NEW_CONFIG(Configuration.host, Configuration.port, self, 31, 3, 14).start()
+        Test_Server_Client_S34_OK_NEW_CONFIG(Configuration.host, Configuration.port, self, 31, 4, 14).start()
 
         try:
             Configuration.dbpath = self.path
